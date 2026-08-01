@@ -1,5 +1,5 @@
 const express = require("express");
-const { getCareCenters, addCareCenter, getEquipment, addEquipment } = require("../controllers/masterController");
+const { getCareCenters, addCareCenter, getEquipment, addEquipment } = require("../controllers/MasterController");
 const router = express.Router();
 
 router.get("/carecenters", getCareCenters);
