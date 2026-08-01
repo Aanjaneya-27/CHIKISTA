@@ -1,8 +1,7 @@
-// src/App.jsx
-import { useState, useEffect } from "react"; // ✅ ADDED useEffect
+import { useState, useEffect } from "react"; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
-import { ROLES, initialCareCenters, initialEquipment, initialCategories, initialReferences, initialDeliveryExecutives, initialLogs, initialNotifications } from "./data/mockData";
+import { ROLES, initialCareCenters, initialEquipment, initialCategories, initialReferences, initialDeliveryExecutives, initialLogs, initialNotifications } from "./data/MockData";
 import { Sidebar, Topbar, NotificationsPanel } from "./components/layout/Layout";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -150,7 +149,6 @@ function MainAppLayout({ role, handleLogout }) {
             <Route path="/dashboard" element={<AdminDashboard role={role} logs={logs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} deliveryExecutives={deliveryExecutives} />} />
             <Route path="/rental" element={<RentalMaster role={role} permissions={permissions} logs={logs} setLogs={setLogs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} />} />
             
-            {/* Master Info pe Data bheja */}
             <Route path="/master" element={
               permissions.canViewMaster ? (
                 <MasterInfo careCenters={careCenters} setCareCenters={setCareCenters} equipmentCatalog={equipmentCatalog} setEquipmentCatalog={setEquipmentCatalog} categories={categories} setCategories={setCategories} references={references} setReferences={setReferences} deliveryExecutives={deliveryExecutives} setDeliveryExecutives={setDeliveryExecutives} />
