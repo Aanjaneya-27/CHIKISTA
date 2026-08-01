@@ -2,7 +2,7 @@
  const cors = require('cors');
  const userRoutes = require('./routes/userRoutes');
  const requisitionRoutes = require('./routes/requisitionRoutes');
- const MasterRoutes = require('./routes/MasterRoutes');
+ const masterRoutes = require('./routes/MasterRoutes');
  const rentalRoutes = require('./routes/rentalRoutes');
 
 const app = express();
@@ -12,7 +12,7 @@ app.use(cors());
 
 app.use('/api/users', userRoutes);
 app.use('/api/requisitions', requisitionRoutes);
-app.use('/api/master', MasterRoutes);
-app.use("/api/rental", require("./routes/rentalRoutes"));
+app.use('/api/master', masterRoutes);
+app.use("/api/rental", rentalRoutes);
 
 module.exports = app;
