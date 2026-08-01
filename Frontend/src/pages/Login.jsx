@@ -4,7 +4,7 @@ import { PrimaryButton, TextInput, Field, Select } from "../components/UiCompone
 import API from "../utils/api";
 
 export default function Login({ onLogin }) {
-  const [isRegister, setIsRegister] = useState(false); // Toggle between Login and Register
+  const [isRegister, setIsRegister] = useState(false); 
   
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
