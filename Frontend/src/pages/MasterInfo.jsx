@@ -253,7 +253,6 @@ const saveCareCenter = async (data) => {
 
   const deleteLabels = { center: "care center", equipment: "device", category: "accessory", reference: "reference", deliveryExecutive: "delivery executive" };
 
-  // ---- Global Inventory Ledger (Active / Inactive counters + Add New Asset) ----
   const tabDataMap = {
     device: equipmentCatalog,
     accessory: categories,
