@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { HeartPulse, ClipboardList, Database, ChevronRight, Bell, ShieldCheck, Menu, User, SlidersHorizontal, LogOut, ChevronDown, X, CheckCircle2, AlertTriangle } from "lucide-react";
-import { ROLES, DEMO_USER_NAMES } from "../../data/mockData";
+import { ROLES, DEMO_USER_NAMES } from "../../data/MockData";
 
 export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNotifications }) {
   const navigate = useNavigate();

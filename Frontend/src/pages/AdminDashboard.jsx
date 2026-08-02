@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Activity, Clock, AlertTriangle, Wallet, TrendingUp, Package, Boxes, Building2, Layers, Truck, ChevronRight, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { trendData, DONUT_COLORS } from "../data/mockData";
+import { trendData, DONUT_COLORS } from "../data/MockData";
 import { StatusBadge } from "../components/UiComponents";
 
 function DashboardStat({ label, value, icon: Icon, tone, delta, deltaUp }) {
