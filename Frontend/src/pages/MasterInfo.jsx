@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Package, Tag, Building2, Users, Truck, MapPin, Phone, Mail, Pencil, Trash2, Plus, X, Save } from "lucide-react";
-import { PrimaryButton, GhostButton, IconAction, ConfirmDialog, Field, TextInput, Select } from "../components/UiComponents";
+import { PrimaryButton, GhostButton, IconAction, ConfirmDialog, Field, TextInput, Select, StatusBadge } from "../components/UiComponents";
 import { REFERRAL_OPTIONS } from "../data/MockData";
 import API from "../utils/api";
 
 function CareCenterFormModal({ initial, onClose, onSubmit }) {
-  const [form, setForm] = useState(initial || { name: "", address: "", contactPerson: "", phone: "", gst: "" });
+  const [form, setForm] = useState(initial || { name: "", address: "", contactPerson: "", phone: "", gst: "", status: "Active" });
   const [errors, setErrors] = useState({});
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -34,7 +34,15 @@ function CareCenterFormModal({ initial, onClose, onSubmit }) {
             <Field label="Contact Person" required error={errors.contactPerson}><TextInput value={form.contactPerson} error={errors.contactPerson} onChange={(e) => set({ contactPerson: e.target.value })} /></Field>
             <Field label="Phone" required error={errors.phone}><TextInput value={form.phone} error={errors.phone} onChange={(e) => set({ phone: e.target.value })} /></Field>
           </div>
-          <Field label="GST / ID Number" required error={errors.gst}><TextInput value={form.gst} error={errors.gst} onChange={(e) => set({ gst: e.target.value })} /></Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="GST / ID Number" required error={errors.gst}><TextInput value={form.gst} error={errors.gst} onChange={(e) => set({ gst: e.target.value })} /></Field>
+            <Field label="Status" required>
+              <Select value={form.status} onChange={(e) => set({ status: e.target.value })}>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </Select>
+            </Field>
+          </div>
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4">
           <GhostButton onClick={onClose}>Cancel</GhostButton>
@@ -46,7 +54,7 @@ function CareCenterFormModal({ initial, onClose, onSubmit }) {
 }
 
 function EquipmentFormModal({ initial, onClose, onSubmit }) {
-  const [form, setForm] = useState(initial || { name: "", category: "Respiratory", dailyRate: "", stock: "" });
+  const [form, setForm] = useState(initial || { name: "", category: "Respiratory", dailyRate: "", stock: "", status: "Active" });
   const [errors, setErrors] = useState({});
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -73,6 +81,12 @@ function EquipmentFormModal({ initial, onClose, onSubmit }) {
             <Field label="Daily Rate (₹)" required error={errors.dailyRate}><TextInput type="number" value={form.dailyRate} error={errors.dailyRate} onChange={(e) => set({ dailyRate: e.target.value })} /></Field>
             <Field label="Stock" required error={errors.stock}><TextInput type="number" value={form.stock} error={errors.stock} onChange={(e) => set({ stock: e.target.value })} /></Field>
           </div>
+          <Field label="Status" required>
+            <Select value={form.status} onChange={(e) => set({ status: e.target.value })}>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </Select>
+          </Field>
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4">
           <GhostButton onClick={onClose}>Cancel</GhostButton>
@@ -84,7 +98,7 @@ function EquipmentFormModal({ initial, onClose, onSubmit }) {
 }
 
 function CategoryFormModal({ initial, onClose, onSubmit }) {
-  const [form, setForm] = useState(initial || { name: "", description: "" });
+  const [form, setForm] = useState(initial || { name: "", description: "", status: "Active" });
   const [errors, setErrors] = useState({});
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -106,6 +120,12 @@ function CategoryFormModal({ initial, onClose, onSubmit }) {
         <div className="space-y-4 px-6 py-5">
           <Field label="Category Name" required error={errors.name}><TextInput value={form.name} error={errors.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. Respiratory" /></Field>
           <Field label="Description" required error={errors.description}><textarea rows={3} value={form.description} onChange={(e) => set({ description: e.target.value })} placeholder="What kind of equipment belongs here?" className={`w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 resize-none ${errors.description ? "border-rose-300" : "border-slate-200 focus:border-teal-500"}`} /></Field>
+          <Field label="Status" required>
+            <Select value={form.status} onChange={(e) => set({ status: e.target.value })}>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </Select>
+          </Field>
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4">
           <GhostButton onClick={onClose}>Cancel</GhostButton>
@@ -117,7 +137,7 @@ function CategoryFormModal({ initial, onClose, onSubmit }) {
 }
 
 function ReferenceFormModal({ initial, onClose, onSubmit }) {
-  const [form, setForm] = useState(initial || { name: "", type: "Doctor Referral", phone: "", email: "", address: "" });
+  const [form, setForm] = useState(initial || { name: "", type: "Doctor Referral", phone: "", email: "", address: "", status: "Active" });
   const [errors, setErrors] = useState({});
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -141,7 +161,15 @@ function ReferenceFormModal({ initial, onClose, onSubmit }) {
         </div>
         <div className="space-y-4 px-6 py-5">
           <Field label="Name" required error={errors.name}><TextInput value={form.name} error={errors.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. Dr. Anil Kumar Mishra" /></Field>
-          <Field label="Referral Type" required><Select value={form.type} onChange={(e) => set({ type: e.target.value })}>{REFERRAL_OPTIONS.filter((r) => r !== "Self" && r !== "Walk-in" && r !== "Online Inquiry").map((r) => <option key={r} value={r}>{r}</option>)}</Select></Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Referral Type" required><Select value={form.type} onChange={(e) => set({ type: e.target.value })}>{REFERRAL_OPTIONS.filter((r) => r !== "Self" && r !== "Walk-in" && r !== "Online Inquiry").map((r) => <option key={r} value={r}>{r}</option>)}</Select></Field>
+            <Field label="Status" required>
+              <Select value={form.status} onChange={(e) => set({ status: e.target.value })}>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </Select>
+            </Field>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Phone" required error={errors.phone}><TextInput value={form.phone} error={errors.phone} onChange={(e) => set({ phone: e.target.value })} /></Field>
             <Field label="Email" required error={errors.email}><TextInput type="email" value={form.email} error={errors.email} onChange={(e) => set({ email: e.target.value })} placeholder="name@company.com" /></Field>
@@ -158,7 +186,7 @@ function ReferenceFormModal({ initial, onClose, onSubmit }) {
 }
 
 function DeliveryExecutiveFormModal({ initial, onClose, onSubmit }) {
-  const [form, setForm] = useState(initial || { name: "", phone: "", vehicleNumber: "", zone: "", email: "" });
+  const [form, setForm] = useState(initial || { name: "", phone: "", vehicleNumber: "", zone: "", email: "", status: "Active" });
   const [errors, setErrors] = useState({});
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -185,7 +213,15 @@ function DeliveryExecutiveFormModal({ initial, onClose, onSubmit }) {
             <Field label="Phone" required error={errors.phone}><TextInput value={form.phone} error={errors.phone} onChange={(e) => set({ phone: e.target.value })} /></Field>
             <Field label="Vehicle Number" required error={errors.vehicleNumber}><TextInput value={form.vehicleNumber} error={errors.vehicleNumber} onChange={(e) => set({ vehicleNumber: e.target.value })} placeholder="e.g. OD-02-AB-4521" /></Field>
           </div>
-          <Field label="Delivery Zone" required error={errors.zone}><TextInput value={form.zone} error={errors.zone} onChange={(e) => set({ zone: e.target.value })} placeholder="e.g. Bhubaneswar Central" /></Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Delivery Zone" required error={errors.zone}><TextInput value={form.zone} error={errors.zone} onChange={(e) => set({ zone: e.target.value })} placeholder="e.g. Bhubaneswar Central" /></Field>
+            <Field label="Status" required>
+              <Select value={form.status} onChange={(e) => set({ status: e.target.value })}>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </Select>
+            </Field>
+          </div>
           <Field label="Email"><TextInput type="email" value={form.email} onChange={(e) => set({ email: e.target.value })} placeholder="name@chikitsa.in" /></Field>
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4">
@@ -206,7 +242,7 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
   const [deModal, setDeModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-const saveCareCenter = async (data) => { 
+  const saveCareCenter = async (data) => { 
     try {
       if (data.id) { 
         setCareCenters((prev) => prev.map((c) => (c.id === data.id ? data : c))); 
@@ -214,7 +250,7 @@ const saveCareCenter = async (data) => {
         const newId = `CC${String(careCenters.length + 1).padStart(3, "0")}`; 
         await API.post("/master/carecenters", {
           id: newId, name: data.name, address: data.address,
-          contact_person: data.contactPerson, phone: data.phone, gst: data.gst
+          contact_person: data.contactPerson, phone: data.phone, gst: data.gst, status: data.status
         });
         setCareCenters((prev) => [...prev, { ...data, id: newId }]); 
       } 
@@ -230,7 +266,7 @@ const saveCareCenter = async (data) => {
         const newId = `EQ${String(equipmentCatalog.length + 1).padStart(2, "0")}`; 
         await API.post("/master/equipment", {
           id: newId, name: data.name, category: data.category,
-          daily_rate: data.dailyRate, stock: data.stock
+          daily_rate: data.dailyRate, stock: data.stock, status: data.status
         });
         setEquipmentCatalog((prev) => [...prev, { ...data, id: newId }]); 
       } 
@@ -261,8 +297,10 @@ const saveCareCenter = async (data) => {
     deliveryExecutive: deliveryExecutives,
   };
   const currentTabList = tabDataMap[tab] || [];
-  const activeCount = tab === "device" ? currentTabList.filter((e) => Number(e.stock) > 0).length : currentTabList.length;
-  const inactiveCount = tab === "device" ? currentTabList.filter((e) => Number(e.stock) <= 0).length : 0;
+  
+  // 🔥 DYNAMIC COUNT LOGIC: Ab ye status ke basis par active/inactive nikalega
+  const activeCount = currentTabList.filter((item) => item.status === "Active" || !item.status).length;
+  const inactiveCount = currentTabList.length - activeCount;
 
   const tabAddLabels = {
     device: "Add New Asset",
@@ -325,7 +363,7 @@ const saveCareCenter = async (data) => {
             <table className="w-full text-left text-sm" style={{ minWidth: 700 }}>
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/70 text-xs font-bold uppercase tracking-wide text-slate-400">
-                  <th className="px-5 py-3">Center</th><th className="px-5 py-3">Contact</th><th className="px-5 py-3">GST / ID</th><th className="px-5 py-3 text-right">Actions</th>
+                  <th className="px-5 py-3">Center</th><th className="px-5 py-3">Contact</th><th className="px-5 py-3">GST / ID</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -334,6 +372,7 @@ const saveCareCenter = async (data) => {
                     <td className="px-5 py-3.5"><p className="font-semibold text-slate-700">{c.name}</p><p className="flex items-center gap-1 text-xs text-slate-400"><MapPin className="h-3 w-3" /> {c.address}</p></td>
                     <td className="px-5 py-3.5"><p className="font-medium text-slate-600">{c.contactPerson}</p><p className="flex items-center gap-1 text-xs text-slate-400"><Phone className="h-3 w-3" /> {c.phone}</p></td>
                     <td className="px-5 py-3.5 font-mono text-xs text-slate-500">{c.gst}</td>
+                    <td className="px-5 py-3.5"><StatusBadge status={c.status || "Active"} /></td>
                     <td className="px-5 py-3.5"><div className="flex items-center justify-end gap-1"><IconAction title="Edit" tone="teal" onClick={() => setCcModal(c)}><Pencil className="h-4 w-4" /></IconAction><IconAction title="Delete" tone="rose" onClick={() => setConfirmDelete({ type: "center", item: c })}><Trash2 className="h-4 w-4" /></IconAction></div></td>
                   </tr>
                 ))}
@@ -352,7 +391,7 @@ const saveCareCenter = async (data) => {
             <table className="w-full text-left text-sm" style={{ minWidth: 700 }}>
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/70 text-xs font-bold uppercase tracking-wide text-slate-400">
-                  <th className="px-5 py-3">Equipment</th><th className="px-5 py-3">Category</th><th className="px-5 py-3">Daily Rate</th><th className="px-5 py-3">Stock</th><th className="px-5 py-3 text-right">Actions</th>
+                  <th className="px-5 py-3">Equipment</th><th className="px-5 py-3">Category</th><th className="px-5 py-3">Daily Rate</th><th className="px-5 py-3">Stock</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -362,6 +401,7 @@ const saveCareCenter = async (data) => {
                     <td className="px-5 py-3.5"><span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700">{eq.category}</span></td>
                     <td className="px-5 py-3.5 text-slate-600">₹{eq.dailyRate}/day</td>
                     <td className="px-5 py-3.5"><span className={`text-sm font-semibold ${eq.stock < 8 ? "text-amber-600" : "text-slate-600"}`}>{eq.stock} units</span></td>
+                    <td className="px-5 py-3.5"><StatusBadge status={eq.status || "Active"} /></td>
                     <td className="px-5 py-3.5"><div className="flex items-center justify-end gap-1"><IconAction title="Edit" tone="teal" onClick={() => setEqModal(eq)}><Pencil className="h-4 w-4" /></IconAction><IconAction title="Delete" tone="rose" onClick={() => setConfirmDelete({ type: "equipment", item: eq })}><Trash2 className="h-4 w-4" /></IconAction></div></td>
                   </tr>
                 ))}
@@ -381,7 +421,13 @@ const saveCareCenter = async (data) => {
               <div key={cat.id} className="flex items-center justify-between gap-4 px-5 py-4">
                 <div className="flex items-center gap-3">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-teal-50 text-teal-600"><Tag className="h-4 w-4" /></div>
-                  <div><p className="font-semibold text-slate-700">{cat.name}</p><p className="text-xs text-slate-400">{cat.description}</p></div>
+                  <div>
+                    <p className="font-semibold text-slate-700 flex items-center gap-2">
+                      {cat.name} 
+                      <StatusBadge status={cat.status || "Active"} />
+                    </p>
+                    <p className="text-xs text-slate-400">{cat.description}</p>
+                  </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <IconAction title="Edit" tone="teal" onClick={() => setCatModal(cat)}><Pencil className="h-4 w-4" /></IconAction><IconAction title="Delete" tone="rose" onClick={() => setConfirmDelete({ type: "category", item: cat })}><Trash2 className="h-4 w-4" /></IconAction>
@@ -401,7 +447,7 @@ const saveCareCenter = async (data) => {
             <table className="w-full text-left text-sm" style={{ minWidth: 700 }}>
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/70 text-xs font-bold uppercase tracking-wide text-slate-400">
-                  <th className="px-5 py-3">Name</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Contact</th><th className="px-5 py-3 text-right">Actions</th>
+                  <th className="px-5 py-3">Name</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Contact</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -410,6 +456,7 @@ const saveCareCenter = async (data) => {
                     <td className="px-5 py-3.5"><p className="font-semibold text-slate-700">{r.name}</p><p className="flex items-center gap-1 text-xs text-slate-400"><MapPin className="h-3 w-3" /> {r.address}</p></td>
                     <td className="px-5 py-3.5"><span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700">{r.type}</span></td>
                     <td className="px-5 py-3.5"><p className="flex items-center gap-1 text-xs text-slate-500"><Phone className="h-3 w-3" /> {r.phone}</p><p className="flex items-center gap-1 text-xs text-slate-400"><Mail className="h-3 w-3" /> {r.email}</p></td>
+                    <td className="px-5 py-3.5"><StatusBadge status={r.status || "Active"} /></td>
                     <td className="px-5 py-3.5"><div className="flex items-center justify-end gap-1"><IconAction title="Edit" tone="teal" onClick={() => setRefModal(r)}><Pencil className="h-4 w-4" /></IconAction><IconAction title="Delete" tone="rose" onClick={() => setConfirmDelete({ type: "reference", item: r })}><Trash2 className="h-4 w-4" /></IconAction></div></td>
                   </tr>
                 ))}
@@ -428,7 +475,7 @@ const saveCareCenter = async (data) => {
             <table className="w-full text-left text-sm" style={{ minWidth: 700 }}>
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/70 text-xs font-bold uppercase tracking-wide text-slate-400">
-                  <th className="px-5 py-3">Name</th><th className="px-5 py-3">Vehicle</th><th className="px-5 py-3">Zone</th><th className="px-5 py-3">Contact</th><th className="px-5 py-3 text-right">Actions</th>
+                  <th className="px-5 py-3">Name</th><th className="px-5 py-3">Vehicle</th><th className="px-5 py-3">Zone</th><th className="px-5 py-3">Contact</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -438,6 +485,7 @@ const saveCareCenter = async (data) => {
                     <td className="px-5 py-3.5 font-mono text-xs text-slate-500">{d.vehicleNumber}</td>
                     <td className="px-5 py-3.5"><span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">{d.zone}</span></td>
                     <td className="px-5 py-3.5"><p className="flex items-center gap-1 text-xs text-slate-500"><Phone className="h-3 w-3" /> {d.phone}</p>{d.email && <p className="flex items-center gap-1 text-xs text-slate-400"><Mail className="h-3 w-3" /> {d.email}</p>}</td>
+                    <td className="px-5 py-3.5"><StatusBadge status={d.status || "Active"} /></td>
                     <td className="px-5 py-3.5"><div className="flex items-center justify-end gap-1"><IconAction title="Edit" tone="teal" onClick={() => setDeModal(d)}><Pencil className="h-4 w-4" /></IconAction><IconAction title="Delete" tone="rose" onClick={() => setConfirmDelete({ type: "deliveryExecutive", item: d })}><Trash2 className="h-4 w-4" /></IconAction></div></td>
                   </tr>
                 ))}
