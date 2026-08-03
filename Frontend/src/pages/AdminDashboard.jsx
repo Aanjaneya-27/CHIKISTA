@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Activity, Clock, AlertTriangle, Wallet, TrendingUp, Package, Boxes, Building2, Layers, Truck, ChevronRight, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { trendData, DONUT_COLORS } from "../data/MockData";
@@ -31,6 +32,7 @@ function DashboardStat({ label, value, icon: Icon, tone, delta, deltaUp }) {
 }
 
 export default function AdminDashboard({ logs, careCenters, equipmentCatalog, deliveryExecutives, setActiveModule }) {
+  const navigate = useNavigate(); 
   const activeCount = logs.filter((l) => l.status === "Active").length;
   const pendingCount = logs.filter((l) => l.status === "Pending").length;
   const overdueCount = logs.filter((l) => l.status === "Overdue").length;
@@ -123,9 +125,16 @@ export default function AdminDashboard({ logs, careCenters, equipmentCatalog, de
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <h3 className="font-display text-sm font-bold text-slate-700">Recent Requisitions</h3>
-            <button onClick={() => setActiveModule("rental")} className="flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700">
+              <button 
+              onClick={() => {
+                if(setActiveModule) setActiveModule("RentalMaster"); 
+                navigate("/rental-master"); 
+              }} 
+              className="flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700 transition"
+            >
               View all <ChevronRight className="h-3.5 w-3.5" />
             </button>
+
           </div>
           <div className="divide-y divide-slate-100">
             {recentLogs.map((log) => (
