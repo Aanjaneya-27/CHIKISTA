@@ -119,11 +119,12 @@ export default function AdminDashboard({ logs, careCenters, equipmentCatalog, de
           </div>
         </div>
       </div>
-
+     
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <h3 className="font-display text-sm font-bold text-slate-700">Recent Requisitions</h3>
+              // button
               <Link 
               to="/rental-master"
               onClick={() => setActiveModule && setActiveModule("RentalMaster")} 
