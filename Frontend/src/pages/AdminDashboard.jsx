@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom"; 
 import { Activity, Clock, AlertTriangle, Wallet, TrendingUp, Package, Boxes, Building2, Layers, Truck, ChevronRight, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { trendData, DONUT_COLORS } from "../data/MockData";
@@ -119,20 +118,21 @@ export default function AdminDashboard({ logs, careCenters, equipmentCatalog, de
           </div>
         </div>
       </div>
-     
+
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <h3 className="font-display text-sm font-bold text-slate-700">Recent Requisitions</h3>
-              // button
-              <Link 
-              to="/rental-master"
-              onClick={() => setActiveModule && setActiveModule("RentalMaster")} 
+            <button 
+              onClick={() => {
+                if (setActiveModule) {
+                  setActiveModule("rental");
+                }
+              }} 
               className="flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700 transition"
             >
               View all <ChevronRight className="h-3.5 w-3.5" />
-            </Link>
-
+            </button>
           </div>
           <div className="divide-y divide-slate-100">
             {recentLogs.map((log) => (
