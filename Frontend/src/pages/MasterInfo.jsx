@@ -210,7 +210,7 @@ function DeliveryExecutiveFormModal({ initial, onClose, onSubmit }) {
         <div className="space-y-4 px-6 py-5">
           <Field label="Name" required error={errors.name}><TextInput value={form.name} error={errors.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. Suresh Patnaik" /></Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Phone" required error={errors.phone}><TextInput value={form.phone} error={errors.phone} onChange={(e) => set({ phone: e.target.value })} /></Field>
+            <Field label="Phone" required error={errors.phone}><TextInput value={form.phone} error={errors.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="Phone number" /></Field>
             <Field label="Vehicle Number" required error={errors.vehicleNumber}><TextInput value={form.vehicleNumber} error={errors.vehicleNumber} onChange={(e) => set({ vehicleNumber: e.target.value })} placeholder="e.g. OD-02-AB-4521" /></Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -255,7 +255,7 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
         setCareCenters((prev) => [...prev, { ...data, id: newId }]); 
       } 
       setCcModal(null); 
-    } catch (err) { alert("❌ Error: " + err.message); }
+    } catch (err) { alert("Error: " + err.message); }
   };
 
   const saveEquipment = async (data) => { 
@@ -271,7 +271,7 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
         setEquipmentCatalog((prev) => [...prev, { ...data, id: newId }]); 
       } 
       setEqModal(null); 
-    } catch (err) { alert("❌ Error: " + err.message); }
+    } catch (err) { alert("Error: " + err.message); }
   };
 
   const saveCategory = (data) => { if (data.id) { setCategories((prev) => prev.map((c) => (c.id === data.id ? data : c))); } else { setCategories((prev) => [...prev, { ...data, id: `CAT${String(prev.length + 1).padStart(2, "0")}` }]); } setCatModal(null); };
@@ -298,16 +298,15 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
   };
   const currentTabList = tabDataMap[tab] || [];
   
-  // 🔥 DYNAMIC COUNT LOGIC: Ab ye status ke basis par active/inactive nikalega
   const activeCount = currentTabList.filter((item) => item.status === "Active" || !item.status).length;
   const inactiveCount = currentTabList.length - activeCount;
 
   const tabAddLabels = {
-    device: "Add New Asset",
-    accessory: "Add New Asset",
-    careCenter: "Add New Asset",
-    reference: "Add New Asset",
-    deliveryExecutive: "Add New Asset",
+    device: "Add Device",
+    accessory: "Add Accessory",
+    careCenter: "Add Care Center",
+    reference: "Add Reference",
+    deliveryExecutive: "Add Delivery Executive",
   };
 
   const handleAddNewAsset = () => {

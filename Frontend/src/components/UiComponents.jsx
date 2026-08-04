@@ -1,4 +1,5 @@
-import { AlertCircle, AlertTriangle, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { AlertCircle, AlertTriangle, Trash2, CheckCircle2, XCircle, X } from "lucide-react";
 
 function statusStyle(status) {
   switch (status) {
@@ -92,6 +93,45 @@ export function ConfirmDialog({ open, title, message, onCancel, onConfirm }) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+let toastCallback = null;
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const toast = {
+  success: (message) => toastCallback && toastCallback({ type: "success", message }),
+  error: (message) => toastCallback && toastCallback({ type: "error", message }),
+};
+
+export function Toaster() {
+  const [toasts, setToasts] = useState([]);
+
+  useEffect(() => {
+    toastCallback = (newToast) => {
+      const id = Math.random().toString(36).substr(2, 9);
+      setToasts((prev) => [...prev, { ...newToast, id }]);
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 3000); // 3 seconds timeout
+    };
+    return () => { toastCallback = null; };
+  }, []);
+
+  return (
+    <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none">
+      {toasts.map((t) => (
+        <div key={t.id} className={`flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl transition-all fade-slide-up pointer-events-auto ${
+          t.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-800"
+        }`}>
+          {t.type === "success" ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <XCircle className="h-5 w-5 text-rose-600" />}
+          <p className="text-sm font-bold">{t.message}</p>
+          <button onClick={() => setToasts(prev => prev.filter(item => item.id !== t.id))} className="ml-2 text-slate-400 hover:text-slate-600">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

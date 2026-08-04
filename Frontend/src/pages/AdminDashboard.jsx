@@ -131,7 +131,7 @@ export default function AdminDashboard({ logs, careCenters, equipmentCatalog, de
               }} 
               className="flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700 transition"
             >
-              View all <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
           <div className="divide-y divide-slate-100">

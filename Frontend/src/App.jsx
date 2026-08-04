@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react"; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
+import { Toaster, toast } from "./components/UiComponents"; 
 import { ROLES, initialCareCenters, initialEquipment, initialCategories, initialReferences, initialDeliveryExecutives, initialLogs, initialNotifications } from "./data/MockData";
 import { Sidebar, Topbar, NotificationsPanel } from "./components/layout/Layout";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import RentalMaster from "./pages/RentalMaster";
 import MasterInfo from "./pages/MasterInfo";
+import UserProfile from "./pages/UserProfile"; 
 import API from "./utils/api"; 
 
 const FontImport = () => (
@@ -156,7 +158,9 @@ function MainAppLayout({ role, handleLogout }) {
                 <AccessDenied role={role} />
               )
             } />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+            <Route path="/profile" element={<UserProfile />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
       </div>
@@ -173,6 +177,7 @@ export default function App() {
   const handleLogin = (selectedRole) => {
     setRole(selectedRole);
     setIsAuthenticated(true);
+    toast.success("Login Successful!"); 
   };
 
   const handleLogout = () => {
@@ -180,6 +185,7 @@ export default function App() {
     setRole(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    toast.success("Logout Successful!"); 
   };
 
   useEffect(() => {
@@ -197,14 +203,10 @@ export default function App() {
     <Router>
       <FontImport />
       <Routes>
-        <Route path="/login" element={
-          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />
-        } />
-        
-        <Route path="/*" element={
-          isAuthenticated ? <MainAppLayout role={role} handleLogout={handleLogout} /> : <Navigate to="/login" replace />
-        } />
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} /> } />
+        <Route path="/*" element={ isAuthenticated ? <MainAppLayout role={role} handleLogout={handleLogout} /> : <Navigate to="/login" replace /> } />
       </Routes>
+      <Toaster />
     </Router>
   );
 }

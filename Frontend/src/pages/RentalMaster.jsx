@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, Plus, Eye, Pencil, Trash2, PackageCheck, Clock, Activity, AlertTriangle, Building2, User, Tag, CreditCard, Save, X, ClipboardList, ArrowLeft, ChevronRight, ImagePlus, Truck } from "lucide-react";
-import { PrimaryButton, GhostButton, IconAction, ConfirmDialog, StatusBadge, Field, Select, TextInput } from "../components/UiComponents";
-import { RENTAL_STATES, DEAL_TYPE_OPTIONS, MODE_OPTIONS, UNIT_OPTIONS, ACCESSORY_OPTIONS, REFERRAL_OPTIONS, BILLING_TYPES, PAYMENT_TYPES } from "../data/MockData";
-import { daysBetween, formatDateShort, todayISO } from "../utils/Helper";
+import { Search, SlidersHorizontal, Plus, Eye, Pencil, Trash2, PackageCheck, Clock, Activity, AlertTriangle, Building2, User, Tag, CreditCard, Save, X, ClipboardList, ArrowLeft, ChevronRight, ImagePlus, Truck, FileText } from "lucide-react";
+import { PrimaryButton, GhostButton, IconAction, ConfirmDialog, StatusBadge, Field, Select, TextInput, toast } from "../components/UiComponents";
+import { RENTAL_STATES, DEAL_TYPE_OPTIONS, MODE_OPTIONS, UNIT_OPTIONS, ACCESSORY_OPTIONS, REFERRAL_OPTIONS, PAYMENT_TYPES } from "../data/MockData";
+import { formatDateShort, todayISO } from "../utils/Helper";
 import API from "../utils/api"; 
 
 function GlobalPolish() {
@@ -10,7 +10,6 @@ function GlobalPolish() {
     <style>{`
       html { scroll-behavior: smooth; }
       .smooth-scroll, .smooth-scroll-x { scroll-behavior: smooth; }
-
       .smooth-scroll::-webkit-scrollbar,
       .smooth-scroll-x::-webkit-scrollbar { width: 8px; height: 8px; }
       .smooth-scroll::-webkit-scrollbar-track,
@@ -24,17 +23,9 @@ function GlobalPolish() {
       .smooth-scroll:hover::-webkit-scrollbar-thumb,
       .smooth-scroll-x:hover::-webkit-scrollbar-thumb { background-color: rgba(13, 148, 136, 0.45); }
       .smooth-scroll, .smooth-scroll-x { scrollbar-width: thin; scrollbar-color: rgba(13,148,136,0.3) transparent; }
-
-      @keyframes riseIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
+      @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       .rise-in { animation: riseIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-      @keyframes fadeScaleIn {
-        from { opacity: 0; transform: scale(0.97) translateY(6px); }
-        to { opacity: 1; transform: scale(1) translateY(0); }
-      }
+      @keyframes fadeScaleIn { from { opacity: 0; transform: scale(0.97) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
       .fade-slide-up { animation: fadeScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
     `}</style>
   );
@@ -60,11 +51,7 @@ function KpiCards({ logs }) {
         const Icon = c.icon;
         const t = toneMap[c.tone];
         return (
-          <div
-            key={c.label}
-            style={{ animationDelay: `${i * 60}ms` }}
-            className="rise-in group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/70 sm:p-5"
-          >
+          <div key={c.label} style={{ animationDelay: `${i * 60}ms` }} className="rise-in group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/70 sm:p-5">
             <span className={`absolute inset-x-0 top-0 h-1 scale-x-0 bg-gradient-to-r transition-transform duration-300 group-hover:scale-x-100 ${t.bar}`} />
             <div className={`pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100 ${t.glow}`} />
             <div className={`relative grid h-11 w-11 place-items-center rounded-xl shadow-lg transition-transform duration-300 group-hover:scale-105 ${t.chip}`}>
@@ -79,17 +66,24 @@ function KpiCards({ logs }) {
   );
 }
 
-const emptyForm = { careCenterId: "", address: "", contactPerson: "", phone: "", gst: "", equipmentId: "", quantity: 1, startDate: "", logoutDate: "", patientName: "", paymentType: "Postpaid", dealType: "B2B", unit: "ODCOM", mode: "Postpaid", notifyDate: "", deliveryAddress: "", notes: "" };
+const emptyForm = { careCenterId: "", address: "", contactPerson: "", phone: "", gst: "", equipmentId: "", quantity: 1, startDate: todayISO(), logoutDate: "", patientName: "", paymentType: "Postpaid", dealType: "B2B", unit: "ODCOM", mode: "Postpaid", notifyDate: "", deliveryAddress: "", notes: "" };
 
 function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCatalog, onClose, onSubmit }) {
   const readOnly = modalMode === "view";
   const [form, setForm] = useState(() => (initial ? { ...emptyForm, ...initial } : emptyForm));
   const [errors, setErrors] = useState({});
+  const [isOther, setIsOther] = useState(initial?.careCenterId === "other");
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
   const handleCareCenterChange = (id) => {
-    const cc = careCenters.find((c) => c.id === id);
-    set({ careCenterId: id, address: cc?.address || "", contactPerson: cc?.contactPerson || "", phone: cc?.phone || "", gst: cc?.gst || "" });
+    if (id === "other") {
+      setIsOther(true);
+      set({ careCenterId: "other", address: "", contactPerson: "", phone: "", gst: "" });
+    } else {
+      setIsOther(false);
+      const cc = careCenters.find((c) => c.id === id);
+      set({ careCenterId: id, address: cc?.address || "", contactPerson: cc?.contactPerson || "", phone: cc?.phone || "", gst: cc?.gst || "" });
+    }
   };
 
   const validate = () => {
@@ -107,10 +101,23 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
 
   const handleSubmit = () => {
     if (readOnly) return onClose();
-    if (!validate()) return;
+    if (!validate()) {
+      toast.error("Please fill all required fields correctly."); 
+      return;
+    }
     const equipment = equipmentCatalog.find((eq) => eq.id === form.equipmentId);
-    const careCenter = careCenters.find((c) => c.id === form.careCenterId);
-    onSubmit({ ...form, equipmentName: equipment?.name || "", category: equipment?.category || "", careCenterName: careCenter?.name || "", status: form.status || "Pending", deliveryStatus: form.deliveryStatus || "Pending Dispatch" });
+    let careCenterName = "Other";
+    if (form.careCenterId !== "other") {
+      careCenterName = careCenters.find((c) => c.id === form.careCenterId)?.name || "";
+    }
+    onSubmit({ 
+      ...form, 
+      equipmentName: equipment?.name || form.equipmentId, 
+      category: equipment?.category || "General", 
+      careCenterName, 
+      status: form.status || "Pending", 
+      deliveryStatus: form.deliveryStatus || "Pending Dispatch" 
+    });
   };
 
   const titles = { add: "New Log Requisition", edit: "Edit Requisition", view: "Requisition Details" };
@@ -138,18 +145,19 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
                   <Select disabled={readOnly} value={form.careCenterId} error={errors.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
                     <option value="">Choose a care center…</option>
                     {careCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    <option value="other">Other (Add New)</option>
                   </Select>
                 </Field>
               </div>
-              <Field label="Contact Person"><TextInput readOnly value={form.contactPerson} placeholder="Auto-filled" className="bg-slate-50/80 text-slate-500" /></Field>
-              <Field label="Phone"><TextInput readOnly value={form.phone} placeholder="Auto-filled" className="bg-slate-50/80 text-slate-500" /></Field>
-              <Field label="GST / ID Number"><TextInput readOnly value={form.gst} placeholder="Auto-filled" className="bg-slate-50/80 text-slate-500" /></Field>
-              <Field label="Address"><TextInput readOnly value={form.address} placeholder="Auto-filled" className="bg-slate-50/80 text-slate-500" /></Field>
+              <Field label="Contact Person"><TextInput readOnly={readOnly || !isOther} value={form.contactPerson} onChange={(e) => set({ contactPerson: e.target.value })} placeholder={!isOther ? "Auto-filled" : "Enter name"} className={!isOther ? "bg-slate-50/80 text-slate-500" : ""} /></Field>
+              <Field label="Phone"><TextInput readOnly={readOnly || !isOther} value={form.phone} onChange={(e) => set({ phone: e.target.value })} placeholder={!isOther ? "Auto-filled" : "Enter phone"} className={!isOther ? "bg-slate-50/80 text-slate-500" : ""} /></Field>
+              <Field label="GST / ID Number"><TextInput readOnly={readOnly || !isOther} value={form.gst} onChange={(e) => set({ gst: e.target.value })} placeholder={!isOther ? "Auto-filled" : "Enter GST/ID"} className={!isOther ? "bg-slate-50/80 text-slate-500" : ""} /></Field>
+              <Field label="Address"><TextInput readOnly={readOnly || !isOther} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder={!isOther ? "Auto-filled" : "Enter full address"} className={!isOther ? "bg-slate-50/80 text-slate-500" : ""} /></Field>
             </div>
           </div>
 
           <div className="border-t border-slate-100" />
-
+          
           <div>
             <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600"><Tag className="h-3.5 w-3.5" /> Record Types</p>
             <div className="grid gap-4 sm:grid-cols-3">
@@ -177,6 +185,11 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
                 <Field label="Equipment" required error={errors.equipmentId}>
                   <Select disabled={readOnly} value={form.equipmentId} error={errors.equipmentId} onChange={(e) => set({ equipmentId: e.target.value })}>
                     <option value="">Select equipment…</option>
+                    <option value="3 Para Monitor - Contec">3 Para Monitor - Contec</option>
+                    <option value="BiPAP - BMC">BiPAP - BMC</option>
+                    <option value="Oxygen Concentrator-Oxymed">Oxygen Concentrator-Oxymed</option>
+                    <option value="FlexWave Anti-Bedsore Mattress">FlexWave Anti-Bedsore Mattress</option>
+                    
                     {equipmentCatalog.map((eq) => <option key={eq.id} value={eq.id}>{eq.name} — ₹{eq.dailyRate}/day</option>)}
                   </Select>
                 </Field>
@@ -237,7 +250,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
   );
 }
 
-const emptyAssetForm = { dealType: "", unit: "", mode: "Postpaid", deviceModel: "", accessory: "", recordDate: todayISO(), loginDate: "", notifyDate: "", logoutDate: "", recallDate: "", billingType: "Monthly", rentalCharge: "", depositAdvance: "", installationCharge: "", careCenterId: "", pocMobile: "", altPocMobile: "", careAddress: "", bedNo: "", pocNameDoctor: "", referral: "", patientName: "", age: "", attendantName: "", mobileNumber: "", altMobileNumber: "", deliveryAddress: "", notes: "" };
+const emptyAssetForm = { dealType: "", unit: "", mode: "Postpaid", deviceModel: "", accessory: "", recordDate: todayISO(), loginDate: todayISO(), notifyDate: "", logoutDate: "", recallDate: "", billingType: "Monthly", rentalCharge: "", depositAdvance: "", installationCharge: "", careCenterId: "", pocMobile: "", altPocMobile: "", careAddress: "", bedNo: "", pocNameDoctor: "", referral: "", patientName: "", age: "", attendantName: "", mobileNumber: "", altMobileNumber: "", deliveryAddress: "", notes: "" };
 
 function SectionHeading({ icon: Icon, children }) {
   return (
@@ -252,17 +265,36 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
   const [form, setForm] = useState(emptyAssetForm);
   const [errors, setErrors] = useState({});
   const [photos, setPhotos] = useState([]);
+  const [isOther, setIsOther] = useState(false);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  // ✅ MAGIC: CARE CENTER AUTO-FILL LOGIC
   const handleCareCenterChange = (id) => {
-    const cc = careCenters.find((c) => c.id === id);
-    set({ 
-      careCenterId: id, 
-      careAddress: cc?.address || "", 
-      pocMobile: cc?.phone || "", 
-      pocNameDoctor: cc?.contactPerson || "" 
-    });
+    if (id === "other") {
+      setIsOther(true);
+      set({ careCenterId: "other", careAddress: "", pocMobile: "", pocNameDoctor: "" });
+    } else {
+      setIsOther(false);
+      const cc = careCenters.find((c) => c.id === id);
+      set({ 
+        careCenterId: id, 
+        careAddress: cc?.address || "", 
+        pocMobile: cc?.phone || "", 
+        pocNameDoctor: cc?.contactPerson || "" 
+      });
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const newFiles = Array.from(e.target.files || []);
+    if (photos.length + newFiles.length > 10) {
+      toast.error("You can upload a maximum of 10 files."); 
+      return;
+    }
+    setPhotos((prev) => [...prev, ...newFiles].slice(0, 10));
+  };
+
+  const removeFile = (indexToRemove) => {
+    setPhotos((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   const validate = () => {
@@ -275,22 +307,37 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
     if (!form.loginDate) e.loginDate = "Log in date is required.";
     if (!form.billingType) e.billingType = "Please select a billing type.";
     if (!form.patientName) e.patientName = "Patient name is required.";
-    
-    // ✅ PREPAID RED STAR MANDATORY CHECK
     if (form.mode === "Prepaid" && !form.notifyDate) {
       e.notifyDate = "Notify Date is mandatory for Prepaid!";
     }
-    
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = () => {
-    if (!validate()) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    if (!validate()) { 
+      toast.error("Please fill all required fields correctly."); 
+      window.scrollTo({ top: 0, behavior: "smooth" }); 
+      return; 
+    }
     const equipment = equipmentCatalog.find((eq) => eq.id === form.deviceModel);
-    const careCenter = careCenters.find((c) => c.id === form.careCenterId);
+    let careCenterName = "Other";
+    if (form.careCenterId !== "other") {
+      careCenterName = careCenters.find((c) => c.id === form.careCenterId)?.name || "";
+    }
     onSubmit({
-      ...form, equipmentId: form.deviceModel, equipmentName: equipment?.name || "", category: equipment?.category || "", careCenterName: careCenter?.name || "", quantity: 1, startDate: form.loginDate, paymentType: form.mode, deliveryAddress: form.deliveryAddress, status: "Active", deliveryStatus: "Pending Dispatch", photoCount: photos.length,
+      ...form, 
+      equipmentId: form.deviceModel, 
+      equipmentName: equipment?.name || form.deviceModel, // 🔥 FIX for custom devices
+      category: equipment?.category || "General", 
+      careCenterName, 
+      quantity: 1, 
+      startDate: form.loginDate, 
+      paymentType: form.mode, 
+      deliveryAddress: form.deliveryAddress, 
+      status: "Active", 
+      deliveryStatus: "Pending Dispatch", 
+      photoCount: photos.length,
     });
   };
 
@@ -323,7 +370,17 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
       <div style={{ animationDelay: "80ms" }} className="rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <SectionHeading icon={Truck}>Asset Allocation &amp; Logistics</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-4">
-          <Field label="Select Device Model" required error={errors.deviceModel}><Select value={form.deviceModel} error={errors.deviceModel} onChange={(e) => set({ deviceModel: e.target.value })}><option value="">-- Choose Equipment Model --</option>{equipmentCatalog.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}</Select></Field>
+          <Field label="Select Device Model" required error={errors.deviceModel}>
+            <Select value={form.deviceModel} error={errors.deviceModel} onChange={(e) => set({ deviceModel: e.target.value })}>
+              <option value="">-- Choose Equipment Model --</option>
+              <option value="3 Para Monitor - Contec">3 Para Monitor - Contec</option>
+              <option value="BiPAP - BMC">BiPAP - BMC</option>
+              <option value="Oxygen Concentrator-Oxymed">Oxygen Concentrator-Oxymed</option>
+              <option value="FlexWave Anti-Bedsore Mattress">FlexWave Anti-Bedsore Mattress</option>
+              
+              {equipmentCatalog.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
+            </Select>
+          </Field>
           <Field label="Select Accessory" required error={errors.accessory}><Select value={form.accessory} error={errors.accessory} onChange={(e) => set({ accessory: e.target.value })}><option value="">-- Choose Accessory --</option>{ACCESSORY_OPTIONS.map((a) => <option key={a} value={a}>{a}</option>)}</Select></Field>
           <Field label="Record Date"><TextInput type="date" value={form.recordDate} onChange={(e) => set({ recordDate: e.target.value })} /></Field>
           <Field label="Log In Date" required error={errors.loginDate}><TextInput type="date" value={form.loginDate} error={errors.loginDate} onChange={(e) => set({ loginDate: e.target.value })} /></Field>
@@ -338,7 +395,13 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
       <div style={{ animationDelay: "120ms" }} className="rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <SectionHeading icon={CreditCard}>Commercials &amp; Billing</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-4">
-          <Field label="Billing Type" required error={errors.billingType}><Select value={form.billingType} error={errors.billingType} onChange={(e) => set({ billingType: e.target.value })}>{BILLING_TYPES.map((b) => <option key={b} value={b}>{b}</option>)}</Select></Field>
+          <Field label="Billing Type" required error={errors.billingType}>
+            <Select value={form.billingType} error={errors.billingType} onChange={(e) => set({ billingType: e.target.value })}>
+              <option value="Daily">Daily</option>
+              <option value="Fortnight">Fortnight</option>
+              <option value="Monthly">Monthly</option>
+            </Select>
+          </Field>
           <Field label="Rental Charge (₹)"><TextInput type="number" min={0} value={form.rentalCharge} onChange={(e) => set({ rentalCharge: e.target.value })} /></Field>
           <Field label="Deposit / Advance (₹)"><TextInput type="number" min={0} value={form.depositAdvance} onChange={(e) => set({ depositAdvance: e.target.value })} /></Field>
           <Field label="Installation Charge (₹)"><TextInput type="number" min={0} value={form.installationCharge} onChange={(e) => set({ installationCharge: e.target.value })} /></Field>
@@ -350,15 +413,21 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
           <div>
             <SectionHeading icon={Building2}>Care Center Context</SectionHeading>
             <div className="space-y-4">
-              <Field label="Care Center Name"><Select value={form.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}><option value="">-- Select Care Center --</option>{careCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select></Field>
+              <Field label="Care Center Name">
+                <Select value={form.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
+                  <option value="">-- Select Care Center --</option>
+                  {careCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <option value="other">Other (Add New)</option>
+                </Select>
+              </Field>
               <div className="grid grid-cols-2 gap-4">
-                <Field label="POC Mobile"><TextInput readOnly value={form.pocMobile} className="bg-slate-50 text-slate-500" onChange={(e) => set({ pocMobile: e.target.value })} /></Field>
+                <Field label="POC Mobile"><TextInput readOnly={!isOther} value={form.pocMobile} className={!isOther ? "bg-slate-50 text-slate-500" : ""} onChange={(e) => set({ pocMobile: e.target.value })} /></Field>
                 <Field label="Alt POC Mobile"><TextInput value={form.altPocMobile} onChange={(e) => set({ altPocMobile: e.target.value })} /></Field>
               </div>
-              <Field label="Care Address"><textarea readOnly rows={2} value={form.careAddress} className="w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm text-slate-500 outline-none resize-none border-slate-200" onChange={(e) => set({ careAddress: e.target.value })} /></Field>
+              <Field label="Care Address"><textarea readOnly={!isOther} rows={2} value={form.careAddress} className={`w-full rounded-lg border px-3 py-2 text-sm outline-none resize-none ${!isOther ? "bg-slate-50 text-slate-500 border-slate-200" : "bg-white text-slate-800 border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30"}`} onChange={(e) => set({ careAddress: e.target.value })} /></Field>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Bed No"><TextInput value={form.bedNo} onChange={(e) => set({ bedNo: e.target.value })} /></Field>
-                <Field label="POC Name / Doctor"><TextInput readOnly value={form.pocNameDoctor} className="bg-slate-50 text-slate-500" onChange={(e) => set({ pocNameDoctor: e.target.value })} /></Field>
+                <Field label="POC Name / Doctor"><TextInput readOnly={!isOther} value={form.pocNameDoctor} className={!isOther ? "bg-slate-50 text-slate-500" : ""} onChange={(e) => set({ pocNameDoctor: e.target.value })} /></Field>
               </div>
               <Field label="Referral"><Select value={form.referral} onChange={(e) => set({ referral: e.target.value })}><option value="">-- Select Referral --</option>{REFERRAL_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}</Select></Field>
             </div>
@@ -386,13 +455,38 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
       </div>
 
       <div style={{ animationDelay: "240ms" }} className="rise-in rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-6 transition-colors hover:border-teal-300 hover:bg-teal-50/30">
-        <Field label="Asset Handover Photo Verification (Up to 10 photos)">
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700">
-              <ImagePlus className="h-4 w-4" /> Choose files
-              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => setPhotos(Array.from(e.target.files || []).slice(0, 10))} />
-            </label>
-            <span className="text-xs font-medium text-slate-400">{photos.length > 0 ? `${photos.length} file${photos.length > 1 ? "s" : ""} chosen` : "No file chosen"}</span>
+        <Field label="Asset Handover Photo Verification (Up to 10 photos/PDFs)">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700">
+                <ImagePlus className="h-4 w-4" /> Choose files
+                <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={handleFileChange} />
+              </label>
+              <span className="text-xs font-medium text-slate-400">{photos.length} / 10 files chosen</span>
+            </div>
+            
+            {photos.length > 0 && (
+              <div className="flex flex-wrap gap-3">
+                {photos.map((file, idx) => {
+                  const isImage = file.type.startsWith("image/");
+                  return (
+                    <div key={idx} className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:ring-2 hover:ring-teal-500/50">
+                      {isImage ? (
+                        <img src={URL.createObjectURL(file)} alt="preview" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center bg-rose-50 p-1 text-center text-rose-500">
+                          <FileText className="mb-1 h-6 w-6" />
+                          <span className="w-full truncate text-[9px] font-semibold">{file.name}</span>
+                        </div>
+                      )}
+                      <button type="button" onClick={() => removeFile(idx)} className="absolute right-1 top-1 hidden h-5 w-5 place-items-center rounded-full bg-rose-500 text-white shadow-md transition hover:bg-rose-600 group-hover:grid">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </Field>
       </div>
@@ -405,15 +499,63 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
   );
 }
 
-
 export default function RentalMaster({ permissions, logs, setLogs, careCenters, equipmentCatalog }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [dealTypeFilter, setDealTypeFilter] = useState("All");
   const [modeFilter, setModeFilter] = useState("All");
+  const [monthFilter, setMonthFilter] = useState(0); 
+
   const [modal, setModal] = useState(null); 
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [showAddPage, setShowAddPage] = useState(false);
+
+  const monthOptions = useMemo(() => {
+    const opts = [];
+    const now = new Date();
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+      opts.push({ value: i, label: i === 0 ? `Current Month (${label})` : label });
+    }
+    return opts;
+  }, []);
+
+  const getDynamicTotalDays = (loginStr, logoutStr, monthOffset) => {
+    if (!loginStr) return "—";
+    
+    const login = new Date(loginStr);
+    const now = new Date();
+    const targetYear = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1).getFullYear();
+    const targetMonth = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1).getMonth();
+
+    let end;
+    if (logoutStr) {
+       const logout = new Date(logoutStr);
+       if (logout.getFullYear() < targetYear || (logout.getFullYear() === targetYear && logout.getMonth() < targetMonth)) {
+           end = logout; 
+       } else if (logout.getFullYear() === targetYear && logout.getMonth() === targetMonth) {
+           end = logout; 
+       } else {
+           end = new Date(targetYear, targetMonth + 1, 0); 
+       }
+    } else {
+       if (monthOffset === 0) {
+           end = now; 
+       } else {
+           end = new Date(targetYear, targetMonth + 1, 0); 
+       }
+    }
+
+    const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
+    const endUtc = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+
+    const X = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
+    const Y = end.getDate();
+
+    if (X < 1) return "—"; 
+    return `${X} / ${Y}`;
+  };
 
   const filtered = useMemo(() => {
     return logs.filter((l) => {
@@ -431,15 +573,14 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
   const handleAdd = async (data) => {
     try {
       const nextId = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
-
       const backendData = {
         id: nextId,
-        care_center_id: data.careCenterId,
+        care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
         equipment_id: data.equipmentId,
         patient_name: data.patientName,
         quantity: data.quantity || 1,
         start_date: data.startDate,
-        payment_type: data.paymentType, // Postpaid or Prepaid
+        payment_type: data.paymentType,
         deal_type: data.dealType,
         unit: data.unit,
         mode: data.mode,
@@ -452,20 +593,22 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
       setLogs((prev) => [{ ...data, id: nextId, status: "Active" }, ...prev]);
       setShowAddPage(false);
       
-      alert(" Requisition saved successfully to Database & Notification triggered!");
+      toast.success("Requisition saved successfully!");
     } catch (err) {
-      alert(" Error saving Requisition: " + (err.response?.data?.message || err.message));
+      toast.error("Error saving Requisition: " + (err.response?.data?.message || err.message)); 
     }
   };
 
   const handleEdit = (data) => {
     setLogs((prev) => prev.map((l) => (l.id === data.id ? { ...l, ...data } : l)));
     setModal(null);
+    toast.success("Requisition updated successfully!"); 
   };
 
   const handleDelete = () => {
     setLogs((prev) => prev.filter((l) => l.id !== confirmDelete.id));
     setConfirmDelete(null);
+    toast.success("Requisition deleted successfully!"); 
   };
 
   if (showAddPage) {
@@ -477,8 +620,8 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
       <GlobalPolish />
       <KpiCards logs={logs} />
 
-      <div style={{ animationDelay: "80ms" }} className="rise-in flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+      <div style={{ animationDelay: "80ms" }} className="rise-in flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center md:flex-wrap">
           <div className="group relative flex-1 sm:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-teal-500" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by ID, patient, device, care center…" className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" />
@@ -486,14 +629,23 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
 
           <div className="flex flex-wrap items-center gap-2">
             <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400" />
+            
+            <select value={monthFilter} onChange={(e) => setMonthFilter(Number(e.target.value))} className="rounded-lg border border-slate-200 bg-teal-50 py-2 pl-2.5 pr-7 text-xs font-bold text-teal-700 outline-none transition hover:border-teal-300 focus:border-teal-500">
+              {monthOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
               <option value="All">All Status</option>
               {RENTAL_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
+            
             <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
               <option value="All">All Deal Types</option>
               {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
+            
             <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
               <option value="All">All Modes</option>
               {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -521,13 +673,14 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
                 <th className="px-5 py-3">Patients</th>
                 <th className="px-5 py-3">Login Date</th>
                 <th className="px-5 py-3">Logout Date</th>
-                <th className="px-5 py-3">Total Day</th>
+                <th className="px-5 py-3">Total Days</th>
                 <th className="px-5 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((log, i) => {
-                const totalDays = daysBetween(log.startDate, log.logoutDate);
+                const dynamicDays = getDynamicTotalDays(log.startDate, log.logoutDate, monthFilter);
+                
                 return (
                   <tr key={log.id} style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }} className="rise-in group/row relative transition-colors duration-150 hover:bg-teal-50/40">
                     <td className="relative px-5 py-3.5">
@@ -541,7 +694,9 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
                     <td className="px-5 py-3.5 text-slate-600">{log.patientName || "—"}</td>
                     <td className="px-5 py-3.5 text-slate-600">{formatDateShort(log.startDate)}</td>
                     <td className="px-5 py-3.5 text-slate-600">{log.logoutDate ? formatDateShort(log.logoutDate) : "—"}</td>
-                    <td className="px-5 py-3.5"><span className="font-semibold text-slate-700">{totalDays !== null ? totalDays : "—"}</span>{totalDays !== null && <span className="text-xs text-slate-400"> {totalDays === 1 ? "day" : "days"}</span>}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="font-semibold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-1 rounded-md">{dynamicDays}</span>
+                    </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1">
                         <IconAction title="View" tone="teal" onClick={() => setModal({ mode: "view", data: log })}><Eye className="h-4 w-4" /></IconAction>

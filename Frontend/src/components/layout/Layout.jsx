@@ -7,7 +7,6 @@ export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNo
   const navigate = useNavigate();
   const location = useLocation();
 
-  // FIX: Dashboard is removed from here!
   const items = [
     { key: "/rental", label: "Rental Master", icon: ClipboardList, show: true },
     { key: "/master", label: "Master Info", icon: Database, show: role === "super_admin" },
@@ -18,7 +17,6 @@ export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNo
       {mobileOpen && <div className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden" onClick={() => setMobileOpen(false)} />}
       <aside className={`fixed z-50 flex h-full w-64 flex-col bg-slate-950 text-slate-300 transition-transform duration-200 will-change-transform lg:static lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
         
-        {/* CLICKING THIS LOGO OPENS DASHBOARD */}
         <button onClick={() => { navigate("/dashboard"); setMobileOpen(false); }} className={`flex w-full items-center gap-2.5 border-b px-5 py-5 text-left transition ${location.pathname === "/dashboard" ? "border-teal-500/30 bg-teal-500/10" : "border-white/10 hover:bg-white/5"}`}>
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-teal-500 shadow-lg shadow-teal-500/30">
             <HeartPulse className="h-5 w-5 text-white" />
@@ -70,12 +68,15 @@ export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNo
 export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, onLogout }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate(); 
+  
   const currentUser = { name: DEMO_USER_NAMES[role], role: ROLES[role].label };
 
   const getTitle = () => {
     if (location.pathname.includes("/dashboard")) return "Admin Dashboard";
     if (location.pathname.includes("/rental")) return "Rental Master";
     if (location.pathname.includes("/master")) return "Master Info";
+    if (location.pathname.includes("/profile")) return "Account Settings"; 
     return "Chikitsa";
   };
 
@@ -114,9 +115,27 @@ export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, 
                 <p className="text-sm font-semibold text-slate-700">{currentUser.name}</p>
                 <p className="text-xs text-slate-400">{currentUser.role}</p>
               </div>
-              <button onClick={() => setProfileMenuOpen(false)} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-600 transition hover:bg-slate-50"><User className="h-4 w-4 text-slate-400" /> My Profile</button>
-              <button onClick={() => setProfileMenuOpen(false)} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-600 transition hover:bg-slate-50"><SlidersHorizontal className="h-4 w-4 text-slate-400" /> Account Settings</button>
-              <button onClick={() => { setProfileMenuOpen(false); onLogout(); }} className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3.5 py-2.5 text-left text-sm text-rose-600 transition hover:bg-rose-50"><LogOut className="h-4 w-4" /> Log Out</button>
+              
+              <button 
+                onClick={() => { setProfileMenuOpen(false); navigate("/profile"); }} 
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-600 transition hover:bg-slate-50"
+              >
+                <User className="h-4 w-4 text-slate-400" /> My Profile
+              </button>
+              
+              <button 
+                onClick={() => { setProfileMenuOpen(false); navigate("/profile"); }} 
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-600 transition hover:bg-slate-50"
+              >
+                <SlidersHorizontal className="h-4 w-4 text-slate-400" /> Account Settings
+              </button>
+              
+              <button 
+                onClick={() => { setProfileMenuOpen(false); onLogout(); }} 
+                className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3.5 py-2.5 text-left text-sm text-rose-600 transition hover:bg-rose-50"
+              >
+                <LogOut className="h-4 w-4" /> Log Out
+              </button>
             </div>
           )}
         </div>
