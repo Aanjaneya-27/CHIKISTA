@@ -72,15 +72,12 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
   const readOnly = modalMode === "view";
   const [form, setForm] = useState(() => (initial ? { ...emptyForm, ...initial } : emptyForm));
   const [errors, setErrors] = useState({});
-  const [isOther, setIsOther] = useState(initial?.careCenterId === "other");
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
   const handleCareCenterChange = (id) => {
     if (id === "other") {
-      setIsOther(true);
       set({ careCenterId: "other", address: "", contactPerson: "", phone: "", gst: "" });
     } else {
-      setIsOther(false);
       const cc = careCenters.find((c) => c.id === id);
       set({ careCenterId: id, address: cc?.address || "", contactPerson: cc?.contactPerson || "", phone: cc?.phone || "", gst: cc?.gst || "" });
     }
@@ -149,10 +146,10 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
                   </Select>
                 </Field>
               </div>
-              <Field label="Contact Person"><TextInput readOnly={readOnly || !isOther} value={form.contactPerson} onChange={(e) => set({ contactPerson: e.target.value })} placeholder={!isOther ? "Auto-filled" : "Enter name"} className={!isOther ? "bg-slate-50/80 text-slate-500" : ""} /></Field>
-              <Field label="Phone"><TextInput readOnly={readOnly || !isOther} value={form.phone} onChange={(e) => set({ phone: e.target.value })} placeholder={!isOther ? "Auto-filled" : "Enter phone"} className={!isOther ? "bg-slate-50/80 text-slate-500" : ""} /></Field>
-              <Field label="GST / ID Number"><TextInput readOnly={readOnly || !isOther} value={form.gst} onChange={(e) => set({ gst: e.target.value })} placeholder={!isOther ? "Auto-filled" : "Enter GST/ID"} className={!isOther ? "bg-slate-50/80 text-slate-500" : ""} /></Field>
-              <Field label="Address"><TextInput readOnly={readOnly || !isOther} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder={!isOther ? "Auto-filled" : "Enter full address"} className={!isOther ? "bg-slate-50/80 text-slate-500" : ""} /></Field>
+              <Field label="Contact Person / Doctor"><TextInput disabled={readOnly} value={form.contactPerson} onChange={(e) => set({ contactPerson: e.target.value })} placeholder="Enter name" /></Field>
+              <Field label="Phone"><TextInput disabled={readOnly} value={form.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="Enter phone" /></Field>
+              <Field label="GST / ID Number"><TextInput disabled={readOnly} value={form.gst} onChange={(e) => set({ gst: e.target.value })} placeholder="Enter GST/ID" /></Field>
+              <Field label="Address"><TextInput disabled={readOnly} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder="Enter full address" /></Field>
             </div>
           </div>
 
@@ -189,7 +186,6 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
                     <option value="BiPAP - BMC">BiPAP - BMC</option>
                     <option value="Oxygen Concentrator-Oxymed">Oxygen Concentrator-Oxymed</option>
                     <option value="FlexWave Anti-Bedsore Mattress">FlexWave Anti-Bedsore Mattress</option>
-                    
                     {equipmentCatalog.map((eq) => <option key={eq.id} value={eq.id}>{eq.name} — ₹{eq.dailyRate}/day</option>)}
                   </Select>
                 </Field>
@@ -265,15 +261,12 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
   const [form, setForm] = useState(emptyAssetForm);
   const [errors, setErrors] = useState({});
   const [photos, setPhotos] = useState([]);
-  const [isOther, setIsOther] = useState(false);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
   const handleCareCenterChange = (id) => {
     if (id === "other") {
-      setIsOther(true);
       set({ careCenterId: "other", careAddress: "", pocMobile: "", pocNameDoctor: "" });
     } else {
-      setIsOther(false);
       const cc = careCenters.find((c) => c.id === id);
       set({ 
         careCenterId: id, 
@@ -328,7 +321,7 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
     onSubmit({
       ...form, 
       equipmentId: form.deviceModel, 
-      equipmentName: equipment?.name || form.deviceModel, // 🔥 FIX for custom devices
+      equipmentName: equipment?.name || form.deviceModel, 
       category: equipment?.category || "General", 
       careCenterName, 
       quantity: 1, 
@@ -377,7 +370,6 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
               <option value="BiPAP - BMC">BiPAP - BMC</option>
               <option value="Oxygen Concentrator-Oxymed">Oxygen Concentrator-Oxymed</option>
               <option value="FlexWave Anti-Bedsore Mattress">FlexWave Anti-Bedsore Mattress</option>
-              
               {equipmentCatalog.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
             </Select>
           </Field>
@@ -421,15 +413,34 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
                 </Select>
               </Field>
               <div className="grid grid-cols-2 gap-4">
-                <Field label="POC Mobile"><TextInput readOnly={!isOther} value={form.pocMobile} className={!isOther ? "bg-slate-50 text-slate-500" : ""} onChange={(e) => set({ pocMobile: e.target.value })} /></Field>
+                <Field label="POC Mobile"><TextInput value={form.pocMobile} onChange={(e) => set({ pocMobile: e.target.value })} /></Field>
                 <Field label="Alt POC Mobile"><TextInput value={form.altPocMobile} onChange={(e) => set({ altPocMobile: e.target.value })} /></Field>
               </div>
-              <Field label="Care Address"><textarea readOnly={!isOther} rows={2} value={form.careAddress} className={`w-full rounded-lg border px-3 py-2 text-sm outline-none resize-none ${!isOther ? "bg-slate-50 text-slate-500 border-slate-200" : "bg-white text-slate-800 border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30"}`} onChange={(e) => set({ careAddress: e.target.value })} /></Field>
+              <Field label="Care Address"><textarea rows={2} value={form.careAddress} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none resize-none border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30" onChange={(e) => set({ careAddress: e.target.value })} /></Field>
+              
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Bed No"><TextInput value={form.bedNo} onChange={(e) => set({ bedNo: e.target.value })} /></Field>
-                <Field label="POC Name / Doctor"><TextInput readOnly={!isOther} value={form.pocNameDoctor} className={!isOther ? "bg-slate-50 text-slate-500" : ""} onChange={(e) => set({ pocNameDoctor: e.target.value })} /></Field>
+                <Field label="Referral">
+                  <Select value={form.referral} onChange={(e) => set({ referral: e.target.value })}>
+                    <option value="">-- Select Referral --</option>
+                    {REFERRAL_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </Select>
+                </Field>
               </div>
-              <Field label="Referral"><Select value={form.referral} onChange={(e) => set({ referral: e.target.value })}><option value="">-- Select Referral --</option>{REFERRAL_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}</Select></Field>
+
+              {/* 🔥 MAGIC UPDATE: Dynamic POC Name / Doctor Box */}
+              {form.referral && form.referral.toLowerCase().includes("doctor") && (
+                <div className="rise-in animate-in fade-in slide-in-from-top-2 duration-300">
+                  <Field label="POC Name / Doctor">
+                    <TextInput 
+                      value={form.pocNameDoctor} 
+                      onChange={(e) => set({ pocNameDoctor: e.target.value })} 
+                      placeholder="Enter Doctor's Full Name" 
+                    />
+                  </Field>
+                </div>
+              )}
+
             </div>
           </div>
           <div>
@@ -523,29 +534,38 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
 
   const getDynamicTotalDays = (loginStr, logoutStr, monthOffset) => {
     if (!loginStr) return "—";
-    
+
     const login = new Date(loginStr);
+    login.setHours(0, 0, 0, 0); 
+
     const now = new Date();
-    const targetYear = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1).getFullYear();
-    const targetMonth = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1).getMonth();
+    now.setHours(0, 0, 0, 0);
+
+    const targetDate = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1);
+    const targetYear = targetDate.getFullYear();
+    const targetMonth = targetDate.getMonth();
 
     let end;
     if (logoutStr) {
        const logout = new Date(logoutStr);
+       logout.setHours(0, 0, 0, 0);
+
        if (logout.getFullYear() < targetYear || (logout.getFullYear() === targetYear && logout.getMonth() < targetMonth)) {
-           end = logout; 
+          end = logout; 
        } else if (logout.getFullYear() === targetYear && logout.getMonth() === targetMonth) {
-           end = logout; 
+          end = logout; 
        } else {
-           end = new Date(targetYear, targetMonth + 1, 0); 
+          end = new Date(targetYear, targetMonth + 1, 0); 
        }
     } else {
        if (monthOffset === 0) {
-           end = now; 
+          end = now; 
        } else {
-           end = new Date(targetYear, targetMonth + 1, 0); 
+          end = new Date(targetYear, targetMonth + 1, 0); 
        }
     }
+
+    if (login > end) return "—"; 
 
     const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
     const endUtc = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
@@ -553,8 +573,7 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
     const X = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
     const Y = end.getDate();
 
-    if (X < 1) return "—"; 
-    return `${X} / ${Y}`;
+    return `${X}/${Y}`;
   };
 
   const filtered = useMemo(() => {
