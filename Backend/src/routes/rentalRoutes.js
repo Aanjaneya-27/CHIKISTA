@@ -84,8 +84,8 @@ router.put("/requisitions/:id", async (req, res) => {
       delivery_address, notes 
     } = req.body;
 
-    const cleanStartDate = start_date && start_date.trim() !== "" ? start_date : null;
-    const cleanNotifyDate = notify_date && notify_date.trim() !== "" ? notify_date : null;
+    const cleanStartDate = start_date ? start_date.toString().slice(0, 10) : null;
+    const cleanNotifyDate = notify_date ? notify_date.toString().slice(0, 10) : null;
 
     await pool.query(
       `UPDATE requisitions 
