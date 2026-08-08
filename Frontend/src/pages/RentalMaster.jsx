@@ -618,16 +618,43 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
     }
   };
 
-  const handleEdit = (data) => {
-    setLogs((prev) => prev.map((l) => (l.id === data.id ? { ...l, ...data } : l)));
-    setModal(null);
-    toast.success("Requisition updated successfully!"); 
+  const handleEdit = async (data) => {
+    try {
+      const backendData = {
+        care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
+        equipment_id: data.equipmentId,
+        patient_name: data.patientName,
+        quantity: data.quantity || 1,
+        start_date: data.startDate,
+        payment_type: data.paymentType,
+        deal_type: data.dealType,
+        unit: data.unit,
+        mode: data.mode,
+        notify_date: data.notifyDate || null,
+        delivery_address: data.deliveryAddress,
+        notes: data.notes,
+        status: data.status
+      };
+      
+      await API.put(`/rental/requisitions/${data.id}`, backendData); 
+      setLogs((prev) => prev.map((l) => (l.id === data.id ? { ...l, ...data } : l)));
+      setModal(null);
+      toast.success("Requisition updated successfully!"); 
+    } catch (err) {
+      toast.error("Update failed: " + (err.response?.data?.message || err.message));
+    }
   };
 
-  const handleDelete = () => {
-    setLogs((prev) => prev.filter((l) => l.id !== confirmDelete.id));
-    setConfirmDelete(null);
-    toast.success("Requisition deleted successfully!"); 
+  const handleDelete = async () => {
+    try {
+      await API.delete(`/rental/requisitions/${confirmDelete.id}`);
+      
+      setLogs((prev) => prev.filter((l) => l.id !== confirmDelete.id));
+      setConfirmDelete(null);
+      toast.success("Requisition deleted successfully!"); 
+    } catch (err) {
+      toast.error("Delete failed: " + (err.response?.data?.message || err.message));
+    }
   };
 
   if (showAddPage) {

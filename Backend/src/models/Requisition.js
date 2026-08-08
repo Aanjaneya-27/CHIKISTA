@@ -26,5 +26,26 @@ class Requisition {
       [id, care_center_id, equipment_id, patient_name, quantity, start_date, payment_type, deal_type, unit, mode, notify_date || null, delivery_address, notes]
     );
   }
+
+  static async update(id, data) {
+    const {
+      care_center_id, equipment_id, patient_name, quantity, start_date, 
+      payment_type, deal_type, unit, mode, notify_date, delivery_address, notes
+    } = data;
+
+    await pool.query(
+      `UPDATE requisitions 
+       SET care_center_id = ?, equipment_id = ?, patient_name = ?, quantity = ?, 
+           start_date = ?, payment_type = ?, deal_type = ?, unit = ?, 
+           mode = ?, notify_date = ?, delivery_address = ?, notes = ?
+       WHERE id = ?`,
+      [care_center_id, equipment_id, patient_name, quantity, start_date, payment_type, deal_type, unit, mode, notify_date || null, delivery_address, notes, id]
+    );
+  }
+
+  static async delete(id) {
+    await pool.query(`DELETE FROM requisitions WHERE id = ?`, [id]);
+  }
 }
+
 module.exports = Requisition;
