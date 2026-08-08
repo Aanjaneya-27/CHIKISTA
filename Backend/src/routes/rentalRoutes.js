@@ -4,36 +4,6 @@ const pool = require("../config/database");
 
 router.post("/requisitions", async (req, res) => {
   try {
-    const { 
-      id, care_center_id, equipment_id, patient_name, quantity, 
-      start_date, deal_type, unit, mode, notify_date, 
-      delivery_address, notes 
-    } = req.body;
-
-    await pool.query(
-      `INSERT INTO requisitions 
-      (id, care_center_id, equipment_id, patient_name, quantity, start_date, deal_type, unit, mode, notify_date, delivery_address, notes) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, care_center_id, equipment_id, patient_name, quantity, start_date, deal_type, unit, mode, notify_date || null, delivery_address, notes]
-    );
-
-    if (mode === "Prepaid" && notify_date) {
-      const notifMessage = `Prepaid payment reminder for Patient: ${patient_name}. Notify Date: ${notify_date}`;
-      await pool.query(
-        `INSERT INTO notifications (title, message, type) VALUES (?, ?, ?)`,
-        ["Action Required: Prepaid Alert", notifMessage, "warning"]
-      );
-    }
-
-    res.status(201).json({ message: "Requisition Created Successfully!" });
-  } catch (err) {
-    console.error("Save Error:", err);
-    res.status(500).json({ message: "Server error while saving", error: err.message });
-  }
-});
-
-router.post("/requisitions", async (req, res) => {
-  try {
     console.log("REQUISITION PAYLOAD:", req.body); 
 
     const { 
@@ -101,6 +71,52 @@ router.get("/notifications", async (req, res) => {
     res.json(rows);
   } catch (err) {
     res.status(500).json({ message: "Error fetching notifications", error: err.message });
+  }
+});
+
+
+router.put("/requisitions/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      care_center_id, equipment_id, patient_name, quantity, 
+      start_date, deal_type, unit, mode, notify_date, 
+      delivery_address, notes 
+    } = req.body;
+
+    const cleanStartDate = start_date && start_date.trim() !== "" ? start_date : null;
+    const cleanNotifyDate = notify_date && notify_date.trim() !== "" ? notify_date : null;
+
+    await pool.query(
+      `UPDATE requisitions 
+       SET care_center_id=?, equipment_id=?, patient_name=?, quantity=?, start_date=?, deal_type=?, unit=?, mode=?, notify_date=?, delivery_address=?, notes=?
+       WHERE id=?`,
+      [
+        care_center_id || null, equipment_id || null, patient_name || "Unknown Patient", quantity || 1, 
+        cleanStartDate, deal_type || "B2B", unit || "ODCOM", mode || "Postpaid", 
+        cleanNotifyDate, delivery_address || "", notes || "", id
+      ]
+    );
+
+    res.status(200).json({ message: "Requisition Updated Successfully!" });
+  } catch (err) {
+    console.error("Update Error:", err);
+    res.status(500).json({ message: "Error updating", error: err.message });
+  }
+});
+
+
+router.delete("/requisitions/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // MySQL query to delete the row
+    await pool.query(`DELETE FROM requisitions WHERE id = ?`, [id]);
+    
+    res.status(200).json({ message: "Requisition Deleted Successfully!" });
+  } catch (err) {
+    console.error("Delete Error:", err);
+    res.status(500).json({ message: "Error deleting", error: err.message });
   }
 });
 
