@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Search, SlidersHorizontal, Plus, Eye, Pencil, Trash2, PackageCheck, Clock, Activity, AlertTriangle, Building2, User, Tag, CreditCard, Save, X, ClipboardList, ArrowLeft, ChevronRight, ImagePlus, Truck, FileText, Calendar, ChevronDown } from "lucide-react"; 
 import { PrimaryButton, GhostButton, IconAction, ConfirmDialog, StatusBadge, Field, Select, TextInput, toast } from "../components/UiComponents";
-import { RENTAL_STATES, DEAL_TYPE_OPTIONS, MODE_OPTIONS, UNIT_OPTIONS, ACCESSORY_OPTIONS, PAYMENT_TYPES } from "../data/MockData";
+import { RENTAL_STATES, DEAL_TYPE_OPTIONS, MODE_OPTIONS, UNIT_OPTIONS, PAYMENT_TYPES } from "../data/MockData";
 import { formatDateShort, todayISO } from "../utils/Helper";
 import API from "../utils/api"; 
 
@@ -122,13 +122,24 @@ function KpiCards({ logs }) {
   );
 }
 
-// 🔥 UPDATE: Modal Form me bhi referral default khali rahega
-const emptyForm = { careCenterId: "", address: "", contactPerson: "", phone: "", gst: "", equipmentId: "", quantity: 1, startDate: todayISO(), logoutDate: "", patientName: "", paymentType: "Postpaid", dealType: "B2B", unit: "ODCOM", mode: "Postpaid", notifyDate: "", deliveryAddress: "", notes: "", bedNo: "", referral: "" };
+const emptyForm = { careCenterId: "", address: "", contactPerson: "", phone: "", gst: "", equipmentId: "", quantity: 1, startDate: todayISO(), logoutDate: "", patientName: "", paymentType: "Postpaid", dealType: "B2B", unit: "ODCOM", mode: "Postpaid", notifyDate: "", deliveryAddress: "", notes: "", bedNo: "", referral: "", accessory: [] };
 
-// 🔥 UPDATE: references = [] yahan bhi accept kiya hai
-function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCatalog, references = [], onClose, onSubmit }) {
+function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCatalog, references = [], categories = [], onClose, onSubmit }) {
   const readOnly = modalMode === "view";
-  const [form, setForm] = useState(() => (initial ? { ...emptyForm, ...initial } : emptyForm));
+  
+  const [form, setForm] = useState(() => {
+    if (initial) {
+      return {
+        ...emptyForm,
+        ...initial,
+        startDate: initial.startDate || initial.start_date || todayISO(),
+        logoutDate: initial.logoutDate || initial.logout_date || "",
+        accessory: Array.isArray(initial.accessories) ? initial.accessories : (typeof initial.accessories === 'string' ? initial.accessories.split(", ") : [])
+      };
+    }
+    return emptyForm;
+  });
+  
   const [errors, setErrors] = useState({});
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -210,7 +221,6 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
               <Field label="GST / ID Number"><TextInput disabled={readOnly} value={form.gst} onChange={(e) => set({ gst: e.target.value })} placeholder="Enter GST/ID" /></Field>
               <Field label="Address"><TextInput disabled={readOnly} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder="Enter full address" /></Field>
               
-              {/* 🔥 UPDATE: Edit Modal mein bhi Referral Add kar diya hai */}
               <div className="sm:col-span-2 grid grid-cols-2 gap-4">
                 <Field label="Bed No"><TextInput disabled={readOnly} value={form.bedNo} onChange={(e) => set({ bedNo: e.target.value })} /></Field>
                 <Field label="Referral">
@@ -257,14 +267,24 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
                 <Field label="Equipment" required error={errors.equipmentId}>
                   <Select disabled={readOnly} value={form.equipmentId} error={errors.equipmentId} onChange={(e) => set({ equipmentId: e.target.value })}>
                     <option value="">Select equipment…</option>
-                    <option value="3 Para Monitor - Contec">3 Para Monitor - Contec</option>
-                    <option value="BiPAP - BMC">BiPAP - BMC</option>
-                    <option value="Oxygen Concentrator-Oxymed">Oxygen Concentrator-Oxymed</option>
-                    <option value="FlexWave Anti-Bedsore Mattress">FlexWave Anti-Bedsore Mattress</option>
                     {equipmentCatalog.map((eq) => <option key={eq.id} value={eq.id}>{eq.name} — ₹{eq.dailyRate}/day</option>)}
                   </Select>
                 </Field>
               </div>
+              
+              <div className="sm:col-span-2">
+                <Field label="Select Accessory" required error={errors.accessory}>
+                  <MultiSelect
+                    options={categories.map(c => c.name)}
+                    selected={Array.isArray(form.accessory) ? form.accessory : []}
+                    onChange={(newAccessories) => set({ accessory: newAccessories })}
+                    placeholder="-- Choose Accessories --"
+                    error={errors.accessory}
+                    disabled={readOnly}
+                  />
+                </Field>
+              </div>
+
               <Field label="Quantity" required error={errors.quantity}>
                 <TextInput disabled={readOnly} type="number" min={1} value={form.quantity} error={errors.quantity} onChange={(e) => set({ quantity: e.target.value })} />
               </Field>
@@ -321,8 +341,6 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
   );
 }
 
-const emptyAssetForm = { dealType: "", unit: "", mode: "Postpaid", deviceModel: "", accessory: [], recordDate: todayISO(), loginDate: todayISO(), notifyDate: "", logoutDate: "", recallDate: "", billingType: "Monthly", rentalCharge: "", depositAdvance: "", installationCharge: "", careCenterId: "", pocMobile: "", altPocMobile: "", careAddress: "", bedNo: "", referral: "", patientName: "", age: "", attendantName: "", mobileNumber: "", altMobileNumber: "", deliveryAddress: "", notes: "" };
-
 function SectionHeading({ icon: Icon, children }) {
   return (
     <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-600">
@@ -332,8 +350,8 @@ function SectionHeading({ icon: Icon, children }) {
   );
 }
 
-function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], onCancel, onSubmit }) {
-  const [form, setForm] = useState(emptyAssetForm);
+function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], categories = [], onCancel, onSubmit }) {
+  const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [photos, setPhotos] = useState([]);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
@@ -440,17 +458,13 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], on
           <Field label="Select Device Model" required error={errors.deviceModel}>
             <Select value={form.deviceModel} error={errors.deviceModel} onChange={(e) => set({ deviceModel: e.target.value })}>
               <option value="">-- Choose Equipment Model --</option>
-              <option value="3 Para Monitor - Contec">3 Para Monitor - Contec</option>
-              <option value="BiPAP - BMC">BiPAP - BMC</option>
-              <option value="Oxygen Concentrator-Oxymed">Oxygen Concentrator-Oxymed</option>
-              <option value="FlexWave Anti-Bedsore Mattress">FlexWave Anti-Bedsore Mattress</option>
               {equipmentCatalog.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
             </Select>
           </Field>
           
           <Field label="Select Accessory" required error={errors.accessory}>
             <MultiSelect
-              options={ACCESSORY_OPTIONS}
+              options={categories.map(c => c.name)}
               selected={Array.isArray(form.accessory) ? form.accessory : []}
               onChange={(newAccessories) => set({ accessory: newAccessories })}
               placeholder="-- Choose Accessories --"
@@ -507,7 +521,6 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], on
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Bed No"><TextInput value={form.bedNo} onChange={(e) => set({ bedNo: e.target.value })} /></Field>
                 
-                {/* 🔥 UPDATE: Direct references se map kara diya gaya hai */}
                 <Field label="Referral">
                   <Select value={form.referral} onChange={(e) => set({ referral: e.target.value })}>
                     <option value="">-- Select Referral --</option>
@@ -519,9 +532,6 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], on
                   </Select>
                 </Field>
               </div>
-              
-              {/* Doctor Name wala extra dabba permanently hata diya gaya hai */}
-
             </div>
           </div>
           <div>
@@ -592,8 +602,7 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], on
   );
 }
 
-// 🔥 UPDATE: references = [] yahan par recieve ho raha hai
-export default function RentalMaster({ permissions, logs, setLogs, careCenters, equipmentCatalog, references = [] }) {
+export default function RentalMaster({ permissions, logs, setLogs, careCenters, equipmentCatalog, references = [], categories = [] }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [dealTypeFilter, setDealTypeFilter] = useState("All");
@@ -684,17 +693,24 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
     });
   }, [logs, search, statusFilter, dealTypeFilter, modeFilter, careCenterFilter, careCenters, equipmentCatalog]);
 
-  const handleAdd = async (data) => {
+ const handleAdd = async (data) => {
     try {
       const nextId = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      // 🔥 BULLETPROOF: Backend chahe jo naam mange, hum sab bhej rahe hain!
       const backendData = {
         id: nextId,
         care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
         equipment_id: data.equipmentId,
         patient_name: data.patientName,
         quantity: data.quantity || 1,
-        start_date: data.startDate,
-        logout_date: data.logoutDate, 
+        
+        start_date: data.startDate || data.loginDate, 
+        startDate: data.startDate || data.loginDate, // CamelCase bhi bhej diya
+        
+        logout_date: data.logoutDate || data.logout_date || null, 
+        logoutDate: data.logoutDate || data.logout_date || null, // CamelCase bhi bhej diya
+        
         payment_type: data.paymentType,
         deal_type: data.dealType,
         unit: data.unit,
@@ -702,11 +718,13 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         notify_date: data.notifyDate || null,
         delivery_address: data.deliveryAddress,
         notes: data.notes,
-        accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory 
+        accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory, 
+        referral: data.referral,
+        status: "Active"
       };
 
       await API.post("/rental/requisitions", backendData);
-      setLogs((prev) => [{ ...data, id: nextId, status: "Active" }, ...prev]);
+      setLogs((prev) => [{ ...backendData, start_date: backendData.start_date, logout_date: backendData.logout_date, accessories: backendData.accessories, referral: backendData.referral }, ...prev]);
       setShowAddPage(false);
       
       toast.success("Requisition saved successfully!");
@@ -717,12 +735,19 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
 
   const handleEdit = async (data) => {
     try {
+      // 🔥 BULLETPROOF FIX YAHAN BHI HUA HAI
       const backendData = {
         care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
         equipment_id: data.equipmentId,
         patient_name: data.patientName,
         quantity: data.quantity || 1,
-        start_date: data.startDate,
+        
+        start_date: data.startDate || data.start_date,
+        startDate: data.startDate || data.start_date,
+        
+        logout_date: data.logoutDate || data.logout_date || null, 
+        logoutDate: data.logoutDate || data.logout_date || null, 
+        
         payment_type: data.paymentType,
         deal_type: data.dealType,
         unit: data.unit,
@@ -730,11 +755,13 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         notify_date: data.notifyDate || null,
         delivery_address: data.deliveryAddress,
         notes: data.notes,
-        status: data.status
+        status: data.status,
+        accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory,
+        referral: data.referral
       };
       
       await API.put(`/rental/requisitions/${data.id}`, backendData); 
-      setLogs((prev) => prev.map((l) => (l.id === data.id ? { ...l, ...data } : l)));
+      setLogs((prev) => prev.map((l) => (l.id === data.id ? { ...l, ...data, logout_date: backendData.logout_date, accessories: backendData.accessories, referral: backendData.referral } : l)));
       setModal(null);
       toast.success("Requisition updated successfully!"); 
     } catch (err) {
@@ -755,15 +782,13 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
   };
 
   if (showAddPage) {
-    // 🔥 UPDATE: Pass references from parent down to the page
-    return <NewRequisitionPage careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} onCancel={() => setShowAddPage(false)} onSubmit={handleAdd} />;
+    return <NewRequisitionPage careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} categories={categories} onCancel={() => setShowAddPage(false)} onSubmit={handleAdd} />;
   }
 
   return (
     <div className="space-y-5">
       <GlobalPolish />
       <KpiCards logs={logs} />
-
       <div style={{ animationDelay: "80ms" }} className="rise-in flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center md:flex-wrap">
           <div className="group relative flex-1 sm:max-w-xs">
@@ -831,7 +856,8 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((log, i) => {
-                const dynamicDays = getDynamicTotalDays(log.startDate || log.start_date, log.logoutDate, monthFilter);
+                const actualLogoutDate = log.logoutDate || log.logout_date;
+                const dynamicDays = getDynamicTotalDays(log.startDate || log.start_date, actualLogoutDate, monthFilter);
                 
                 const rowColor = log.mode === "Prepaid" 
                   ? "bg-emerald-50/70 hover:bg-emerald-100" 
@@ -863,7 +889,7 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
                     </td>
                     <td className="px-5 py-3.5 text-slate-600">{log.patientName || log.patient_name || "—"}</td>
                     <td className="px-5 py-3.5 text-slate-600">{formatDateShort(log.startDate || log.start_date)}</td>
-                    <td className="px-5 py-3.5 text-slate-600">{log.logoutDate ? formatDateShort(log.logoutDate) : "—"}</td>
+                    <td className="px-5 py-3.5 text-slate-600">{actualLogoutDate ? formatDateShort(actualLogoutDate) : "—"}</td>
                     <td className="px-5 py-3.5">
                       <span className="font-semibold text-slate-700 bg-slate-50/50 border border-slate-200/60 px-2 py-1 rounded-md shadow-sm">{dynamicDays}</span>
                     </td>
@@ -895,7 +921,7 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         </div>
       </div>
 
-      {modal && <RequisitionModal mode={modal.mode} initial={modal.data} careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} onClose={() => setModal(null)} onSubmit={modal.mode === "add" ? handleAdd : handleEdit} />}
+      {modal && <RequisitionModal mode={modal.mode} initial={modal.data} careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} categories={categories} onClose={() => setModal(null)} onSubmit={modal.mode === "add" ? handleAdd : handleEdit} />}
 
       <ConfirmDialog open={!!confirmDelete} title="Delete this requisition?" message={confirmDelete ? `${confirmDelete.id} will be permanently removed. This cannot be undone.` : ""} onCancel={() => setConfirmDelete(null)} onConfirm={handleDelete} />
     </div>

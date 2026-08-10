@@ -31,23 +31,23 @@ const createRequisition = async (req, res) => {
 
 const updateRequisition = async (req, res) => {
   const { id } = req.params;
-  const data = req.body;
   
   try {
-    await Requisition.update(id, data); 
-    await Notification.create("info", "Requisition Updated", `REQ ${id} details were updated.`);
+    await Requisition.update(id, req.body); 
     res.status(200).json({ message: "Requisition updated successfully!" });
   } catch (error) {
+    console.error(" Update Error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
+module.exports = { updateRequisition };
+
 const deleteRequisition = async (req, res) => {
   const { id } = req.params;
-
   try {
     await Requisition.delete(id); 
-    await Notification.create("warning", "Requisition Deleted", `REQ ${id} was removed from the system.`);
+    await Notification.create("warning", "Requisition Deleted", `REQ ${id} was removed.`);
     res.status(200).json({ message: "Requisition deleted successfully!" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -61,10 +61,4 @@ const getNotifications = async (req, res) => {
   } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
 };
 
-module.exports = { 
-  getRequisitions, 
-  createRequisition, 
-  updateRequisition, 
-  deleteRequisition, 
-  getNotifications 
-};
+module.exports = { getRequisitions, createRequisition, updateRequisition, deleteRequisition, getNotifications };
