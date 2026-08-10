@@ -64,50 +64,46 @@ class Requisition {
   }
 
  static async update(id, data) {
+    const patientName = data.patient_name || data.patientName;
+    const careCenterId = data.care_center_id || data.careCenterId;
+    const equipmentId = data.equipment_id || data.equipmentId;
+    const startDate = data.start_date || data.startDate;
+    const logoutDate = data.logout_date || data.logoutDate || null;
+    const notifyDate = data.notify_date || data.notifyDate || null;
+    const paymentType = data.payment_type || data.paymentType;
+    const dealType = data.deal_type || data.dealType;
+    const deliveryAddress = data.delivery_address || data.deliveryAddress;
+
     const sql = `
        UPDATE requisitions 
-       SET care_center_id = ?, 
-           equipment_id = ?, 
-           patient_name = ?, 
-           quantity = ?, 
-           start_date = ?, 
-           payment_type = ?, 
-           deal_type = ?, 
-           unit = ?, 
-           mode = ?, 
-           notify_date = ?, 
-           delivery_address = ?, 
-           notes = ?,
-           logout_date = ?, 
-           bed_no = ?,       
-           referral = ?,     
-           status = ?
+       SET care_center_id = ?, equipment_id = ?, patient_name = ?, quantity = ?, 
+           start_date = ?, payment_type = ?, deal_type = ?, unit = ?, 
+           mode = ?, notify_date = ?, delivery_address = ?, notes = ?,
+           logout_date = ?, status = ?
        WHERE id = ?
     `;
     
     const values = [
-      data.care_center_id, 
-      data.equipment_id, 
-      data.patient_name, 
+      careCenterId, 
+      equipmentId, 
+      patientName, 
       data.quantity, 
-      data.start_date || data.startDate, 
-      data.payment_type, 
-      data.deal_type, 
+      startDate, 
+      paymentType, 
+      dealType, 
       data.unit, 
       data.mode, 
-      data.notify_date || null, 
-      data.delivery_address, 
+      notifyDate, 
+      deliveryAddress, 
       data.notes || null, 
-      data.logout_date || data.logoutDate || null, 
-      data.bed_no || data.bedNo || null, 
-      data.referral || null,
+      logoutDate, 
       data.status || 'Pending', 
       id 
     ];
 
-    await pool.query(sql, values);
+    const [result] = await pool.query(sql, values);
+    return result;
   }
-
   static async delete(id) {
     await pool.query(`DELETE FROM requisitions WHERE id = ?`, [id]);
   }
