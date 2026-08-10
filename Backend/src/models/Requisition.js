@@ -3,7 +3,6 @@ const pool = require("../config/database");
 function formatMySQLDate(dateStr) {
   if (!dateStr) return null;
   
-  // Agar already YYYY-MM-DD format mein hai
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
     return dateStr;
   }
