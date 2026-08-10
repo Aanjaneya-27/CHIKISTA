@@ -38,8 +38,8 @@ class Requisition {
   static async create(data) {
     const sql = `
       INSERT INTO requisitions 
-      (id, care_center_id, equipment_id, patient_name, quantity, start_date, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, logout_date, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, care_center_id, equipment_id, patient_name, quantity, start_date, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, logout_date, bed_no, referral, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
       data.id, 
@@ -47,15 +47,17 @@ class Requisition {
       data.equipment_id, 
       data.patient_name, 
       data.quantity, 
-      formatMySQLDate(data.start_date || data.loginDate), 
+      data.start_date || data.loginDate, 
       data.payment_type, 
       data.deal_type, 
       data.unit, 
       data.mode, 
-      formatMySQLDate(data.notify_date), 
+      data.notify_date || null, 
       data.delivery_address, 
       data.notes || null, 
-      formatMySQLDate(data.logout_date || data.logoutDate), 
+      data.logout_date || data.logoutDate || null, 
+      data.bed_no || null,  
+      data.referral || null,  
       data.status || 'Active' 
     ];
     await pool.query(sql, values);

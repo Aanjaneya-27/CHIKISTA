@@ -696,21 +696,16 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
  const handleAdd = async (data) => {
     try {
       const nextId = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
-      
-      // 🔥 BULLETPROOF: Backend chahe jo naam mange, hum sab bhej rahe hain!
       const backendData = {
         id: nextId,
         care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
         equipment_id: data.equipmentId,
         patient_name: data.patientName,
         quantity: data.quantity || 1,
-        
         start_date: data.startDate || data.loginDate, 
-        startDate: data.startDate || data.loginDate, // CamelCase bhi bhej diya
-        
-        logout_date: data.logoutDate || data.logout_date || null, 
-        logoutDate: data.logoutDate || data.logout_date || null, // CamelCase bhi bhej diya
-        
+        logout_date: data.logoutDate || data.logout_date || null, // 🔥 FIX 
+        bed_no: data.bedNo || data.bed_no || "", // 🔥 YEH MISSING THA
+        referral: data.referral || "",           // 🔥 YEH MISSING THA
         payment_type: data.paymentType,
         deal_type: data.dealType,
         unit: data.unit,
@@ -719,14 +714,12 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         delivery_address: data.deliveryAddress,
         notes: data.notes,
         accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory, 
-        referral: data.referral,
         status: "Active"
       };
 
       await API.post("/rental/requisitions", backendData);
-      setLogs((prev) => [{ ...backendData, start_date: backendData.start_date, logout_date: backendData.logout_date, accessories: backendData.accessories, referral: backendData.referral }, ...prev]);
+      setLogs((prev) => [{ ...backendData }, ...prev]);
       setShowAddPage(false);
-      
       toast.success("Requisition saved successfully!");
     } catch (err) {
       toast.error("Error saving Requisition: " + (err.response?.data?.message || err.message)); 
@@ -735,19 +728,15 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
 
   const handleEdit = async (data) => {
     try {
-      // 🔥 BULLETPROOF FIX YAHAN BHI HUA HAI
       const backendData = {
         care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
         equipment_id: data.equipmentId,
         patient_name: data.patientName,
         quantity: data.quantity || 1,
-        
         start_date: data.startDate || data.start_date,
-        startDate: data.startDate || data.start_date,
-        
         logout_date: data.logoutDate || data.logout_date || null, 
-        logoutDate: data.logoutDate || data.logout_date || null, 
-        
+        bed_no: data.bedNo || data.bed_no || "", 
+        referral: data.referral || "",          
         payment_type: data.paymentType,
         deal_type: data.dealType,
         unit: data.unit,
@@ -756,12 +745,11 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         delivery_address: data.deliveryAddress,
         notes: data.notes,
         status: data.status,
-        accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory,
-        referral: data.referral
+        accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory
       };
       
       await API.put(`/rental/requisitions/${data.id}`, backendData); 
-      setLogs((prev) => prev.map((l) => (l.id === data.id ? { ...l, ...data, logout_date: backendData.logout_date, accessories: backendData.accessories, referral: backendData.referral } : l)));
+      setLogs((prev) => prev.map((l) => (l.id === data.id ? { ...l, ...backendData } : l)));
       setModal(null);
       toast.success("Requisition updated successfully!"); 
     } catch (err) {
