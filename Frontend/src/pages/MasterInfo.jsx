@@ -184,7 +184,7 @@ function DeliveryExecutiveFormModal({ initial, onClose, onSubmit }) {
 
   const validate = () => {
     const e = {};
-    if (!(form.driverName || "").trim()) e.driverName = "Executive Driver Name is required.";
+    if (!(form.driverName || "").trim()) e.driverName = "Delivery Agent Name is required.";
     if (!/^\d{10}$/.test(form.phone)) e.phone = "Invalid 10-digit mobile number.";
     
     setErrors(e);
@@ -199,11 +199,12 @@ function DeliveryExecutiveFormModal({ initial, onClose, onSubmit }) {
     <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 backdrop-blur-sm p-4">
       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-          <h2 className="font-display text-base font-bold text-slate-800">{initial?.id ? "Edit Delivery Courier Node" : "Onboard Delivery Courier Node"}</h2>
+          <h2 className="font-display text-base font-bold text-slate-800">{initial?.id ? "Edit Delivery Agent" : "Add Delivery Agent"}</h2>
           <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button>
         </div>
         <div className="space-y-4 px-6 py-5">
-          <Field label="Executive Driver Name" required error={errors.driverName}><TextInput value={form.driverName} error={errors.driverName} onChange={(e) => set({ driverName: e.target.value })} /></Field>
+          {/* 🔥 UPDATE: Delivery Agent Name label added */}
+          <Field label="Delivery Agent Name" required error={errors.driverName}><TextInput value={form.driverName} error={errors.driverName} onChange={(e) => set({ driverName: e.target.value })} /></Field>
           <Field label="Active Mobile Hotline" required error={errors.phone}><TextInput type="tel" value={form.phone} error={errors.phone} onChange={(e) => set({ phone: e.target.value })} /></Field>
           <Field label="Status" required>
             <Select value={form.status} onChange={(e) => set({ status: e.target.value })}>
@@ -256,7 +257,7 @@ function EquipmentFormModal({ initial, onClose, onSubmit }) {
         </div>
         <div className="space-y-4 px-6 py-5">
           <Field label="Equipment Name" required error={errors.name}><TextInput value={form.name} error={errors.name} onChange={(e) => set({ name: e.target.value })} /></Field>
-          <Field label="Category" required><Select value={form.category} onChange={(e) => set({ category: e.target.value })}><option>Respiratory</option><option>Mobility & Bedding</option><option>Monitoring</option></Select></Field>
+          {/* 🔥 UPDATE: Category Field removed completely */}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Daily Rate (₹)" required error={errors.dailyRate}><TextInput type="number" value={form.dailyRate} error={errors.dailyRate} onChange={(e) => set({ dailyRate: e.target.value })} /></Field>
             <Field label="Stock" required error={errors.stock}><TextInput type="number" value={form.stock} error={errors.stock} onChange={(e) => set({ stock: e.target.value })} /></Field>
@@ -366,7 +367,7 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
     toast.success("Record Deleted Successfully");
   };
 
-  const deleteLabels = { center: "care center", equipment: "device", category: "accessory", reference: "reference", deliveryExecutive: "delivery courier node" };
+  const deleteLabels = { center: "care center", equipment: "device", category: "accessory", reference: "reference", deliveryExecutive: "delivery agent" };
 
   const tabDataMap = {
     device: equipmentCatalog,
@@ -385,7 +386,7 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
     accessory: "Add New Accessory",
     careCenter: "Care Center Form",
     reference: "Link Reference",
-    deliveryExecutive: "Onboard Courier",
+    deliveryExecutive: "Add Delivery Agent", // 🔥 Updated label
   };
 
   const handleAddNewAsset = () => {
@@ -424,7 +425,7 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
           { key: "accessory", label: "Accessories", icon: Tag },
           { key: "careCenter", label: "Care Center", icon: Building2 },
           { key: "reference", label: "Reference", icon: Users },
-          { key: "deliveryExecutive", label: "Delivery Courier", icon: Truck },
+          { key: "deliveryExecutive", label: "Delivery Agent", icon: Truck }, // 🔥 Updated tab label
         ].map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${tab === t.key ? "bg-teal-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"}`}>
             <t.icon className="h-4 w-4" /> {t.label}
@@ -500,7 +501,7 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-teal-50 text-teal-600"><Tag className="h-4 w-4" /></div>
                   <div>
                     <p className="font-semibold text-slate-700">{cat.name}</p>
-                    <StatusBadge status={cat.status || "Active"} />
+                    <p className="mt-0.5"><StatusBadge status={cat.status || "Active"} /></p>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -543,13 +544,15 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
       {tab === "deliveryExecutive" && (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-            <div><h3 className="font-display text-sm font-bold text-slate-700">Delivery Courier Nodes</h3><p className="text-xs text-slate-400">{deliveryExecutives.length} couriers on record</p></div>
+            {/* 🔥 Updated record text */}
+            <div><h3 className="font-display text-sm font-bold text-slate-700">Delivery Agent</h3><p className="text-xs text-slate-400">{deliveryExecutives.length} agents on record</p></div>
           </div>
           <div className="smooth-scroll-x overflow-x-auto">
             <table className="w-full text-left text-sm" style={{ minWidth: 700 }}>
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/70 text-xs font-bold uppercase tracking-wide text-slate-400">
-                  <th className="px-5 py-3">Driver Name</th><th className="px-5 py-3">Hotline</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th>
+                  {/* 🔥 Updated Table Header */}
+                  <th className="px-5 py-3">Delivery Agent Name</th><th className="px-5 py-3">Hotline</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

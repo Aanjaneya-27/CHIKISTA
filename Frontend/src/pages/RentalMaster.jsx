@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, Plus, Eye, Pencil, Trash2, PackageCheck, Clock, Activity, AlertTriangle, Building2, User, Tag, CreditCard, Save, X, ClipboardList, ArrowLeft, ChevronRight, ImagePlus, Truck, FileText } from "lucide-react";
+import { Search, SlidersHorizontal, Plus, Eye, Pencil, Trash2, PackageCheck, Clock, Activity, AlertTriangle, Building2, User, Tag, CreditCard, Save, X, ClipboardList, ArrowLeft, ChevronRight, ImagePlus, Truck, FileText, Calendar, ChevronDown } from "lucide-react"; 
 import { PrimaryButton, GhostButton, IconAction, ConfirmDialog, StatusBadge, Field, Select, TextInput, toast } from "../components/UiComponents";
-import { RENTAL_STATES, DEAL_TYPE_OPTIONS, MODE_OPTIONS, UNIT_OPTIONS, ACCESSORY_OPTIONS, REFERRAL_OPTIONS, PAYMENT_TYPES } from "../data/MockData";
+import { RENTAL_STATES, DEAL_TYPE_OPTIONS, MODE_OPTIONS, UNIT_OPTIONS, ACCESSORY_OPTIONS, PAYMENT_TYPES } from "../data/MockData";
 import { formatDateShort, todayISO } from "../utils/Helper";
 import API from "../utils/api"; 
 
@@ -28,6 +28,62 @@ function GlobalPolish() {
       @keyframes fadeScaleIn { from { opacity: 0; transform: scale(0.97) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
       .fade-slide-up { animation: fadeScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
     `}</style>
+  );
+}
+
+function MultiSelect({ options, selected, onChange, placeholder = "Select...", error, disabled }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleOption = (opt) => {
+    if (selected.includes(opt)) {
+      onChange(selected.filter((item) => item !== opt));
+    } else {
+      onChange([...selected, opt]);
+    }
+  };
+
+  const removeOption = (e, opt) => {
+    e.stopPropagation();
+    onChange(selected.filter((item) => item !== opt));
+  };
+
+  return (
+    <div className="relative text-left">
+      <div 
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`flex min-h-[42px] w-full flex-wrap items-center justify-between gap-1.5 rounded-lg border bg-white px-3 py-2 text-sm transition-all ${error ? 'border-rose-300 ring-4 ring-rose-500/10' : 'border-slate-200 hover:border-teal-300 focus:border-teal-500'} ${disabled ? 'bg-slate-50 cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+      >
+        <div className="flex flex-wrap gap-1.5 items-center flex-1">
+          {selected.length === 0 && <span className="text-slate-400">{placeholder}</span>}
+          {selected.map((sel) => (
+            <span key={sel} className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 border border-amber-200 shadow-sm">
+              {sel}
+              {!disabled && (
+                <X className="h-3.5 w-3.5 cursor-pointer hover:text-amber-900 transition-colors" onClick={(e) => removeOption(e, sel)} />
+              )}
+            </span>
+          ))}
+        </div>
+        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </div>
+
+      {isOpen && !disabled && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}></div>
+          <div className="absolute z-[99] mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl ring-1 ring-black/5">
+            {options.map((opt) => (
+              <div 
+                key={opt} 
+                onClick={() => toggleOption(opt)} 
+                className={`cursor-pointer px-4 py-2 text-sm transition-colors hover:bg-teal-50 ${selected.includes(opt) ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-slate-700'}`}
+              >
+                {opt}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -66,9 +122,11 @@ function KpiCards({ logs }) {
   );
 }
 
-const emptyForm = { careCenterId: "", address: "", contactPerson: "", phone: "", gst: "", equipmentId: "", quantity: 1, startDate: todayISO(), logoutDate: "", patientName: "", paymentType: "Postpaid", dealType: "B2B", unit: "ODCOM", mode: "Postpaid", notifyDate: "", deliveryAddress: "", notes: "" };
+// 🔥 UPDATE: Modal Form me bhi referral default khali rahega
+const emptyForm = { careCenterId: "", address: "", contactPerson: "", phone: "", gst: "", equipmentId: "", quantity: 1, startDate: todayISO(), logoutDate: "", patientName: "", paymentType: "Postpaid", dealType: "B2B", unit: "ODCOM", mode: "Postpaid", notifyDate: "", deliveryAddress: "", notes: "", bedNo: "", referral: "" };
 
-function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCatalog, onClose, onSubmit }) {
+// 🔥 UPDATE: references = [] yahan bhi accept kiya hai
+function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCatalog, references = [], onClose, onSubmit }) {
   const readOnly = modalMode === "view";
   const [form, setForm] = useState(() => (initial ? { ...emptyForm, ...initial } : emptyForm));
   const [errors, setErrors] = useState({});
@@ -90,6 +148,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
     if (!form.quantity || Number(form.quantity) < 1) e.quantity = "Quantity must be at least 1.";
     if (!form.patientName) e.patientName = "Patient name is required.";
     if (!form.startDate) e.startDate = "Login date is required.";
+    if (!form.logoutDate) e.logoutDate = "Logout date is required.";
     if (form.paymentType === "Prepaid" && !form.notifyDate) e.notifyDate = "Notify date is mandatory for Prepaid requisitions.";
     if (!form.deliveryAddress) e.deliveryAddress = "Delivery address is required.";
     setErrors(e);
@@ -150,6 +209,22 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
               <Field label="Phone"><TextInput disabled={readOnly} value={form.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="Enter phone" /></Field>
               <Field label="GST / ID Number"><TextInput disabled={readOnly} value={form.gst} onChange={(e) => set({ gst: e.target.value })} placeholder="Enter GST/ID" /></Field>
               <Field label="Address"><TextInput disabled={readOnly} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder="Enter full address" /></Field>
+              
+              {/* 🔥 UPDATE: Edit Modal mein bhi Referral Add kar diya hai */}
+              <div className="sm:col-span-2 grid grid-cols-2 gap-4">
+                <Field label="Bed No"><TextInput disabled={readOnly} value={form.bedNo} onChange={(e) => set({ bedNo: e.target.value })} /></Field>
+                <Field label="Referral">
+                  <Select disabled={readOnly} value={form.referral} onChange={(e) => set({ referral: e.target.value })}>
+                    <option value="">-- Select Referral --</option>
+                    {references.map((r) => (
+                      <option key={r.id} value={r.doctorName || r.name}>
+                        {r.doctorName || r.name} {r.domain ? `(${r.domain})` : ""}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+
             </div>
           </div>
 
@@ -194,10 +269,10 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
                 <TextInput disabled={readOnly} type="number" min={1} value={form.quantity} error={errors.quantity} onChange={(e) => set({ quantity: e.target.value })} />
               </Field>
               <Field label="Login Date (Rental Start)" required error={errors.startDate}>
-                <TextInput disabled={readOnly} type="date" value={form.startDate} error={errors.startDate} onChange={(e) => set({ startDate: e.target.value })} />
+                <TextInput disabled={readOnly} type="date" value={form.startDate ? form.startDate.slice(0,10) : ""} error={errors.startDate} onChange={(e) => set({ startDate: e.target.value })} />
               </Field>
-              <Field label="Logout Date (Return)" hint="Leave blank while the rental is still ongoing">
-                <TextInput disabled={readOnly} type="date" value={form.logoutDate} onChange={(e) => set({ logoutDate: e.target.value })} />
+              <Field label="Logout Date (Return)" required error={errors.logoutDate}>
+                <TextInput disabled={readOnly} type="date" value={form.logoutDate ? form.logoutDate.slice(0,10) : ""} error={errors.logoutDate} onChange={(e) => set({ logoutDate: e.target.value })} />
               </Field>
               <div className="sm:col-span-2">
                 <Field label="Delivery Address" required error={errors.deliveryAddress}>
@@ -223,7 +298,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
                 </div>
               </div>
               <Field label="Notify Date" required={form.paymentType === "Prepaid"} error={errors.notifyDate} hint={form.paymentType === "Postpaid" ? "Optional for postpaid requisitions" : "Required — customer will be notified on this date"}>
-                <TextInput disabled={readOnly} type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
+                <TextInput disabled={readOnly} type="date" value={form.notifyDate ? form.notifyDate.slice(0,10) : ""} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
               </Field>
             </div>
           </div>
@@ -246,7 +321,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
   );
 }
 
-const emptyAssetForm = { dealType: "", unit: "", mode: "Postpaid", deviceModel: "", accessory: "", recordDate: todayISO(), loginDate: todayISO(), notifyDate: "", logoutDate: "", recallDate: "", billingType: "Monthly", rentalCharge: "", depositAdvance: "", installationCharge: "", careCenterId: "", pocMobile: "", altPocMobile: "", careAddress: "", bedNo: "", pocNameDoctor: "", referral: "", patientName: "", age: "", attendantName: "", mobileNumber: "", altMobileNumber: "", deliveryAddress: "", notes: "" };
+const emptyAssetForm = { dealType: "", unit: "", mode: "Postpaid", deviceModel: "", accessory: [], recordDate: todayISO(), loginDate: todayISO(), notifyDate: "", logoutDate: "", recallDate: "", billingType: "Monthly", rentalCharge: "", depositAdvance: "", installationCharge: "", careCenterId: "", pocMobile: "", altPocMobile: "", careAddress: "", bedNo: "", referral: "", patientName: "", age: "", attendantName: "", mobileNumber: "", altMobileNumber: "", deliveryAddress: "", notes: "" };
 
 function SectionHeading({ icon: Icon, children }) {
   return (
@@ -257,7 +332,7 @@ function SectionHeading({ icon: Icon, children }) {
   );
 }
 
-function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit }) {
+function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], onCancel, onSubmit }) {
   const [form, setForm] = useState(emptyAssetForm);
   const [errors, setErrors] = useState({});
   const [photos, setPhotos] = useState([]);
@@ -265,14 +340,13 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
 
   const handleCareCenterChange = (id) => {
     if (id === "other") {
-      set({ careCenterId: "other", careAddress: "", pocMobile: "", pocNameDoctor: "" });
+      set({ careCenterId: "other", careAddress: "", pocMobile: "" });
     } else {
       const cc = careCenters.find((c) => c.id === id);
       set({ 
         careCenterId: id, 
         careAddress: cc?.address || "", 
-        pocMobile: cc?.phone || "", 
-        pocNameDoctor: cc?.contactPerson || "" 
+        pocMobile: cc?.phone || ""
       });
     }
   };
@@ -296,8 +370,9 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
     if (!form.unit) e.unit = "Please select a unit.";
     if (!form.mode) e.mode = "Please select a mode.";
     if (!form.deviceModel) e.deviceModel = "Please choose an equipment model.";
-    if (!form.accessory) e.accessory = "Please choose an accessory.";
+    if (!form.accessory || form.accessory.length === 0) e.accessory = "Please choose at least one accessory.";
     if (!form.loginDate) e.loginDate = "Log in date is required.";
+    if (!form.logoutDate) e.logoutDate = "Logout date is required to calculate total days.";
     if (!form.billingType) e.billingType = "Please select a billing type.";
     if (!form.patientName) e.patientName = "Patient name is required.";
     if (form.mode === "Prepaid" && !form.notifyDate) {
@@ -347,11 +422,10 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
         <h2 className="font-display text-2xl font-extrabold tracking-tight text-slate-800">Log Asset Requisition</h2>
         <div className="hidden items-center gap-2 sm:flex">
           <GhostButton onClick={onCancel}>Discard</GhostButton>
-          <PrimaryButton onClick={handleSubmit}><Save className="h-4 w-4" /> Save Requisition &amp; Deploy</PrimaryButton>
         </div>
       </div>
 
-      <div style={{ animationDelay: "40ms" }} className="rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+      <div style={{ animationDelay: "40ms" }} className="relative z-40 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <SectionHeading icon={Tag}>Record Types</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Deal Type" required error={errors.dealType}><Select value={form.dealType} error={errors.dealType} onChange={(e) => set({ dealType: e.target.value })}><option value="">--- Select ---</option>{DEAL_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}</Select></Field>
@@ -360,7 +434,7 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
         </div>
       </div>
 
-      <div style={{ animationDelay: "80ms" }} className="rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+      <div style={{ animationDelay: "80ms" }} className="relative z-30 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <SectionHeading icon={Truck}>Asset Allocation &amp; Logistics</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-4">
           <Field label="Select Device Model" required error={errors.deviceModel}>
@@ -373,18 +447,30 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
               {equipmentCatalog.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
             </Select>
           </Field>
-          <Field label="Select Accessory" required error={errors.accessory}><Select value={form.accessory} error={errors.accessory} onChange={(e) => set({ accessory: e.target.value })}><option value="">-- Choose Accessory --</option>{ACCESSORY_OPTIONS.map((a) => <option key={a} value={a}>{a}</option>)}</Select></Field>
+          
+          <Field label="Select Accessory" required error={errors.accessory}>
+            <MultiSelect
+              options={ACCESSORY_OPTIONS}
+              selected={Array.isArray(form.accessory) ? form.accessory : []}
+              onChange={(newAccessories) => set({ accessory: newAccessories })}
+              placeholder="-- Choose Accessories --"
+              error={errors.accessory}
+            />
+          </Field>
+
           <Field label="Record Date"><TextInput type="date" value={form.recordDate} onChange={(e) => set({ recordDate: e.target.value })} /></Field>
           <Field label="Log In Date" required error={errors.loginDate}><TextInput type="date" value={form.loginDate} error={errors.loginDate} onChange={(e) => set({ loginDate: e.target.value })} /></Field>
           
           <Field label="Notify Date" required={form.mode === "Prepaid"} error={errors.notifyDate}><TextInput type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} /></Field>
           
-          <Field label="Log Out Date"><TextInput type="date" value={form.logoutDate} onChange={(e) => set({ logoutDate: e.target.value })} /></Field>
+          <Field label="Log Out Date" required error={errors.logoutDate}>
+            <TextInput type="date" value={form.logoutDate} error={errors.logoutDate} onChange={(e) => set({ logoutDate: e.target.value })} />
+          </Field>
           <Field label="Recall Date"><TextInput type="date" value={form.recallDate} onChange={(e) => set({ recallDate: e.target.value })} /></Field>
         </div>
       </div>
 
-      <div style={{ animationDelay: "120ms" }} className="rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+      <div style={{ animationDelay: "120ms" }} className="relative z-20 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <SectionHeading icon={CreditCard}>Commercials &amp; Billing</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-4">
           <Field label="Billing Type" required error={errors.billingType}>
@@ -400,7 +486,7 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
         </div>
       </div>
 
-      <div style={{ animationDelay: "160ms" }} className="rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+      <div style={{ animationDelay: "160ms" }} className="relative z-10 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <div className="grid gap-8 lg:grid-cols-2">
           <div>
             <SectionHeading icon={Building2}>Care Center Context</SectionHeading>
@@ -420,26 +506,21 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
               
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Bed No"><TextInput value={form.bedNo} onChange={(e) => set({ bedNo: e.target.value })} /></Field>
+                
+                {/* 🔥 UPDATE: Direct references se map kara diya gaya hai */}
                 <Field label="Referral">
                   <Select value={form.referral} onChange={(e) => set({ referral: e.target.value })}>
                     <option value="">-- Select Referral --</option>
-                    {REFERRAL_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                    {references.map((r) => (
+                      <option key={r.id} value={r.doctorName || r.name}>
+                        {r.doctorName || r.name} {r.domain ? `(${r.domain})` : ""}
+                      </option>
+                    ))}
                   </Select>
                 </Field>
               </div>
-
-              {/* 🔥 MAGIC UPDATE: Dynamic POC Name / Doctor Box */}
-              {form.referral && form.referral.toLowerCase().includes("doctor") && (
-                <div className="rise-in animate-in fade-in slide-in-from-top-2 duration-300">
-                  <Field label="POC Name / Doctor">
-                    <TextInput 
-                      value={form.pocNameDoctor} 
-                      onChange={(e) => set({ pocNameDoctor: e.target.value })} 
-                      placeholder="Enter Doctor's Full Name" 
-                    />
-                  </Field>
-                </div>
-              )}
+              
+              {/* Doctor Name wala extra dabba permanently hata diya gaya hai */}
 
             </div>
           </div>
@@ -461,7 +542,7 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
         </div>
       </div>
 
-      <div style={{ animationDelay: "200ms" }} className="rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+      <div style={{ animationDelay: "200ms" }} className="relative z-0 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <Field label="Notes"><textarea rows={3} value={form.notes} onChange={(e) => set({ notes: e.target.value })} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" /></Field>
       </div>
 
@@ -502,20 +583,23 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, onCancel, onSubmit 
         </Field>
       </div>
 
-      <div className="flex items-center justify-end gap-2 sm:hidden">
-        <GhostButton onClick={onCancel}>Discard</GhostButton>
-        <PrimaryButton onClick={handleSubmit}><Save className="h-4 w-4" /> Save Requisition &amp; Deploy</PrimaryButton>
+      <div className="mt-8 flex items-center justify-end border-t border-slate-200 pt-6 pb-4">
+        <PrimaryButton onClick={handleSubmit} className="px-6 py-2.5 shadow-md hover:shadow-lg transition-all">
+          <Save className="h-4.5 w-4.5" /> Save Requisition &amp; Deploy
+        </PrimaryButton>
       </div>
     </div>
   );
 }
 
-export default function RentalMaster({ permissions, logs, setLogs, careCenters, equipmentCatalog }) {
+// 🔥 UPDATE: references = [] yahan par recieve ho raha hai
+export default function RentalMaster({ permissions, logs, setLogs, careCenters, equipmentCatalog, references = [] }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [dealTypeFilter, setDealTypeFilter] = useState("All");
   const [modeFilter, setModeFilter] = useState("All");
   const [monthFilter, setMonthFilter] = useState(0); 
+  const [careCenterFilter, setCareCenterFilter] = useState("All"); 
 
   const [modal, setModal] = useState(null); 
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -538,6 +622,20 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
     const login = new Date(loginStr);
     login.setHours(0, 0, 0, 0); 
 
+    if (logoutStr) {
+      const logout = new Date(logoutStr);
+      logout.setHours(0, 0, 0, 0);
+
+      const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
+      const endUtc = Date.UTC(logout.getFullYear(), logout.getMonth(), logout.getDate());
+
+      let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1; 
+      if (diffDays < 0) diffDays = 0; 
+
+      const logoutMonth = logout.getMonth() + 1; 
+      return `${diffDays}/${logoutMonth}`;
+    }
+
     const now = new Date();
     now.setHours(0, 0, 0, 0);
 
@@ -546,23 +644,10 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
     const targetMonth = targetDate.getMonth();
 
     let end;
-    if (logoutStr) {
-       const logout = new Date(logoutStr);
-       logout.setHours(0, 0, 0, 0);
-
-       if (logout.getFullYear() < targetYear || (logout.getFullYear() === targetYear && logout.getMonth() < targetMonth)) {
-          end = logout; 
-       } else if (logout.getFullYear() === targetYear && logout.getMonth() === targetMonth) {
-          end = logout; 
-       } else {
-          end = new Date(targetYear, targetMonth + 1, 0); 
-       }
+    if (monthOffset === 0) {
+       end = now; 
     } else {
-       if (monthOffset === 0) {
-          end = now; 
-       } else {
-          end = new Date(targetYear, targetMonth + 1, 0); 
-       }
+       end = new Date(targetYear, targetMonth + 1, 0); 
     }
 
     if (login > end) return "—"; 
@@ -578,16 +663,26 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
 
   const filtered = useMemo(() => {
     return logs.filter((l) => {
-      const cc = careCenters.find((c) => c.id === l.careCenterId);
-      const matchesSearch = !search || l.id.toLowerCase().includes(search.toLowerCase()) || l.equipmentName.toLowerCase().includes(search.toLowerCase()) || (l.patientName || "").toLowerCase().includes(search.toLowerCase()) || cc?.name.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = statusFilter === "All" || l.status === statusFilter;
-      const matchesDealType = dealTypeFilter === "All" || l.dealType === dealTypeFilter;
-      const matchesMode = modeFilter === "All" || l.mode === modeFilter;
-      return matchesSearch && matchesStatus && matchesDealType && matchesMode;
-    });
-  }, [logs, search, statusFilter, dealTypeFilter, modeFilter, careCenters]);
+      const ccId = l.careCenterId || l.care_center_id;
+      const ccName = l.careCenterName || careCenters.find((c) => c.id === ccId)?.name || ccId;
+      
+      const eqId = l.equipmentId || l.equipment_id;
+      const eqName = l.equipmentName || equipmentCatalog.find(e => e.id === eqId)?.name || eqId;
 
-  const careCenterName = (id) => careCenters.find((c) => c.id === id)?.name || "—";
+      const matchesSearch = !search || 
+        l.id.toLowerCase().includes(search.toLowerCase()) || 
+        (eqName || "").toLowerCase().includes(search.toLowerCase()) || 
+        (l.patientName || l.patient_name || "").toLowerCase().includes(search.toLowerCase()) || 
+        (ccName || "").toLowerCase().includes(search.toLowerCase());
+        
+      const matchesStatus = statusFilter === "All" || l.status === statusFilter;
+      const matchesDealType = dealTypeFilter === "All" || (l.dealType || l.deal_type) === dealTypeFilter;
+      const matchesMode = modeFilter === "All" || l.mode === modeFilter;
+      const matchesCareCenter = careCenterFilter === "All" || ccId === careCenterFilter;
+
+      return matchesSearch && matchesStatus && matchesDealType && matchesMode && matchesCareCenter;
+    });
+  }, [logs, search, statusFilter, dealTypeFilter, modeFilter, careCenterFilter, careCenters, equipmentCatalog]);
 
   const handleAdd = async (data) => {
     try {
@@ -599,13 +694,15 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         patient_name: data.patientName,
         quantity: data.quantity || 1,
         start_date: data.startDate,
+        logout_date: data.logoutDate, 
         payment_type: data.paymentType,
         deal_type: data.dealType,
         unit: data.unit,
         mode: data.mode,
         notify_date: data.notifyDate || null,
         delivery_address: data.deliveryAddress,
-        notes: data.notes
+        notes: data.notes,
+        accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory 
       };
 
       await API.post("/rental/requisitions", backendData);
@@ -658,7 +755,8 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
   };
 
   if (showAddPage) {
-    return <NewRequisitionPage careCenters={careCenters} equipmentCatalog={equipmentCatalog} onCancel={() => setShowAddPage(false)} onSubmit={handleAdd} />;
+    // 🔥 UPDATE: Pass references from parent down to the page
+    return <NewRequisitionPage careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} onCancel={() => setShowAddPage(false)} onSubmit={handleAdd} />;
   }
 
   return (
@@ -676,10 +774,18 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
           <div className="flex flex-wrap items-center gap-2">
             <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400" />
             
-            <select value={monthFilter} onChange={(e) => setMonthFilter(Number(e.target.value))} className="rounded-lg border border-slate-200 bg-teal-50 py-2 pl-2.5 pr-7 text-xs font-bold text-teal-700 outline-none transition hover:border-teal-300 focus:border-teal-500">
-              {monthOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
+            <div className="relative group flex items-center justify-center h-9 w-9 rounded-lg border border-slate-200 bg-white hover:bg-teal-50 transition cursor-pointer shrink-0 shadow-sm" title="Filter by Month">
+              <Calendar className="h-4.5 w-4.5 text-slate-500 group-hover:text-teal-600" />
+              <select value={monthFilter} onChange={(e) => setMonthFilter(Number(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                {monthOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <select value={careCenterFilter} onChange={(e) => setCareCenterFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
+              <option value="All">All Care Centers</option>
+              {careCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
 
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
@@ -725,23 +831,41 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((log, i) => {
-                const dynamicDays = getDynamicTotalDays(log.startDate, log.logoutDate, monthFilter);
+                const dynamicDays = getDynamicTotalDays(log.startDate || log.start_date, log.logoutDate, monthFilter);
                 
+                const rowColor = log.mode === "Prepaid" 
+                  ? "bg-emerald-50/70 hover:bg-emerald-100" 
+                  : log.mode === "Postpaid" 
+                  ? "bg-rose-50/70 hover:bg-rose-100"       
+                  : "hover:bg-teal-50/40";                  
+
+                const eqId = log.equipmentId || log.equipment_id;
+                let actualDevice = eqId || log.equipmentName || "—";
+                
+                const catMatch = equipmentCatalog.find(e => e.id === eqId);
+                if (catMatch) actualDevice = catMatch.name;
+
                 return (
-                  <tr key={log.id} style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }} className="rise-in group/row relative transition-colors duration-150 hover:bg-teal-50/40">
+                  <tr 
+                    key={log.id} 
+                    style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }} 
+                    className={`rise-in group/row relative transition-colors duration-150 ${rowColor}`}
+                  >
                     <td className="relative px-5 py-3.5">
                       <span className="absolute left-0 top-1/2 h-0 w-0.5 -translate-y-1/2 bg-teal-500 transition-all duration-200 group-hover/row:h-6" />
                       <StatusBadge status={log.status} glow={log.status === "Active"} /><p className="mt-1 text-xs font-medium text-slate-400">{log.id}</p>
                     </td>
-                    <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${log.dealType === "B2B" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{log.dealType || "—"}</span></td>
+                    <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${(log.dealType || log.deal_type) === "B2B" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{log.dealType || log.deal_type || "—"}</span></td>
                     <td className="px-5 py-3.5 text-slate-600">{log.unit || "—"}</td>
                     <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${log.mode === "Prepaid" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{log.mode || "—"}</span></td>
-                    <td className="px-5 py-3.5"><p className="font-semibold text-slate-700">{log.equipmentName}</p><p className="text-xs text-slate-400">{careCenterName(log.careCenterId)}</p></td>
-                    <td className="px-5 py-3.5 text-slate-600">{log.patientName || "—"}</td>
-                    <td className="px-5 py-3.5 text-slate-600">{formatDateShort(log.startDate)}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="font-semibold text-slate-700">{actualDevice}</span>
+                    </td>
+                    <td className="px-5 py-3.5 text-slate-600">{log.patientName || log.patient_name || "—"}</td>
+                    <td className="px-5 py-3.5 text-slate-600">{formatDateShort(log.startDate || log.start_date)}</td>
                     <td className="px-5 py-3.5 text-slate-600">{log.logoutDate ? formatDateShort(log.logoutDate) : "—"}</td>
                     <td className="px-5 py-3.5">
-                      <span className="font-semibold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-1 rounded-md">{dynamicDays}</span>
+                      <span className="font-semibold text-slate-700 bg-slate-50/50 border border-slate-200/60 px-2 py-1 rounded-md shadow-sm">{dynamicDays}</span>
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1">
@@ -771,9 +895,9 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         </div>
       </div>
 
-      {modal && <RequisitionModal mode={modal.mode} initial={modal.data} careCenters={careCenters} equipmentCatalog={equipmentCatalog} onClose={() => setModal(null)} onSubmit={modal.mode === "add" ? handleAdd : handleEdit} />}
+      {modal && <RequisitionModal mode={modal.mode} initial={modal.data} careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} onClose={() => setModal(null)} onSubmit={modal.mode === "add" ? handleAdd : handleEdit} />}
 
-      <ConfirmDialog open={!!confirmDelete} title="Delete this requisition?" message={confirmDelete ? `${confirmDelete.id} for ${careCenterName(confirmDelete.careCenterId)} will be permanently removed. This cannot be undone.` : ""} onCancel={() => setConfirmDelete(null)} onConfirm={handleDelete} />
+      <ConfirmDialog open={!!confirmDelete} title="Delete this requisition?" message={confirmDelete ? `${confirmDelete.id} will be permanently removed. This cannot be undone.` : ""} onCancel={() => setConfirmDelete(null)} onConfirm={handleDelete} />
     </div>
   );
 }

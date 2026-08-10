@@ -4,8 +4,6 @@ import { PrimaryButton, Field, TextInput, toast } from "../components/UiComponen
 
 export default function UserProfile() {
   const [activeTab, setActiveTab] = useState("profile");
-
-  // Mock User Data
   const [profile, setProfile] = useState({
     name: "Admin",
     email: "admin@chikitsa.com",
