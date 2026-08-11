@@ -11,5 +11,9 @@ class Equipment {
       [id, name, category, daily_rate, stock]
     );
   }
+  static async delete(id) {
+    await pool.query("DELETE FROM equipment WHERE id = ?", [id]);
+  }
 }
+
 module.exports = Equipment;

@@ -44,13 +44,12 @@ const addEquipment = async (req, res) => {
 const deleteEquipment = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query("DELETE FROM equipment WHERE id = ?", [id]);
-    res.status(200).json({ message: "Equipment deleted" });
+    await Equipment.delete(id); 
+    res.status(200).json({ message: "Equipment deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
