@@ -382,15 +382,7 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
       else if (type === "category") {
         await API.delete(`/master/categories/${id}`);
         setCategories((prev) => prev.filter((c) => c.id !== id));
-      } 
-      else if (type === "reference") {
-        await API.delete(`/master/references/${id}`);
-        setReferences((prev) => prev.filter((r) => r.id !== id));
-      } 
-      else if (type === "deliveryExecutive") {
-        await API.delete(`/master/delivery-executives/${id}`);
-        setDeliveryExecutives((prev) => prev.filter((d) => d.id !== id));
-      }
+      }    
       
       setConfirmDelete(null);
       toast.success("Record Deleted From Database Successfully");
