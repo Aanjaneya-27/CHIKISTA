@@ -356,40 +356,37 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
     setDeModal(null); 
   };
 
-const handleDelete = async () => {
+ const handleDelete = async () => {
     try {
       const id = confirmDelete.item.id;
-      const type = confirmDelete.type;
-
-      if (type === "center") {
-        await API.delete(`/care-centers/${id}`); 
+        if (confirmDelete.type === "center") {
+        await API.delete(`/carecenters/${id}`); 
         setCareCenters((prev) => prev.filter((c) => c.id !== id));
       } 
-      else if (type === "equipment") {
-        await API.delete(`/equipments/${id}`); 
+      else if (confirmDelete.type === "equipment") {
+        await API.delete(`/equipment/${id}`); 
         setEquipmentCatalog((prev) => prev.filter((e) => e.id !== id));
       } 
-      else if (type === "category") {
+      else if (confirmDelete.type === "category") {
         await API.delete(`/categories/${id}`); 
         setCategories((prev) => prev.filter((c) => c.id !== id));
       } 
-      else if (type === "reference") {
+      else if (confirmDelete.type === "reference") {
         await API.delete(`/references/${id}`); 
         setReferences((prev) => prev.filter((r) => r.id !== id));
       } 
-      else if (type === "deliveryExecutive") {
+      else if (confirmDelete.type === "deliveryExecutive") {
         await API.delete(`/delivery-executives/${id}`); 
         setDeliveryExecutives((prev) => prev.filter((d) => d.id !== id));
       }
-
+      
       setConfirmDelete(null);
-      toast.success("Record Deleted From Database Successfully!");
+      toast.success("Record Deleted From Database Successfully");
     } catch (error) {
       console.error("Delete Error:", error);
-      toast.error("Error: " + (error.response?.data?.message || "Could not delete from backend"));
+      toast.error("Error deleting from backend!");
     }
   };
-
   const deleteLabels = { center: "care center", equipment: "device", category: "accessory", reference: "reference", deliveryExecutive: "delivery agent" };
 
   const tabDataMap = {
