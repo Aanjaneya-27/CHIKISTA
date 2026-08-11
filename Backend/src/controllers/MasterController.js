@@ -20,9 +20,10 @@ const deleteCareCenter = async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query("DELETE FROM care_centers WHERE id = ?", [id]);
-    res.status(200).json({ message: "Care center deleted" });
+    res.status(200).json({ message: "Care center deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("SQL Error:", error); 
+    res.status(500).json({ message: error.message, sqlError: error.sqlMessage }); 
   }
 };
 
@@ -54,9 +55,10 @@ const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query("DELETE FROM categories WHERE id = ?", [id]);
-    res.status(200).json({ message: "Category deleted" });
+    res.status(200).json({ message: "Category deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("SQL Error:", error);
+    res.status(500).json({ message: error.message, sqlError: error.sqlMessage });
   }
 };
 

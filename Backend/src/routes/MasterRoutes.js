@@ -11,7 +11,6 @@ const {
 
 const router = express.Router();
 
-//forced routes for care centers and equipment
 router.get("/carecenters", getCareCenters);
 router.post("/carecenters", addCareCenter);
 router.delete("/carecenters/:id", deleteCareCenter); 
@@ -19,5 +18,6 @@ router.get("/equipment", getEquipment);
 router.post("/equipment", addEquipment);
 router.delete("/equipment/:id", deleteEquipment); 
 router.delete("/categories/:id", deleteCategory); 
+router.delete("/references/:id", deleteReference);
 
 module.exports = router;
