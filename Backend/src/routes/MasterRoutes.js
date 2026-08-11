@@ -11,6 +11,7 @@ const {
 
 const router = express.Router();
 
+//forced routes for care centers and equipment
 router.get("/carecenters", getCareCenters);
 router.post("/carecenters", addCareCenter);
 router.delete("/carecenters/:id", deleteCareCenter); 
