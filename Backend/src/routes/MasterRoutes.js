@@ -6,7 +6,9 @@ const {
   getEquipment, 
   addEquipment,
   deleteEquipment, 
-  deleteCategory    
+  deleteCategory, 
+  deleteReference, 
+  deleteDeliveryExecutive
 } = require("../controllers/MasterController");
 
 const router = express.Router();
@@ -18,5 +20,6 @@ router.get("/equipment", getEquipment);
 router.post("/equipment", addEquipment);
 router.delete("/equipment/:id", deleteEquipment); 
 router.delete("/categories/:id", deleteCategory); 
-
+router.delete("/references/:id", deleteReference);
+router.delete("/delivery-executives/:id", deleteDeliveryExecutive);
 module.exports = router;

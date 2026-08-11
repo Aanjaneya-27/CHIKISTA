@@ -62,5 +62,25 @@ const deleteCategory = async (req, res) => {
     res.status(500).json({ message: error.message, sqlError: error.sqlMessage });
   }
 };
+const deleteReference = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM `references` WHERE id = ?", [id]); 
+    res.status(200).json({ message: "Reference deleted successfully" });
+  } catch (error) {
+    console.error("SQL Error:", error);
+    res.status(500).json({ message: error.message, sqlError: error.sqlMessage });
+  }
+};
 
-module.exports = { getCareCenters, addCareCenter, deleteCareCenter, getEquipment, addEquipment, deleteEquipment, deleteCategory };
+const deleteDeliveryExecutive = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM delivery_executives WHERE id = ?", [id]); 
+    res.status(200).json({ message: "Delivery Executive deleted successfully" });
+  } catch (error) {
+    console.error("SQL Error:", error);
+    res.status(500).json({ message: error.message, sqlError: error.sqlMessage });
+  }
+};
+module.exports = { getCareCenters, addCareCenter, deleteCareCenter, getEquipment, addEquipment, deleteEquipment, deleteCategory, deleteReference, deleteDeliveryExecutive };
