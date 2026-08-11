@@ -356,29 +356,29 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
     setDeModal(null); 
   };
 
- const handleDelete = async () => {
+const handleDelete = async () => {
     try {
       const id = confirmDelete.item.id;
       const type = confirmDelete.type;
 
       if (type === "center") {
-        await API.delete(`/api/care-centers/${id}`); 
+        await API.delete(`/care-centers/${id}`); 
         setCareCenters((prev) => prev.filter((c) => c.id !== id));
       } 
       else if (type === "equipment") {
-        await API.delete(`/api/equipments/${id}`); 
+        await API.delete(`/equipments/${id}`); 
         setEquipmentCatalog((prev) => prev.filter((e) => e.id !== id));
       } 
       else if (type === "category") {
-        await API.delete(`/api/categories/${id}`); 
+        await API.delete(`/categories/${id}`); 
         setCategories((prev) => prev.filter((c) => c.id !== id));
       } 
       else if (type === "reference") {
-        await API.delete(`/api/references/${id}`); 
+        await API.delete(`/references/${id}`); 
         setReferences((prev) => prev.filter((r) => r.id !== id));
       } 
       else if (type === "deliveryExecutive") {
-        await API.delete(`/api/delivery-executives/${id}`); 
+        await API.delete(`/delivery-executives/${id}`); 
         setDeliveryExecutives((prev) => prev.filter((d) => d.id !== id));
       }
 
