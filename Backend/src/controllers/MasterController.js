@@ -1,5 +1,6 @@
 const CareCenter = require("../models/CareCenter");
 const Equipment = require("../models/Equipment");
+const pool = require("../config/database");
 
 const getCareCenters = async (req, res) => {
   try {
