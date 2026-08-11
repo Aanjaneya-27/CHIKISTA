@@ -129,12 +129,22 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
   
   const [form, setForm] = useState(() => {
     if (initial) {
+      // 🔥 YEH HAI ASLI FIX: Backend se chahe accessory aaye ya accessories, dono handle ho jayenge
+      const rawAcc = initial.accessory || initial.accessories;
+      let parsedAcc = [];
+      
+      if (Array.isArray(rawAcc)) {
+        parsedAcc = rawAcc;
+      } else if (typeof rawAcc === 'string' && rawAcc.trim() !== "") {
+        parsedAcc = rawAcc.split(',').map(item => item.trim());
+      }
+
       return {
         ...emptyForm,
         ...initial,
         startDate: initial.startDate || initial.start_date || todayISO(),
         logoutDate: initial.logoutDate || initial.logout_date || "",
-        accessory: Array.isArray(initial.accessories) ? initial.accessories : (typeof initial.accessories === 'string' ? initial.accessories.split(", ") : [])
+        accessory: parsedAcc
       };
     }
     return emptyForm;
@@ -696,6 +706,8 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
  const handleAdd = async (data) => {
     try {
       const nextId = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
+      const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
+      
       const backendData = {
         id: nextId,
         care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
@@ -703,9 +715,9 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         patient_name: data.patientName,
         quantity: data.quantity || 1,
         start_date: data.startDate || data.loginDate, 
-        logout_date: data.logoutDate || data.logout_date || null, // 🔥 FIX 
-        bed_no: data.bedNo || data.bed_no || "", // 🔥 YEH MISSING THA
-        referral: data.referral || "",           // 🔥 YEH MISSING THA
+        logout_date: data.logoutDate || data.logout_date || null, 
+        bed_no: data.bedNo || data.bed_no || "", 
+        referral: data.referral || "",           
         payment_type: data.paymentType,
         deal_type: data.dealType,
         unit: data.unit,
@@ -713,7 +725,8 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         notify_date: data.notifyDate || null,
         delivery_address: data.deliveryAddress,
         notes: data.notes,
-        accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory, 
+        accessory: accStr,   // 🔥 Dono add kar diye, DB mein miss nahi hoga
+        accessories: accStr, // 🔥 Dono add kar diye
         status: "Active"
       };
 
@@ -728,6 +741,8 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
 
   const handleEdit = async (data) => {
     try {
+      const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
+      
       const backendData = {
         care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
         equipment_id: data.equipmentId,
@@ -745,7 +760,8 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         delivery_address: data.deliveryAddress,
         notes: data.notes,
         status: data.status,
-        accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory
+        accessory: accStr,   
+        accessories: accStr 
       };
       
       await API.put(`/rental/requisitions/${data.id}`, backendData); 
@@ -850,7 +866,7 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
                 const rowColor = log.mode === "Prepaid" 
                   ? "bg-emerald-50/70 hover:bg-emerald-100" 
                   : log.mode === "Postpaid" 
-                  ? "bg-rose-50/70 hover:bg-rose-100"       
+                  ? "bg-rose-50/70 hover:bg-rose-100"      
                   : "hover:bg-teal-50/40";                  
 
                 const eqId = log.equipmentId || log.equipment_id;
