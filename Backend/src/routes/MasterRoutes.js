@@ -18,6 +18,5 @@ router.get("/equipment", getEquipment);
 router.post("/equipment", addEquipment);
 router.delete("/equipment/:id", deleteEquipment); 
 router.delete("/categories/:id", deleteCategory); 
-router.delete("/references/:id", deleteReference);
 
 module.exports = router;
