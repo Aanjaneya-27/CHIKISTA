@@ -24,15 +24,14 @@ function formatMySQLDate(dateStr) {
 
 class Requisition {
   static async getAll() {
-    const query = `
-      SELECT r.*, c.name as careCenterName, e.name as equipmentName, e.category 
-      FROM requisitions r
-      JOIN care_centers c ON r.care_center_id = c.id
-      JOIN equipment e ON r.equipment_id = e.id
-      ORDER BY r.created_at DESC
-    `;
-    const [rows] = await pool.query(query);
+    const sql = `SELECT * FROM requisitions ORDER BY created_at DESC`;
+    const [rows] = await pool.query(sql);
     return rows;
+  }
+  static async findById(id) {
+    const sql = `SELECT * FROM requisitions WHERE id = ?`;
+    const [rows] = await pool.query(sql, [id]);
+    return rows[0];
   }
 
   static async create(data) {
