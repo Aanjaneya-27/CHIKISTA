@@ -1,20 +1,14 @@
 const pool = require("../config/database");
 
-const getStrictDate = (val1, val2) => {
-  const today = new Date().toISOString().slice(0, 10); 
+// 100% Safe Date Formatter
+const safeDate = (val1, val2) => {
   let d = val1 || val2;
-  
-  if (!d || d === "" || d === "null" || d === "undefined") return today;
-  
+  const today = new Date().toISOString().slice(0, 10);
+  if (!d || d === "" || String(d).includes("null")) return today;
   try {
-    if (typeof d === "string" && d.includes("-") && d.split("-")[0].length === 2) {
-      const p = d.split("-");
-      return `${p[2]}-${p[1]}-${p[0]}`;
-    }
-    const dateObj = new Date(d);
-    if (isNaN(dateObj.getTime())) return today;
-    return dateObj.toISOString().slice(0, 10);
-  } catch (err) {
+    const parsed = new Date(d);
+    return isNaN(parsed.getTime()) ? today : parsed.toISOString().slice(0, 10);
+  } catch (e) {
     return today;
   }
 };
@@ -31,80 +25,70 @@ class Requisition {
   }
 
   static async create(data) {
-    // 💥 Guaranteed Safe Values (Koi column khali nahi jayega)
     const reqId = data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
-    const startDate = getStrictDate(data.start_date, data.startDate);
-    const logoutDate = getStrictDate(data.logout_date, data.logoutDate); // Guaranteed NOT NULL
-    const notifyDate = getStrictDate(data.notify_date, data.notifyDate);
     
-    let accValue = data.accessory || data.accessories || "";
-    if (Array.isArray(accValue)) accValue = accValue.join(", ");
+    // Dates hamesha YYYY-MM-DD jayengi, kabhi NULL nahi.
+    const startDate = safeDate(data.start_date, data.startDate);
+    const logoutDate = safeDate(data.logout_date, data.logoutDate);
 
+    // 💥 FIX: 'accessory' column hata diya gaya hai taaki MySQL crash na ho.
     const sql = `
       INSERT INTO requisitions 
-      (id, care_center_id, equipment_id, patient_name, quantity, start_date, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, logout_date, bed_no, referral, status, accessory) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, care_center_id, equipment_id, patient_name, quantity, start_date, payment_type, deal_type, unit, mode, delivery_address, notes, logout_date, bed_no, referral, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
       reqId,
-      data.care_center_id || data.careCenterId || "N/A",
-      data.equipment_id || data.equipmentId || "N/A",
-      data.patient_name || data.patientName || "Unknown",
+      data.care_center_id || data.careCenterId || "CARE-NEW",
+      data.equipment_id || data.equipmentId || data.deviceModel || "EQ-NEW",
+      data.patient_name || data.patientName || "Unknown Patient",
       data.quantity || 1,
       startDate,
       data.payment_type || data.paymentType || "Postpaid",
       data.deal_type || data.dealType || "B2B",
       data.unit || data.unit || "ODCOM",
       data.mode || data.mode || "Postpaid",
-      notifyDate,
       data.delivery_address || data.deliveryAddress || "N/A",
       data.notes || "",
       logoutDate, 
       data.bed_no || data.bedNo || "",
       data.referral || "",
-      data.status || 'Active',
-      accValue
+      data.status || 'Active'
     ];
 
     await pool.query(sql, values);
   }
 
   static async update(id, data) {
-    const startDate = getStrictDate(data.start_date, data.startDate);
-    const logoutDate = getStrictDate(data.logout_date, data.logoutDate);
-    const notifyDate = getStrictDate(data.notify_date, data.notifyDate);
-
-    let accValue = data.accessory || data.accessories || "";
-    if (Array.isArray(accValue)) accValue = accValue.join(", ");
+    const startDate = safeDate(data.start_date, data.startDate);
+    const logoutDate = safeDate(data.logout_date, data.logoutDate);
 
     const sql = `
        UPDATE requisitions 
        SET care_center_id = ?, equipment_id = ?, patient_name = ?, quantity = ?, 
            start_date = ?, payment_type = ?, deal_type = ?, unit = ?, 
-           mode = ?, notify_date = ?, delivery_address = ?, notes = ?,
-           logout_date = ?, bed_no = ?, referral = ?, status = ?, accessory = ?
+           mode = ?, delivery_address = ?, notes = ?, logout_date = ?, 
+           bed_no = ?, referral = ?, status = ?
        WHERE id = ?
     `;
     
     const values = [
-      data.care_center_id || data.careCenterId || "N/A", 
-      data.equipment_id || data.equipmentId || "N/A", 
-      data.patient_name || data.patientName || "Unknown", 
+      data.care_center_id || data.careCenterId, 
+      data.equipment_id || data.equipmentId, 
+      data.patient_name || data.patientName, 
       data.quantity || 1, 
       startDate, 
-      data.payment_type || data.paymentType || "Postpaid", 
-      data.deal_type || data.dealType || "B2B", 
-      data.unit || data.unit || "ODCOM", 
-      data.mode || data.mode || "Postpaid", 
-      notifyDate, 
-      data.delivery_address || data.deliveryAddress || "N/A", 
+      data.payment_type || data.paymentType, 
+      data.deal_type || data.dealType, 
+      data.unit, 
+      data.mode, 
+      data.delivery_address || data.deliveryAddress, 
       data.notes || "", 
       logoutDate, 
       data.bed_no || data.bedNo || "",       
       data.referral || "",                   
       data.status || 'Active', 
-      accValue, 
       id 
     ];
 
