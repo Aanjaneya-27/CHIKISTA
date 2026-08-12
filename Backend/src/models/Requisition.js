@@ -7,9 +7,11 @@ function formatMySQLDate(dateStr) {
 
   // YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  
-  // ISO format
+
+  // ISO string
   if (s.includes("T")) return s.split("T")[0];
+
+  // DD-MM-YYYY or DD/MM/YYYY
   const parts = s.split(/[-/]/);
   if (parts.length === 3) {
     if (parts[2].length === 4) {
@@ -39,12 +41,14 @@ class Requisition {
   }
 
   static async create(data) {
-    const reqId = data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
-
-    // 2. Strict Date Parsing with NOT NULL safety fallbacks
     const today = new Date().toISOString().slice(0, 10);
+
+    // Auto-generate ID if missing
+    const reqId = data.id || `REQ-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    // Strict Date Fallbacks (Guarantees NOT NULL Compliance)
     const startDateVal = formatMySQLDate(data.start_date || data.startDate || data.loginDate) || today;
-    const logoutDateVal = formatMySQLDate(data.logout_date || data.logoutDate) || startDateVal; // Guaranteed NOT NULL
+    const logoutDateVal = formatMySQLDate(data.logout_date || data.logoutDate) || startDateVal; 
     const notifyDateVal = formatMySQLDate(data.notify_date || data.notifyDate);
 
     let accValue = data.accessory || data.accessories || "";
@@ -54,15 +58,15 @@ class Requisition {
 
     const sql = `
       INSERT INTO requisitions 
-      (id, care_center_id, equipment_id, patient_name, quantity, start_date, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, logout_date, bed_no, referral, status, accessory) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, care_center_id, equipment_id, patient_name, quantity, start_date, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, logout_date, bed_no, referral, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
       reqId,
       data.care_center_id || data.careCenterId || "CARE-001",
       data.equipment_id || data.equipmentId || data.deviceModel || "EQ-001",
-      data.patient_name || data.patientName || "Unknown",
+      data.patient_name || data.patientName || "Patient",
       data.quantity || 1,
       startDateVal,
       data.payment_type || data.paymentType || "Postpaid",
@@ -72,33 +76,32 @@ class Requisition {
       notifyDateVal,
       data.delivery_address || data.deliveryAddress || "N/A",
       data.notes || "",
-      logoutDateVal, // Ensures NOT NULL condition passes 100%
+      logoutDateVal, // Guaranteed non-null YYYY-MM-DD
       data.bed_no || data.bedNo || "",
       data.referral || "",
-      data.status || 'Active',
-      accValue
+      data.status || 'Active'
     ];
 
     await pool.query(sql, values);
   }
 
   static async update(id, data) {
+    const today = new Date().toISOString().slice(0, 10);
+    const startDateVal = formatMySQLDate(data.start_date || data.startDate) || today;
+    const logoutDateVal = formatMySQLDate(data.logout_date || data.logoutDate) || startDateVal;
+    const notifyDateVal = formatMySQLDate(data.notify_date || data.notifyDate);
+
     let accValue = data.accessory || data.accessories || "";
     if (Array.isArray(accValue)) {
       accValue = accValue.length > 0 ? accValue.join(", ") : "";
     }
-
-    const today = new Date().toISOString().slice(0, 10);
-    const startDateVal = formatMySQLDate(data.start_date || data.startDate) || today;
-    const logoutDateVal = formatMySQLDate(data.logout_date || data.logoutDate) || startDateVal; // Guaranteed NOT NULL
-    const notifyDateVal = formatMySQLDate(data.notify_date || data.notifyDate);
 
     const sql = `
        UPDATE requisitions 
        SET care_center_id = ?, equipment_id = ?, patient_name = ?, quantity = ?, 
            start_date = ?, payment_type = ?, deal_type = ?, unit = ?, 
            mode = ?, notify_date = ?, delivery_address = ?, notes = ?,
-           logout_date = ?, bed_no = ?, referral = ?, status = ?, accessory = ?
+           logout_date = ?, bed_no = ?, referral = ?, status = ?
        WHERE id = ?
     `;
     
@@ -119,7 +122,6 @@ class Requisition {
       data.bed_no || data.bedNo || "",       
       data.referral || "",                   
       data.status || 'Active', 
-      accValue, 
       id 
     ];
 
