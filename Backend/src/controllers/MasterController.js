@@ -49,11 +49,27 @@ const getEquipment = async (req, res) => {
 };
 
 const addEquipment = async (req, res) => {
-  const { id, name, category, daily_rate, stock, status } = req.body;
   try {
-    await Equipment.create(id, name, category, daily_rate, stock);
+    const { name, category, daily_rate, stock, status } = req.body;
+        const id = req.body.id || 'EQ-' + Date.now();
+
+    await pool.query(
+      "INSERT INTO equipment (id, name, category, daily_rate, stock, status) VALUES (?, ?, ?, ?, ?, ?)",
+      [
+        id, 
+        name, 
+        category || 'General', 
+        daily_rate || 0, 
+        stock || 0, 
+        status || 'Active'
+      ]
+    );
+
     res.status(201).json({ message: "Equipment Added!" });
-  } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
+  } catch (error) { 
+    console.error("Add Equipment Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message, sqlError: error.sqlMessage }); 
+  }
 };
 
 const updateEquipment = async (req, res) => {
