@@ -23,6 +23,13 @@ function formatMySQLDate(dateStr) {
   return null;
 }
 
+// Fallback Helper: Never returns NULL
+function getSafeDate(d1, d2) {
+  const parsed = formatMySQLDate(d1) || formatMySQLDate(d2);
+  if (parsed) return parsed;
+  return new Date().toISOString().slice(0, 10); // Fallback to TODAY (YYYY-MM-DD)
+}
+
 class Requisition {
   static async getAll() {
     const sql = `SELECT * FROM requisitions ORDER BY created_at DESC`;
@@ -37,12 +44,17 @@ class Requisition {
   }
 
   static async create(data) {
-    const today = new Date().toISOString().slice(0, 10);
     const reqId = data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    const startDateVal = formatMySQLDate(data.start_date || data.startDate || data.loginDate) || today;
-    const logoutDateVal = formatMySQLDate(data.logout_date || data.logoutDate) || startDateVal; 
-    const notifyDateVal = formatMySQLDate(data.notify_date || data.notifyDate);
+    // Guarantees NO NULL for NOT NULL columns
+    const startDateVal = getSafeDate(data.start_date, data.startDate);
+    const logoutDateVal = getSafeDate(data.logout_date, data.logoutDate); 
+    const notifyDateVal = formatMySQLDate(data.notify_date || data.notifyDate) || startDateVal;
+
+    let accValue = data.accessory || data.accessories || "";
+    if (Array.isArray(accValue)) {
+      accValue = accValue.length > 0 ? accValue.join(", ") : "";
+    }
 
     const sql = `
       INSERT INTO requisitions 
@@ -62,7 +74,7 @@ class Requisition {
       data.unit || "ODCOM",
       data.mode || "Postpaid",
       notifyDateVal,
-      data.delivery_address || data.deliveryAddress || "N/A",
+      data.delivery_address || data.deliveryAddress || "Address",
       data.notes || "",
       logoutDateVal,
       data.bed_no || data.bedNo || "",
@@ -74,10 +86,14 @@ class Requisition {
   }
 
   static async update(id, data) {
-    const today = new Date().toISOString().slice(0, 10);
-    const startDateVal = formatMySQLDate(data.start_date || data.startDate) || today;
-    const logoutDateVal = formatMySQLDate(data.logout_date || data.logoutDate) || startDateVal;
-    const notifyDateVal = formatMySQLDate(data.notify_date || data.notifyDate);
+    const startDateVal = getSafeDate(data.start_date, data.startDate);
+    const logoutDateVal = getSafeDate(data.logout_date, data.logoutDate);
+    const notifyDateVal = formatMySQLDate(data.notify_date || data.notifyDate) || startDateVal;
+
+    let accValue = data.accessory || data.accessories || "";
+    if (Array.isArray(accValue)) {
+      accValue = accValue.length > 0 ? accValue.join(", ") : "";
+    }
 
     const sql = `
        UPDATE requisitions 
@@ -89,17 +105,17 @@ class Requisition {
     `;
     
     const values = [
-      data.care_center_id || data.careCenterId, 
-      data.equipment_id || data.equipmentId, 
-      data.patient_name || data.patientName, 
+      data.care_center_id || data.careCenterId || "CARE-001", 
+      data.equipment_id || data.equipmentId || "EQ-001", 
+      data.patient_name || data.patientName || "Patient", 
       data.quantity || 1, 
       startDateVal, 
-      data.payment_type || data.paymentType, 
-      data.deal_type || data.dealType, 
-      data.unit, 
-      data.mode, 
+      data.payment_type || data.paymentType || "Postpaid", 
+      data.deal_type || data.dealType || "B2B", 
+      data.unit || "ODCOM", 
+      data.mode || "Postpaid", 
       notifyDateVal, 
-      data.delivery_address || data.deliveryAddress, 
+      data.delivery_address || data.deliveryAddress || "Address", 
       data.notes || "", 
       logoutDateVal, 
       data.bed_no || data.bedNo || "",       
