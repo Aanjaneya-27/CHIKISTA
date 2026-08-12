@@ -1,19 +1,23 @@
 const pool = require("../config/database");
 
 function formatMySQLDate(dateStr) {
-  if (!dateStr) return null;
+  if (!dateStr || dateStr === "null" || dateStr === "undefined") return null;
   const s = String(dateStr).trim();
-  if (!s || s === "null" || s === "undefined") return null;
+  
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
   if (s.includes("T")) return s.split("T")[0];
 
   const parts = s.split(/[-/]/);
   if (parts.length === 3) {
-    if (parts[0].length === 2 && parts[2].length === 4) {
-      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    if (parts[2].length === 4) {
+      const day = parts[0].padStart(2, "0");
+      const month = parts[1].padStart(2, "0");
+      return `${parts[2]}-${month}-${day}`;
     }
     if (parts[0].length === 4) {
-      return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+      const month = parts[1].padStart(2, "0");
+      const day = parts[2].padStart(2, "0");
+      return `${parts[0]}-${month}-${day}`;
     }
   }
 
@@ -21,7 +25,6 @@ function formatMySQLDate(dateStr) {
   if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
   return null;
 }
-
 class Requisition {
   static async getAll() {
     const sql = `SELECT * FROM requisitions ORDER BY created_at DESC`;
@@ -81,7 +84,7 @@ static async update(id, data) {
     formatMySQLDate(rawNotifyDate), 
     data.delivery_address || data.deliveryAddress, 
     data.notes || null, 
-    formatMySQLDate(rawLogoutDate), // 👈 Dual-checked key
+    formatMySQLDate(rawLogoutDate), 
     data.bed_no || data.bedNo || "",       
     data.referral || "",                   
     data.status || 'Pending', 
