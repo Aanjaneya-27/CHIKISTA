@@ -335,11 +335,11 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
               <Field label="Login Date (Rental Start)" required error={errors.startDate}>
                 <TextInput disabled={readOnly} type="date" value={form.startDate} error={errors.startDate} onChange={(e) => set({ startDate: e.target.value })} />
               </Field>
-                <Field label="Logout Date (Return)" required error={errors.logoutDate}>
+<Field label="Logout Date (Return)" required error={errors.logoutDate}>
   <TextInput 
     disabled={readOnly} 
     type="date" 
-    value={form.logoutDate || form.logout_date || ""} 
+    value={form.logoutDate || ""} 
     error={errors.logoutDate} 
     onChange={(e) => set({ logoutDate: e.target.value, logout_date: e.target.value })} 
   />
@@ -772,41 +772,40 @@ const fetchLogs = useCallback(async () => {
     });
   }, [logs, search, statusFilter, dealTypeFilter, modeFilter, careCenterFilter, careCenters, equipmentCatalog]);
 
- const handleAdd = async (data) => {
-    try {
-      const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
-      
-      const backendData = {
-        care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
-        equipment_id: data.equipmentId,
-        patient_name: data.patientName,
-        quantity: data.quantity || 1,
-        start_date: data.startDate || data.loginDate, 
-        logout_date: data.logoutDate || data.logout_date || null, 
-        bed_no: data.bedNo || data.bed_no || "", 
-        referral: data.referral || "",          
-        payment_type: data.paymentType,
-        deal_type: data.dealType,
-        unit: data.unit,
-        mode: data.mode,
-        notify_date: data.notifyDate || null,
-        delivery_address: data.deliveryAddress,
-        notes: data.notes,
-        accessory: accStr,
-        accessories: accStr, 
-        status: "Active"
-      };
+  const handleAdd = async (data) => {
+  try {
+    const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
+    
+    const backendData = {
+      id: data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
+      care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
+      equipment_id: data.equipmentId || data.deviceModel,
+      patient_name: data.patientName,
+      quantity: data.quantity || 1,
+      start_date: data.startDate || data.loginDate, 
+      logout_date: data.logoutDate || data.logout_date || data.startDate || data.loginDate, 
+      bed_no: data.bedNo || "", 
+      referral: data.referral || "",          
+      payment_type: data.paymentType || data.mode,
+      deal_type: data.dealType,
+      unit: data.unit,
+      mode: data.mode,
+      notify_date: data.notifyDate || null,
+      delivery_address: data.deliveryAddress,
+      notes: data.notes || "",
+      accessory: accStr,
+      accessories: accStr, 
+      status: "Active"
+    };
 
-      await API.post("/rental/requisitions", backendData);
-      
-      await fetchLogs();
-      
-      setShowAddPage(false);
-      toast.success("Requisition saved successfully!");
-    } catch (err) {
-      toast.error("Error saving Requisition: " + (err.response?.data?.message || err.message)); 
-    }
-  };
+    await API.post("/rental/requisitions", backendData);
+    await fetchLogs();
+    setShowAddPage(false);
+    toast.success("Requisition saved successfully!");
+  } catch (err) {
+    toast.error("Error saving Requisition: " + (err.response?.data?.message || err.message)); 
+  }
+};
 
  const handleEdit = async (data) => {
     try {

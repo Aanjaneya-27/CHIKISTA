@@ -37,21 +37,37 @@ class Requisition {
     const [rows] = await pool.query(sql, [id]);
     return rows[0];
   }
+static async create(data) {
+  const startDateVal = formatMySQLDate(data.start_date || data.startDate || data.loginDate);
+  const logoutDateVal = formatMySQLDate(data.logout_date || data.logoutDate) || startDateVal;
+  const notifyDateVal = formatMySQLDate(data.notify_date || data.notifyDate);
 
-  static async create(data) {
-    const sql = `
-      INSERT INTO requisitions 
-      (id, care_center_id, equipment_id, patient_name, quantity, start_date, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, logout_date, bed_no, referral, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    const values = [
-      data.id, data.care_center_id, data.equipment_id, data.patient_name, data.quantity, 
-      formatMySQLDate(data.start_date || data.loginDate), data.payment_type, data.deal_type, data.unit, data.mode, 
-      formatMySQLDate(data.notify_date) || null, data.delivery_address, data.notes || null, 
-      formatMySQLDate(data.logout_date || data.logoutDate) || null, data.bed_no || null, data.referral || null, data.status || 'Active' 
-    ];
-    await pool.query(sql, values);
-  }
+  const sql = `
+    INSERT INTO requisitions 
+    (id, care_center_id, equipment_id, patient_name, quantity, start_date, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, logout_date, bed_no, referral, status) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+  const values = [
+    data.id, 
+    data.care_center_id || data.careCenterId, 
+    data.equipment_id || data.equipmentId, 
+    data.patient_name || data.patientName, 
+    data.quantity || 1, 
+    startDateVal, 
+    data.payment_type || data.paymentType, 
+    data.deal_type || data.dealType, 
+    data.unit, 
+    data.mode, 
+    notifyDateVal, 
+    data.delivery_address || data.deliveryAddress, 
+    data.notes || null, 
+    logoutDateVal, 
+    data.bed_no || data.bedNo || null, 
+    data.referral || null, 
+    data.status || 'Active' 
+  ];
+  await pool.query(sql, values);
+}
 
 static async update(id, data) {
   let accValue = data.accessory || data.accessories || "";
