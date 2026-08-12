@@ -18,6 +18,20 @@ const addCareCenter = async (req, res) => {
   } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
 };
 
+const updateCareCenter = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, address, contact_person, phone, gst } = req.body;
+    await pool.query(
+      "UPDATE care_centers SET name = ?, address = ?, contact_person = ?, phone = ?, gst = ? WHERE id = ?",
+      [name, address, contact_person, phone, gst, id]
+    );
+    res.status(200).json({ message: "Care Center updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message, sqlError: error.sqlMessage });
+  }
+};
+
 const deleteCareCenter = async (req, res) => {
   try {
     const { id } = req.params;
@@ -44,6 +58,20 @@ const addEquipment = async (req, res) => {
   } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
 };
 
+const updateEquipment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, category, daily_rate, stock } = req.body;
+    await pool.query(
+      "UPDATE equipment SET name = ?, category = ?, daily_rate = ?, stock = ? WHERE id = ?",
+      [name, category, daily_rate, stock, id]
+    );
+    res.status(200).json({ message: "Equipment updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message, sqlError: error.sqlMessage });
+  }
+};
+
 const deleteEquipment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -53,7 +81,6 @@ const deleteEquipment = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 const getCategories = async (req, res) => {
   try {
@@ -73,6 +100,18 @@ const addCategory = async (req, res) => {
     res.status(500).json({ message: "Server error", sqlError: error.sqlMessage }); 
   }
 };
+
+const updateCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    await pool.query("UPDATE categories SET name = ? WHERE id = ?", [name, id]);
+    res.status(200).json({ message: "Category updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message, sqlError: error.sqlMessage });
+  }
+};
+
 const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;  
@@ -107,7 +146,21 @@ const addReference = async (req, res) => {
     console.error(error);
     res.status(500).json({ message: "Server error", sqlError: error.sqlMessage }); 
   }
-  };
+};
+
+const updateReference = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { doctorName, phone } = req.body;
+    await pool.query(
+      "UPDATE `references` SET name = ?, contact = ? WHERE id = ?",
+      [doctorName, phone, id]
+    );
+    res.status(200).json({ message: "Reference updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message, sqlError: error.sqlMessage });
+  }
+};
 
 const deleteReference = async (req, res) => {
   try {
@@ -141,6 +194,21 @@ const addDeliveryExecutive = async (req, res) => {
     res.status(500).json({ message: "Server error", sqlError: error.sqlMessage }); 
   }
 };
+
+const updateDeliveryExecutive = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { driverName, phone, status } = req.body;
+    await pool.query(
+      "UPDATE delivery_executives SET name = ?, phone = ?, status = ? WHERE id = ?",
+      [driverName, phone, status || 'Active', id]
+    );
+    res.status(200).json({ message: "Delivery Executive updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message, sqlError: error.sqlMessage });
+  }
+};
+
 const deleteDeliveryExecutive = async (req, res) => {
   try {
     const { id } = req.params;
@@ -154,9 +222,9 @@ const deleteDeliveryExecutive = async (req, res) => {
 
 
 module.exports = { 
-  getCareCenters, addCareCenter, deleteCareCenter, 
-  getEquipment, addEquipment, deleteEquipment, 
-  getCategories, addCategory, deleteCategory, 
-  getReferences, addReference, deleteReference, 
-  getDeliveryExecutives, addDeliveryExecutive, deleteDeliveryExecutive 
+  getCareCenters, addCareCenter, updateCareCenter, deleteCareCenter, 
+  getEquipment, addEquipment, updateEquipment, deleteEquipment, 
+  getCategories, addCategory, updateCategory, deleteCategory, 
+  getReferences, addReference, updateReference, deleteReference, 
+  getDeliveryExecutives, addDeliveryExecutive, updateDeliveryExecutive, deleteDeliveryExecutive 
 };
