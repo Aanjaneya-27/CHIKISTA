@@ -2,30 +2,40 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/database"); 
 
+const getSafeDate = (dateStr) => {
+  const today = new Date().toISOString().slice(0, 10);
+  if (!dateStr || String(dateStr).trim() === "") return today;
+  return dateStr.toString().slice(0, 10);
+};
+
 router.post("/requisitions", async (req, res) => {
   try {
     console.log("REQUISITION PAYLOAD:", req.body); 
 
     const { 
       id, care_center_id, equipment_id, patient_name, quantity, 
-      start_date, deal_type, unit, mode, notify_date, 
+      start_date, logout_date, deal_type, unit, mode, notify_date, 
       delivery_address, notes 
     } = req.body;
 
-    const cleanStartDate = start_date && start_date.trim() !== "" ? start_date : null;
-    const cleanNotifyDate = notify_date && notify_date.trim() !== "" ? notify_date : null;
+    const cleanStartDate = getSafeDate(start_date);
+    const cleanLogoutDate = getSafeDate(logout_date); // 👈 YEH MISSING THA!
+    const cleanNotifyDate = notify_date && notify_date.trim() !== "" ? notify_date.toString().slice(0, 10) : null;
+
+    const reqId = id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
 
     await pool.query(
       `INSERT INTO requisitions 
-      (id, care_center_id, equipment_id, patient_name, quantity, start_date, deal_type, unit, mode, notify_date, delivery_address, notes) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, deal_type, unit, mode, notify_date, delivery_address, notes) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, 
-        care_center_id || null, 
-        equipment_id || null, 
+        reqId, 
+        care_center_id || "CARE-NEW", 
+        equipment_id || "EQ-NEW", 
         patient_name || "Unknown Patient", 
         quantity || 1, 
         cleanStartDate, 
+        cleanLogoutDate, 
         deal_type || "B2B", 
         unit || "ODCOM", 
         mode || "Postpaid", 
@@ -74,26 +84,26 @@ router.get("/notifications", async (req, res) => {
   }
 });
 
-
 router.put("/requisitions/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { 
       care_center_id, equipment_id, patient_name, quantity, 
-      start_date, deal_type, unit, mode, notify_date, 
+      start_date, logout_date, deal_type, unit, mode, notify_date, 
       delivery_address, notes 
     } = req.body;
 
-    const cleanStartDate = start_date ? start_date.toString().slice(0, 10) : null;
+    const cleanStartDate = getSafeDate(start_date);
+    const cleanLogoutDate = getSafeDate(logout_date);
     const cleanNotifyDate = notify_date ? notify_date.toString().slice(0, 10) : null;
 
     await pool.query(
       `UPDATE requisitions 
-       SET care_center_id=?, equipment_id=?, patient_name=?, quantity=?, start_date=?, deal_type=?, unit=?, mode=?, notify_date=?, delivery_address=?, notes=?
+       SET care_center_id=?, equipment_id=?, patient_name=?, quantity=?, start_date=?, logout_date=?, deal_type=?, unit=?, mode=?, notify_date=?, delivery_address=?, notes=?
        WHERE id=?`,
       [
         care_center_id || null, equipment_id || null, patient_name || "Unknown Patient", quantity || 1, 
-        cleanStartDate, deal_type || "B2B", unit || "ODCOM", mode || "Postpaid", 
+        cleanStartDate, cleanLogoutDate, deal_type || "B2B", unit || "ODCOM", mode || "Postpaid", 
         cleanNotifyDate, delivery_address || "", notes || "", id
       ]
     );
@@ -105,14 +115,10 @@ router.put("/requisitions/:id", async (req, res) => {
   }
 });
 
-
 router.delete("/requisitions/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // MySQL query to delete the row
     await pool.query(`DELETE FROM requisitions WHERE id = ?`, [id]);
-    
     res.status(200).json({ message: "Requisition Deleted Successfully!" });
   } catch (err) {
     console.error("Delete Error:", err);
