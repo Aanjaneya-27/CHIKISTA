@@ -635,9 +635,9 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
   
   const [logs, setLogs] = useState([]); 
   
-  const fetchLogs = useCallback(async () => {
+const fetchLogs = useCallback(async () => {
     try {
-      const response = await API.get("/rental/requisitions");
+      const response = await API.get(`/rental/requisitions?t=${Date.now()}`);
       setLogs(response.data);
     } catch (error) {
       console.error("Failed to fetch logs:", error);
