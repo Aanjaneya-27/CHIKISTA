@@ -263,22 +263,21 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
               </div>
               <Field label="Contact Person / Doctor"><TextInput disabled={readOnly} value={form.contactPerson} onChange={(e) => set({ contactPerson: e.target.value })} placeholder="Enter name" /></Field>
               <Field label="Phone"><TextInput disabled={readOnly} value={form.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="Enter phone" /></Field>
-              <Field label="GST / ID Number"><TextInput disabled={readOnly} value={form.gst} onChange={(e) => set({ gst: e.target.value })} placeholder="Enter GST/ID" /></Field>
-              <Field label="Address"><TextInput disabled={readOnly} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder="Enter full address" /></Field>
-              
+               <Field label="GST / ID Number"><TextInput disabled={readOnly} value={form.gst || form.gst_number || form.gstNumber || ""} onChange={(e) => set({ gst: e.target.value })} placeholder="Enter GST/ID" /></Field>
+<Field label="Address"><TextInput disabled={readOnly} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder="Enter full address" /></Field>              
               <div className="sm:col-span-2 grid grid-cols-2 gap-4">
-                <Field label="Bed No"><TextInput disabled={readOnly} value={form.bedNo} onChange={(e) => set({ bedNo: e.target.value })} /></Field>
-                <Field label="Referral">
-                  <Select disabled={readOnly} value={form.referral} onChange={(e) => set({ referral: e.target.value })}>
-                    <option value="">-- Select Referral --</option>
-                    {references.map((r) => (
-                      <option key={r.id} value={r.doctorName || r.name}>
-                        {r.doctorName || r.name} {r.domain ? `(${r.domain})` : ""}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              </div>
+  <Field label="Bed No"><TextInput disabled={readOnly} value={form.bedNo || form.bed_number || form.bedNumber || ""} onChange={(e) => set({ bedNo: e.target.value, bed_number: e.target.value })} /></Field>
+  <Field label="Referral">
+    <Select disabled={readOnly} value={form.referral || form.referral_doctor || form.referralDoctor || ""} onChange={(e) => set({ referral: e.target.value, referral_doctor: e.target.value })}>
+      <option value="">-- Select Referral --</option>
+      {references.map((r) => (
+        <option key={r.id} value={r.doctorName || r.name}>
+          {r.doctorName || r.name} {r.domain ? `(${r.domain})` : ""}
+        </option>
+      ))}
+    </Select>
+  </Field>
+</div>
             </div>
           </div>
 
@@ -843,41 +842,43 @@ const handleAdd = async (data) => {
   }
 };
  const handleEdit = async (data) => {
-    try {
-      const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
-      const newLogoutDate = data.logoutDate || data.logout_date || null;
-      const newStartDate = data.startDate || data.start_date;
-      const newNotifyDate = data.notifyDate || data.notify_date || null;
+  try {
+    const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
+    const newLogoutDate = data.logoutDate || data.logout_date || null;
+    const newStartDate = data.startDate || data.start_date;
+    const newNotifyDate = data.notifyDate || data.notify_date || null;
 
-      const backendData = {
-        care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
-        equipment_id: data.equipmentId || data.equipment_id,
-        patient_name: data.patientName || data.patient_name,
-        quantity: data.quantity || 1,
-        start_date: newStartDate,
-        logout_date: newLogoutDate,
-        bed_no: data.bedNo || data.bed_no || "", 
-        referral: data.referral || "",          
-        payment_type: data.paymentType || data.payment_type,
-        deal_type: data.dealType || data.deal_type,
-        unit: data.unit,
-        mode: data.mode,
-        notify_date: newNotifyDate,
-        delivery_address: data.deliveryAddress || data.delivery_address,
-        notes: data.notes || "",
-        status: data.status || "Active",
-        accessory: accStr,   
-        accessories: accStr 
-      };
-      
-      await API.put(`/rental/requisitions/${data.id}`, backendData); 
-      await fetchLogs();
-      setModal(null);
-      toast.success("Requisition updated successfully!"); 
-    } catch (err) {
-      toast.error("Update failed: " + (err.response?.data?.message || err.message));
-    }
-  };
+    const backendData = {
+      care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
+      equipment_id: data.equipmentId || data.equipment_id,
+      patient_name: data.patientName || data.patient_name,
+      quantity: data.quantity || 1,
+      start_date: newStartDate,
+      logout_date: newLogoutDate,
+      bed_number: data.bedNo || data.bed_number || data.bedNumber || "", 
+      referral_doctor: data.referral || data.referral_doctor || data.referralDoctor || "",         
+      gst_number: data.gst || data.gst_number || data.gstNumber || "",
+
+      payment_type: data.paymentType || data.payment_type,
+      deal_type: data.dealType || data.deal_type,
+      unit: data.unit,
+      mode: data.mode,
+      notify_date: newNotifyDate,
+      delivery_address: data.deliveryAddress || data.delivery_address,
+      notes: data.notes || "",
+      status: data.status || "Active",
+      accessory: accStr,   
+      accessories: accStr 
+    };
+    
+    await API.put(`/rental/requisitions/${data.id}`, backendData); 
+    await fetchLogs();
+    setModal(null);
+    toast.success("Requisition updated successfully!"); 
+  } catch (err) {
+    toast.error("Update failed: " + (err.response?.data?.message || err.message));
+  }
+};
 
   const handleDelete = async () => {
     try {
