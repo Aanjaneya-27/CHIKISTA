@@ -9,26 +9,18 @@ const getRequisitions = async (req, res) => {
 };
 
 const createRequisition = async (req, res) => {
-  const data = req.body;
-  if (data.payment_type === "Prepaid" && !data.notify_date) {
-    return res.status(400).json({ message: "Notify Date is mandatory for Prepaid requisitions!" });
-  }
-
   try {
-    await Requisition.create(data);
-    await Notification.create("info", "New Requisition Submitted", `REQ ${data.id} created for patient ${data.patient_name}.`);
-    
-    const today = new Date().toISOString().slice(0, 10);
-    if (data.notify_date === today) {
-      await Notification.create("warning", "Action Required: Pay Now", `Payment is due TODAY for ${data.patient_name} (REQ ${data.id}).`);
-    }
-
+    await Requisition.create(req.body);
     res.status(201).json({ message: "Requisition created successfully!" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("CRASH ERROR:", error);
+      res.status(500).json({ 
+      message: "Server Crash Error", 
+      error: error.message, 
+      sqlMessage: error.sqlMessage || "No SQL details" 
+    });
   }
 };
-
 const updateRequisition = async (req, res) => {
   const { id } = req.params;
   
