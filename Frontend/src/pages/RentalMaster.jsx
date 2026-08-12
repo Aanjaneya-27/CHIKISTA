@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, SlidersHorizontal, Plus, Eye, Pencil, Trash2, PackageCheck, Clock, Activity, AlertTriangle, Building2, User, Tag, CreditCard, Save, X, ClipboardList, ArrowLeft, ChevronRight, ImagePlus, Truck, FileText, Calendar, ChevronDown } from "lucide-react"; 
 import { PrimaryButton, GhostButton, IconAction, ConfirmDialog, StatusBadge, Field, Select, TextInput, toast } from "../components/UiComponents";
 import { RENTAL_STATES, DEAL_TYPE_OPTIONS, MODE_OPTIONS, UNIT_OPTIONS, PAYMENT_TYPES } from "../data/MockData";
@@ -129,7 +129,6 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
   
   const [form, setForm] = useState(() => {
     if (initial) {
-      // 🔥 YEH HAI ASLI FIX: Backend se chahe accessory aaye ya accessories, dono handle ho jayenge
       const rawAcc = initial.accessory || initial.accessories;
       let parsedAcc = [];
       
@@ -244,7 +243,6 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
                   </Select>
                 </Field>
               </div>
-
             </div>
           </div>
 
@@ -612,7 +610,25 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
   );
 }
 
-export default function RentalMaster({ permissions, logs, setLogs, careCenters, equipmentCatalog, references = [], categories = [] }) {
+
+export default function RentalMaster({ permissions, careCenters, equipmentCatalog, references = [], categories = [] }) {
+  
+  const [logs, setLogs] = useState([]); 
+  
+  const fetchLogs = useCallback(async () => {
+    try {
+      const response = await API.get("/rental/requisitions");
+      setLogs(response.data);
+    } catch (error) {
+      console.error("Failed to fetch logs:", error);
+    }
+  }, []);
+
+ useEffect(() => {
+    // eslint-disable-next-line
+    fetchLogs();
+  }, [fetchLogs]);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [dealTypeFilter, setDealTypeFilter] = useState("All");
@@ -689,7 +705,7 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
       const eqName = l.equipmentName || equipmentCatalog.find(e => e.id === eqId)?.name || eqId;
 
       const matchesSearch = !search || 
-        l.id.toLowerCase().includes(search.toLowerCase()) || 
+        l.id.toString().toLowerCase().includes(search.toLowerCase()) || 
         (eqName || "").toLowerCase().includes(search.toLowerCase()) || 
         (l.patientName || l.patient_name || "").toLowerCase().includes(search.toLowerCase()) || 
         (ccName || "").toLowerCase().includes(search.toLowerCase());
@@ -705,11 +721,9 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
 
  const handleAdd = async (data) => {
     try {
-      const nextId = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
       
       const backendData = {
-        id: nextId,
         care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
         equipment_id: data.equipmentId,
         patient_name: data.patientName,
@@ -717,7 +731,7 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         start_date: data.startDate || data.loginDate, 
         logout_date: data.logoutDate || data.logout_date || null, 
         bed_no: data.bedNo || data.bed_no || "", 
-        referral: data.referral || "",           
+        referral: data.referral || "",          
         payment_type: data.paymentType,
         deal_type: data.dealType,
         unit: data.unit,
@@ -725,13 +739,15 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
         notify_date: data.notifyDate || null,
         delivery_address: data.deliveryAddress,
         notes: data.notes,
-        accessory: accStr,   // 🔥 Dono add kar diye, DB mein miss nahi hoga
-        accessories: accStr, // 🔥 Dono add kar diye
+        accessory: accStr,
+        accessories: accStr, 
         status: "Active"
       };
 
       await API.post("/rental/requisitions", backendData);
-      setLogs((prev) => [{ ...backendData }, ...prev]);
+      
+      await fetchLogs();
+      
       setShowAddPage(false);
       toast.success("Requisition saved successfully!");
     } catch (err) {
@@ -765,7 +781,9 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
       };
       
       await API.put(`/rental/requisitions/${data.id}`, backendData); 
-      setLogs((prev) => prev.map((l) => (l.id === data.id ? { ...l, ...backendData } : l)));
+      
+      await fetchLogs();
+      
       setModal(null);
       toast.success("Requisition updated successfully!"); 
     } catch (err) {
@@ -777,7 +795,8 @@ export default function RentalMaster({ permissions, logs, setLogs, careCenters, 
     try {
       await API.delete(`/rental/requisitions/${confirmDelete.id}`);
       
-      setLogs((prev) => prev.filter((l) => l.id !== confirmDelete.id));
+      await fetchLogs();
+      
       setConfirmDelete(null);
       toast.success("Requisition deleted successfully!"); 
     } catch (err) {

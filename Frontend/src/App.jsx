@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { Toaster, toast } from "./components/UiComponents"; 
-import { ROLES, initialCareCenters, initialEquipment, initialCategories, initialReferences, initialDeliveryExecutives, initialLogs, initialNotifications } from "./data/MockData";
+import { ROLES } from "./data/MockData";
 import { Sidebar, Topbar, NotificationsPanel } from "./components/layout/Layout";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -51,13 +51,13 @@ function AccessDenied({ role }) {
 function MainAppLayout({ role, handleLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [careCenters, setCareCenters] = useState(initialCareCenters);
-  const [equipmentCatalog, setEquipmentCatalog] = useState(initialEquipment);
-  const [categories, setCategories] = useState(initialCategories);
-  const [references, setReferences] = useState(initialReferences);
-  const [deliveryExecutives, setDeliveryExecutives] = useState(initialDeliveryExecutives);
-  const [logs, setLogs] = useState(initialLogs);
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const [careCenters, setCareCenters] = useState([]);
+  const [equipmentCatalog, setEquipmentCatalog] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [references, setReferences] = useState([]);
+  const [deliveryExecutives, setDeliveryExecutives] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   
   const unreadCount = notifications.filter((n) => !n.read).length;
   const markNotifRead = (id) => setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
@@ -73,61 +73,70 @@ function MainAppLayout({ role, handleLogout }) {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const ccRes = await API.get("/master/carecenters");
-        const eqRes = await API.get("/master/equipment");
+        const ccRes = await API.get("/master/carecenters").catch(() => ({ data: [] }));
+        const eqRes = await API.get("/master/equipment").catch(() => ({ data: [] }));
+        const catRes = await API.get("/master/categories").catch(() => ({ data: [] }));
+        const refRes = await API.get("/master/references").catch(() => ({ data: [] }));
+        const deRes = await API.get("/master/delivery-executives").catch(() => ({ data: [] }));
         
-        if (ccRes.data && ccRes.data.length > 0) {
+        if (ccRes.data) {
           setCareCenters(ccRes.data.map(c => ({
             id: c.id, 
             name: c.name, 
             address: c.address, 
-            contactPerson: c.contact_person, 
+            contactPerson: c.contact_person || c.contactPerson, 
             phone: c.phone, 
-            gst: c.gst
+            gst: c.gst,
+            status: c.status
           })));
         }
 
-        if (eqRes.data && eqRes.data.length > 0) {
+        if (eqRes.data) {
           setEquipmentCatalog(eqRes.data.map(e => ({
             id: e.id, 
             name: e.name, 
             category: e.category, 
-            dailyRate: e.daily_rate, 
-            stock: e.stock
+            dailyRate: e.daily_rate || e.dailyRate, 
+            stock: e.stock,
+            status: e.status
           })));
         }
 
-        const reqRes = await API.get("/rental/requisitions");
-        if (reqRes.data && reqRes.data.length > 0) {
+        if (catRes.data) setCategories(catRes.data);
+        if (refRes.data) setReferences(refRes.data);
+        if (deRes.data) setDeliveryExecutives(deRes.data);
+
+        const reqRes = await API.get("/rental/requisitions").catch(() => ({ data: [] }));
+        if (reqRes.data) {
           setLogs(reqRes.data.map(r => ({
             id: r.id,
-            careCenterId: r.care_center_id,
+            careCenterId: r.care_center_id || r.careCenterId,
             careCenterName: r.careCenterName || "Care Center", 
-            equipmentId: r.equipment_id,
+            equipmentId: r.equipment_id || r.equipmentId,
             equipmentName: r.equipmentName || "Equipment", 
-            patientName: r.patient_name,
+            patientName: r.patient_name || r.patientName,
             quantity: r.quantity,
-            startDate: r.start_date,
-            logoutDate: r.logout_date || "",
-            paymentType: r.payment_type,
-            dealType: r.deal_type,
+            startDate: r.start_date || r.startDate,
+            logoutDate: r.logout_date || r.logoutDate || "",
+            paymentType: r.payment_type || r.paymentType,
+            dealType: r.deal_type || r.dealType,
             unit: r.unit,
             mode: r.mode,
-            notifyDate: r.notify_date,
-            deliveryAddress: r.delivery_address,
+            notifyDate: r.notify_date || r.notifyDate,
+            deliveryAddress: r.delivery_address || r.deliveryAddress,
             notes: r.notes,
             status: r.status || "Active" 
           })));
         }
 
-        const notifRes = await API.get("/rental/notifications");
-        if (notifRes.data && notifRes.data.length > 0) {
+        const notifRes = await API.get("/rental/notifications").catch(() => ({ data: [] }));
+        if (notifRes.data) {
           setNotifications(notifRes.data.map(n => ({
             id: n.id,
             title: n.title,
             message: n.message,
             type: n.type,
-            time: n.created_at,
+            time: n.created_at || n.time,
             read: false
           })));
         }

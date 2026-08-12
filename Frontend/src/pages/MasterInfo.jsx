@@ -3,7 +3,6 @@ import { Package, Tag, Building2, Users, Truck, MapPin, Phone, Pencil, Trash2, P
 import { PrimaryButton, GhostButton, IconAction, ConfirmDialog, Field, TextInput, Select, StatusBadge, toast } from "../components/UiComponents";
 import API from "../utils/api";
 
-
 function CareCenterFormModal({ initial, onClose, onSubmit }) {
   const [form, setForm] = useState({ 
     id: initial?.id || null,
@@ -62,7 +61,6 @@ function CareCenterFormModal({ initial, onClose, onSubmit }) {
     </div>
   );
 }
-
 
 function CategoryFormModal({ initial, onClose, onSubmit }) {
   const [form, setForm] = useState({ 
@@ -171,7 +169,6 @@ function ReferenceFormModal({ initial, onClose, onSubmit }) {
   );
 }
 
-
 function DeliveryExecutiveFormModal({ initial, onClose, onSubmit }) {
   const [form, setForm] = useState({ 
     id: initial?.id || null,
@@ -203,7 +200,6 @@ function DeliveryExecutiveFormModal({ initial, onClose, onSubmit }) {
           <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button>
         </div>
         <div className="space-y-4 px-6 py-5">
-          {/* 🔥 UPDATE: Delivery Agent Name label added */}
           <Field label="Delivery Agent Name" required error={errors.driverName}><TextInput value={form.driverName} error={errors.driverName} onChange={(e) => set({ driverName: e.target.value })} /></Field>
           <Field label="Active Mobile Hotline" required error={errors.phone}><TextInput type="tel" value={form.phone} error={errors.phone} onChange={(e) => set({ phone: e.target.value })} /></Field>
           <Field label="Status" required>
@@ -221,7 +217,6 @@ function DeliveryExecutiveFormModal({ initial, onClose, onSubmit }) {
     </div>
   );
 }
-
 
 function EquipmentFormModal({ initial, onClose, onSubmit }) {
   const [form, setForm] = useState({ 
@@ -257,7 +252,6 @@ function EquipmentFormModal({ initial, onClose, onSubmit }) {
         </div>
         <div className="space-y-4 px-6 py-5">
           <Field label="Equipment Name" required error={errors.name}><TextInput value={form.name} error={errors.name} onChange={(e) => set({ name: e.target.value })} /></Field>
-          {/* 🔥 UPDATE: Category Field removed completely */}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Daily Rate (₹)" required error={errors.dailyRate}><TextInput type="number" value={form.dailyRate} error={errors.dailyRate} onChange={(e) => set({ dailyRate: e.target.value })} /></Field>
             <Field label="Stock" required error={errors.stock}><TextInput type="number" value={form.stock} error={errors.stock} onChange={(e) => set({ stock: e.target.value })} /></Field>
@@ -290,87 +284,78 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
   const saveCareCenter = async (data) => { 
     try {
       if (data.id) { 
-        setCareCenters((prev) => prev.map((c) => (c.id === data.id ? data : c))); 
-        toast.success("Record Updated Successfully");
+        await API.put(`/master/carecenters/${data.id}`, data);
       } else { 
-        const newId = `CC${String(careCenters.length + 1).padStart(3, "0")}`; 
-        await API.post("/master/carecenters", {
-          id: newId, name: data.name, address: data.address,
-          contact_person: data.altPhone || "N/A", phone: data.phone, gst: "N/A", status: data.status
-        });
-        setCareCenters((prev) => [...prev, { ...data, id: newId }]); 
-        toast.success("Record Added Successfully");
+        await API.post("/master/carecenters", data);
       } 
+      const res = await API.get("/master/carecenters");
+      setCareCenters(res.data);
       setCcModal(null); 
+      toast.success(data.id ? "Record Updated" : "Record Added");
     } catch { toast.error("Unable to Save Record"); }
   };
 
   const saveEquipment = async (data) => { 
     try {
       if (data.id) { 
-        setEquipmentCatalog((prev) => prev.map((e) => (e.id === data.id ? data : e))); 
-        toast.success("Record Updated Successfully");
+        await API.put(`/master/equipment/${data.id}`, data);
       } else { 
-        const newId = `EQ${String(equipmentCatalog.length + 1).padStart(2, "0")}`; 
-        await API.post("/master/equipment", {
-          id: newId, name: data.name, category: data.category,
-          daily_rate: data.dailyRate, stock: data.stock, status: data.status
-        });
-        setEquipmentCatalog((prev) => [...prev, { ...data, id: newId }]); 
-        toast.success("Record Added Successfully");
+        await API.post("/master/equipment", data);
       } 
+      const res = await API.get("/master/equipment");
+      setEquipmentCatalog(res.data);
       setEqModal(null); 
+      toast.success(data.id ? "Record Updated" : "Record Added");
     } catch { toast.error("Unable to Save Record"); }
   };
 
-  const saveCategory = (data) => { 
-    if (data.id) { 
-      setCategories((prev) => prev.map((c) => (c.id === data.id ? data : c))); 
-      toast.success("Record Updated Successfully");
-    } else { 
-      setCategories((prev) => [...prev, { ...data, id: `CAT${String(prev.length + 1).padStart(2, "0")}` }]); 
-      toast.success("Record Added Successfully");
-    } 
-    setCatModal(null); 
+  const saveCategory = async (data) => { 
+    try {
+      if (data.id) {
+        await API.put(`/master/categories/${data.id}`, data);
+      } else {
+        await API.post("/master/categories", data);
+      }
+      const res = await API.get("/master/categories");
+      setCategories(res.data);
+      setCatModal(null);
+      toast.success(data.id ? "Record Updated" : "Record Added");
+    } catch { toast.error("Unable to Save Record"); }
   };
 
-  const saveReference = (data) => { 
-    if (data.id) { 
-      setReferences((prev) => prev.map((r) => (r.id === data.id ? data : r))); 
-      toast.success("Record Updated Successfully");
-    } else { 
-      setReferences((prev) => [...prev, { ...data, id: `REF${String(prev.length + 1).padStart(2, "0")}` }]); 
-      toast.success("Record Added Successfully");
-    } 
-    setRefModal(null); 
+  const saveReference = async (data) => { 
+    try {
+      if (data.id) {
+        await API.put(`/master/references/${data.id}`, data);
+      } else {
+        await API.post("/master/references", data);
+      }
+      const res = await API.get("/master/references");
+      setReferences(res.data);
+      setRefModal(null);
+      toast.success(data.id ? "Record Updated" : "Record Added");
+    } catch { toast.error("Unable to Save Record"); }
   };
 
-  const saveDeliveryExecutive = (data) => { 
-    if (data.id) { 
-      setDeliveryExecutives((prev) => prev.map((d) => (d.id === data.id ? data : d))); 
-      toast.success("Record Updated Successfully");
-    } else { 
-      setDeliveryExecutives((prev) => [...prev, { ...data, id: `DE${String(prev.length + 1).padStart(2, "0")}` }]); 
-      toast.success("Record Added Successfully");
-    } 
-    setDeModal(null); 
+  const saveDeliveryExecutive = async (data) => { 
+    try {
+      if (data.id) {
+        await API.put(`/master/delivery-executives/${data.id}`, data);
+      } else {
+        await API.post("/master/delivery-executives", data);
+      }
+      const res = await API.get("/master/delivery-executives");
+      setDeliveryExecutives(res.data);
+      setDeModal(null);
+      toast.success(data.id ? "Record Updated" : "Record Added");
+    } catch { toast.error("Unable to Save Record"); }
   };
-
-  // const handleDelete = () => {
-  //   if (confirmDelete.type === "center") setCareCenters((prev) => prev.filter((c) => c.id !== confirmDelete.item.id));
-  //   else if (confirmDelete.type === "equipment") setEquipmentCatalog((prev) => prev.filter((e) => e.id !== confirmDelete.item.id));
-  //   else if (confirmDelete.type === "category") setCategories((prev) => prev.filter((c) => c.id !== confirmDelete.item.id));
-  //   else if (confirmDelete.type === "reference") setReferences((prev) => prev.filter((r) => r.id !== confirmDelete.item.id));
-  //   else if (confirmDelete.type === "deliveryExecutive") setDeliveryExecutives((prev) => prev.filter((d) => d.id !== confirmDelete.item.id));
-    
-  //   setConfirmDelete(null);
-  //   toast.success("Record Deleted Successfully");
-  // };
 
   const handleDelete = async () => {
     try {
       const id = confirmDelete.item.id;
       const type = confirmDelete.type;
+      
       if (type === "center") {
         await API.delete(`/master/carecenters/${id}`);
         setCareCenters((prev) => prev.filter((c) => c.id !== id));
@@ -419,7 +404,7 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
     accessory: "Add New Accessory",
     careCenter: "Care Center Form",
     reference: "Link Reference",
-    deliveryExecutive: "Add Delivery Agent", // 🔥 Updated label
+    deliveryExecutive: "Add Delivery Agent",
   };
 
   const handleAddNewAsset = () => {
@@ -458,7 +443,7 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
           { key: "accessory", label: "Accessories", icon: Tag },
           { key: "careCenter", label: "Care Center", icon: Building2 },
           { key: "reference", label: "Reference", icon: Users },
-          { key: "deliveryExecutive", label: "Delivery Agent", icon: Truck }, // 🔥 Updated tab label
+          { key: "deliveryExecutive", label: "Delivery Agent", icon: Truck },
         ].map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${tab === t.key ? "bg-teal-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"}`}>
             <t.icon className="h-4 w-4" /> {t.label}
@@ -577,14 +562,12 @@ export default function MasterInfo({ careCenters, setCareCenters, equipmentCatal
       {tab === "deliveryExecutive" && (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-            {/* 🔥 Updated record text */}
             <div><h3 className="font-display text-sm font-bold text-slate-700">Delivery Agent</h3><p className="text-xs text-slate-400">{deliveryExecutives.length} agents on record</p></div>
           </div>
           <div className="smooth-scroll-x overflow-x-auto">
             <table className="w-full text-left text-sm" style={{ minWidth: 700 }}>
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/70 text-xs font-bold uppercase tracking-wide text-slate-400">
-                  {/* 🔥 Updated Table Header */}
                   <th className="px-5 py-3">Delivery Agent Name</th><th className="px-5 py-3">Hotline</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
