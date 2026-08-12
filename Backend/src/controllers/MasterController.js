@@ -208,36 +208,6 @@ const updateReference = async (req, res) => {
   }
 };
 
-const addReference = async (req, res) => {
-  try {
-    const { doctorName, phone, specialistDomain, specialist_domain, hospital, status } = req.body;
-    const finalSpecialist = specialistDomain || specialist_domain || '';
-    const finalHospital = hospital || '';
-    const id = 'REF-' + Date.now();
-    await pool.query(
-      "INSERT INTO `references` (id, name, contact, specialist_domain, hospital, status) VALUES (?, ?, ?, ?, ?, ?)",
-      [id, doctorName, phone, finalSpecialist, finalHospital, status || 'Active']
-    );
-    res.status(201).json({ message: "Reference Added!" });
-  } catch (error) { res.status(500).json({ message: "Server error", sqlError: error.sqlMessage }); }
-};
-
-const updateReference = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { doctorName, phone, specialistDomain, specialist_domain, hospital, status } = req.body;
-    const finalSpecialist = specialistDomain !== undefined ? specialistDomain : (specialist_domain || '');
-    const finalHospital = hospital !== undefined ? hospital : '';
-    await pool.query(
-      "UPDATE `references` SET name = ?, contact = ?, specialist_domain = ?, hospital = ?, status = ? WHERE id = ?",
-      [doctorName, phone, finalSpecialist, finalHospital, status || 'Active', id]
-    );
-    res.status(200).json({ message: "Reference updated successfully" });
-  } catch (error) {
-    res.status(400).json({ message: error.sqlMessage || error.message });
-  }
-};
-
 const deleteReference = async (req, res) => {
   try {
     const { id } = req.params;
