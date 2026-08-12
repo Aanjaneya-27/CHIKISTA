@@ -775,41 +775,46 @@ const fetchLogs = useCallback(async () => {
     }
   };
 
-  const handleEdit = async (data) => {
-    try {
-      const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
-      
-      const backendData = {
-        care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
-        equipment_id: data.equipmentId,
-        patient_name: data.patientName,
-        quantity: data.quantity || 1,
-        start_date: data.startDate || data.start_date,
-        logout_date: data.logoutDate || data.logout_date || null, 
-        bed_no: data.bedNo || data.bed_no || "", 
-        referral: data.referral || "",          
-        payment_type: data.paymentType,
-        deal_type: data.dealType,
-        unit: data.unit,
-        mode: data.mode,
-        notify_date: data.notifyDate || null,
-        delivery_address: data.deliveryAddress,
-        notes: data.notes,
-        status: data.status,
-        accessory: accStr,   
-        accessories: accStr 
-      };
-      
-      await API.put(`/rental/requisitions/${data.id}`, backendData); 
-      
-      await fetchLogs();
-      
-      setModal(null);
-      toast.success("Requisition updated successfully!"); 
-    } catch (err) {
-      toast.error("Update failed: " + (err.response?.data?.message || err.message));
-    }
-  };
+ const handleEdit = async (data) => {
+  try {
+    const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
+        const toISO = (d) => {
+      if (!d) return null;
+      if (d.includes('-') && d.split('-')[0].length === 4) return d; // pehle se YYYY-MM-DD hai
+      const p = d.split('-');
+      if (p.length === 3 && p[2].length === 4) return `${p[2]}-${p[1]}-${p[0]}`; // DD-MM-YYYY to YYYY-MM-DD
+      return d;
+    };
+
+    const backendData = {
+      care_center_id: data.careCenterId === "other" ? "NEW" : data.careCenterId,
+      equipment_id: data.equipmentId,
+      patient_name: data.patientName,
+      quantity: data.quantity || 1,
+      start_date: toISO(data.startDate || data.start_date),
+      logout_date: toISO(data.logoutDate || data.logout_date), 
+      bed_no: data.bedNo || data.bed_no || "", 
+      referral: data.referral || "",          
+      payment_type: data.paymentType,
+      deal_type: data.dealType,
+      unit: data.unit,
+      mode: data.mode,
+      notify_date: toISO(data.notifyDate || data.notify_date),
+      delivery_address: data.deliveryAddress,
+      notes: data.notes,
+      status: data.status,
+      accessory: accStr,   
+      accessories: accStr 
+    };
+    
+    await API.put(`/rental/requisitions/${data.id}`, backendData); 
+    await fetchLogs();
+    setModal(null);
+    toast.success("Requisition updated successfully!"); 
+  } catch (err) {
+    toast.error("Update failed: " + (err.response?.data?.message || err.message));
+  }
+};
 
   const handleDelete = async () => {
     try {
