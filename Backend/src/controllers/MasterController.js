@@ -104,14 +104,17 @@ const addCategory = async (req, res) => {
 const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
-    await pool.query("UPDATE categories SET name = ? WHERE id = ?", [name, id]);
+    const { name, status } = req.body; 
+    await pool.query(
+      "UPDATE categories SET name = ?, status = ? WHERE id = ?", 
+      [name, status || 'Active', id]
+    );
+    
     res.status(200).json({ message: "Category updated successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message, sqlError: error.sqlMessage });
   }
 };
-
 const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;  
