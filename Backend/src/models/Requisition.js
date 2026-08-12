@@ -5,13 +5,9 @@ function formatMySQLDate(dateStr) {
   const s = String(dateStr).trim();
   if (!s) return null;
 
-  // YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-
-  // ISO string
   if (s.includes("T")) return s.split("T")[0];
 
-  // DD-MM-YYYY or DD/MM/YYYY
   const parts = s.split(/[-/]/);
   if (parts.length === 3) {
     if (parts[2].length === 4) {
@@ -42,19 +38,11 @@ class Requisition {
 
   static async create(data) {
     const today = new Date().toISOString().slice(0, 10);
+    const reqId = data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // Auto-generate ID if missing
-    const reqId = data.id || `REQ-${Math.floor(100000 + Math.random() * 900000)}`;
-
-    // Strict Date Fallbacks (Guarantees NOT NULL Compliance)
     const startDateVal = formatMySQLDate(data.start_date || data.startDate || data.loginDate) || today;
     const logoutDateVal = formatMySQLDate(data.logout_date || data.logoutDate) || startDateVal; 
     const notifyDateVal = formatMySQLDate(data.notify_date || data.notifyDate);
-
-    let accValue = data.accessory || data.accessories || "";
-    if (Array.isArray(accValue)) {
-      accValue = accValue.length > 0 ? accValue.join(", ") : "";
-    }
 
     const sql = `
       INSERT INTO requisitions 
@@ -76,7 +64,7 @@ class Requisition {
       notifyDateVal,
       data.delivery_address || data.deliveryAddress || "N/A",
       data.notes || "",
-      logoutDateVal, // Guaranteed non-null YYYY-MM-DD
+      logoutDateVal,
       data.bed_no || data.bedNo || "",
       data.referral || "",
       data.status || 'Active'
@@ -90,11 +78,6 @@ class Requisition {
     const startDateVal = formatMySQLDate(data.start_date || data.startDate) || today;
     const logoutDateVal = formatMySQLDate(data.logout_date || data.logoutDate) || startDateVal;
     const notifyDateVal = formatMySQLDate(data.notify_date || data.notifyDate);
-
-    let accValue = data.accessory || data.accessories || "";
-    if (Array.isArray(accValue)) {
-      accValue = accValue.length > 0 ? accValue.join(", ") : "";
-    }
 
     const sql = `
        UPDATE requisitions 
