@@ -43,11 +43,15 @@ const deleteCareCenter = async (req, res) => {
 
 const getEquipment = async (req, res) => {
   try {
-    const rows = await Equipment.getAll();
+    const [rows] = await pool.query(`
+      SELECT *, daily_rate AS dailyRate 
+      FROM equipment
+    `);
     res.json(rows);
-  } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
+  } catch (error) { 
+    res.status(500).json({ message: "Server error", error: error.message }); 
+  }
 };
-
 const addEquipment = async (req, res) => {
   try {
     const { name, category, daily_rate, stock, status } = req.body;
