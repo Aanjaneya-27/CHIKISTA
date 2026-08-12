@@ -79,17 +79,21 @@ const addEquipment = async (req, res) => {
 const updateEquipment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, category, daily_rate, stock, status } = req.body;
+    const { name, category, daily_rate, dailyRate, stock, status } = req.body;
+        const finalRate = dailyRate !== undefined ? dailyRate : (daily_rate || 0);
+    const finalCategory = category || 'General';
+
     await pool.query(
       "UPDATE equipment SET name = ?, category = ?, daily_rate = ?, stock = ?, status = ? WHERE id = ?",
-      [name, category, daily_rate, stock, status || 'Active', id]
+      [name, finalCategory, finalRate, stock || 0, status || 'Active', id]
     );
+    
     res.status(200).json({ message: "Equipment updated successfully" });
   } catch (error) {
+    console.error("Update Equipment Error:", error);
     res.status(400).json({ message: error.sqlMessage || error.message });
   }
 };
-
 const deleteEquipment = async (req, res) => {
   try {
     const { id } = req.params;
