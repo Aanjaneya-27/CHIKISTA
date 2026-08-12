@@ -21,13 +21,36 @@ const addCareCenter = async (req, res) => {
 const updateCareCenter = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, address, contact_person, phone, gst, status } = req.body;
+    const { 
+      name, 
+      address, 
+      contact_person, 
+      contactPerson, 
+      phone, 
+      gst, 
+      status 
+    } = req.body;
+    
+    const finalContactPerson = contact_person !== undefined ? contact_person : (contactPerson || '');
+    const finalPhone = phone || '';
+    const finalGst = gst || '';
+
     await pool.query(
       "UPDATE care_centers SET name = ?, address = ?, contact_person = ?, phone = ?, gst = ?, status = ? WHERE id = ?",
-      [name, address, contact_person, phone, gst, status || 'Active', id]
+      [
+        name || '', 
+        address || '', 
+        finalContactPerson, 
+        finalPhone, 
+        finalGst, 
+        status || 'Active', 
+        id
+      ]
     );
+    
     res.status(200).json({ message: "Care Center updated successfully" });
   } catch (error) {
+    console.error("Update CareCenter Error:", error);
     res.status(400).json({ message: error.sqlMessage || error.message });
   }
 };
