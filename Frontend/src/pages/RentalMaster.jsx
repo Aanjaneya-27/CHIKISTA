@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react"; 
 import { Search, SlidersHorizontal, Plus, Eye, Pencil, Trash2, PackageCheck, Clock, Activity, AlertTriangle, Building2, User, Tag, CreditCard, Save, X, ClipboardList, ArrowLeft, ChevronRight, ImagePlus, Truck, FileText, Calendar, ChevronDown } from "lucide-react"; 
 import { PrimaryButton, GhostButton, IconAction, ConfirmDialog, StatusBadge, Field, Select, TextInput, toast } from "../components/UiComponents";
 import { RENTAL_STATES, DEAL_TYPE_OPTIONS, MODE_OPTIONS, UNIT_OPTIONS, PAYMENT_TYPES } from "../data/MockData";
@@ -138,11 +138,30 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
         parsedAcc = rawAcc.split(',').map(item => item.trim());
       }
 
+      const ccId = initial.careCenterId || initial.care_center_id || "";
+      const cc = careCenters.find((c) => c.id === ccId);
+
       return {
         ...emptyForm,
         ...initial,
+        careCenterId: ccId,
+        equipmentId: initial.equipmentId || initial.equipment_id || "",
+        patientName: initial.patientName || initial.patient_name || "",
         startDate: initial.startDate || initial.start_date || todayISO(),
         logoutDate: initial.logoutDate || initial.logout_date || "",
+        bedNo: initial.bedNo || initial.bed_no || "",
+        referral: initial.referral || "",
+        dealType: initial.dealType || initial.deal_type || "B2B",
+        unit: initial.unit || "ODCOM",
+        mode: initial.mode || "Postpaid",
+        paymentType: initial.paymentType || initial.payment_type || "Postpaid",
+        notifyDate: initial.notifyDate || initial.notify_date || "",
+        deliveryAddress: initial.deliveryAddress || initial.delivery_address || "",
+        notes: initial.notes || "",
+        contactPerson: initial.contactPerson || initial.contact_person || cc?.contactPerson || "",
+        phone: initial.phone || cc?.phone || "",
+        gst: initial.gst || cc?.gst || "",
+        address: initial.address || cc?.address || "",
         accessory: parsedAcc
       };
     }
@@ -188,6 +207,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
     }
     onSubmit({ 
       ...form, 
+      id: initial?.id,
       equipmentName: equipment?.name || form.equipmentId, 
       category: equipment?.category || "General", 
       careCenterName, 
@@ -885,8 +905,8 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
                 const rowColor = log.mode === "Prepaid" 
                   ? "bg-emerald-50/70 hover:bg-emerald-100" 
                   : log.mode === "Postpaid" 
-                  ? "bg-rose-50/70 hover:bg-rose-100"      
-                  : "hover:bg-teal-50/40";                  
+                  ? "bg-rose-50/70 hover:bg-rose-100"       
+                  : "hover:bg-teal-50/40";                
 
                 const eqId = log.equipmentId || log.equipment_id;
                 let actualDevice = eqId || log.equipmentName || "—";
