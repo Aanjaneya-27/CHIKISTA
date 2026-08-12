@@ -5,7 +5,9 @@ const getRequisitions = async (req, res) => {
   try {
     const rows = await Requisition.getAll();
     res.json(rows);
-  } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
+  } catch (error) { 
+    res.status(500).json({ message: "Server error", error: error.message }); 
+  }
 };
 
 const createRequisition = async (req, res) => {
@@ -14,26 +16,22 @@ const createRequisition = async (req, res) => {
     res.status(201).json({ message: "Requisition created successfully!" });
   } catch (error) {
     console.error("CRASH ERROR:", error);
-      res.status(500).json({ 
-      message: "Server Crash Error", 
-      error: error.message, 
-      sqlMessage: error.sqlMessage || "No SQL details" 
-    });
+    const exactError = error.sqlMessage || error.message || "Unknown Database Error";
+    res.status(400).json({ message: exactError });
   }
 };
+
 const updateRequisition = async (req, res) => {
   const { id } = req.params;
-  
   try {
     await Requisition.update(id, req.body); 
     res.status(200).json({ message: "Requisition updated successfully!" });
   } catch (error) {
     console.error(" Update Error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    const exactError = error.sqlMessage || error.message || "Unknown Database Error";
+    res.status(400).json({ message: exactError });
   }
 };
-
-module.exports = { updateRequisition };
 
 const deleteRequisition = async (req, res) => {
   const { id } = req.params;
@@ -50,7 +48,15 @@ const getNotifications = async (req, res) => {
   try {
     const rows = await Notification.getAll();
     res.json(rows);
-  } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
+  } catch (error) { 
+    res.status(500).json({ message: "Server error", error: error.message }); 
+  }
 };
 
-module.exports = { getRequisitions, createRequisition, updateRequisition, deleteRequisition, getNotifications };
+module.exports = { 
+  getRequisitions, 
+  createRequisition, 
+  updateRequisition, 
+  deleteRequisition, 
+  getNotifications 
+};
