@@ -64,12 +64,15 @@ const getCategories = async (req, res) => {
 
 const addCategory = async (req, res) => {
   try {
-    const { name, status } = req.body;
-    await pool.query("INSERT INTO categories (name, status) VALUES (?, ?)", [name, status || 'Active']);
+    const { name } = req.body;
+    const id = 'CAT-' + Date.now(); 
+    await pool.query("INSERT INTO categories (id, name) VALUES (?, ?)", [id, name]);
     res.status(201).json({ message: "Category Added!" });
-  } catch (error) { res.status(500).json({ message: "Server error", sqlError: error.sqlMessage }); }
+  } catch (error) { 
+    console.error(error);
+    res.status(500).json({ message: "Server error", sqlError: error.sqlMessage }); 
+  }
 };
-
 const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;  
@@ -93,14 +96,18 @@ const getReferences = async (req, res) => {
 
 const addReference = async (req, res) => {
   try {
-    const { doctorName, domain, hospital, phone, altPhone, status } = req.body;
-    await pool.query(
-      "INSERT INTO `references` (doctorName, domain, hospital, phone, altPhone, status) VALUES (?, ?, ?, ?, ?, ?)", 
-      [doctorName, domain, hospital, phone, altPhone, status || 'Active']
+    const { doctorName, phone } = req.body;
+    const id = 'REF-' + Date.now();
+      await pool.query(
+      "INSERT INTO `references` (id, name, contact) VALUES (?, ?, ?)", 
+      [id, doctorName, phone]
     );
     res.status(201).json({ message: "Reference Added!" });
-  } catch (error) { res.status(500).json({ message: "Server error", sqlError: error.sqlMessage }); }
-};
+  } catch (error) { 
+    console.error(error);
+    res.status(500).json({ message: "Server error", sqlError: error.sqlMessage }); 
+  }
+  };
 
 const deleteReference = async (req, res) => {
   try {
@@ -123,14 +130,17 @@ const getDeliveryExecutives = async (req, res) => {
 const addDeliveryExecutive = async (req, res) => {
   try {
     const { driverName, phone, status } = req.body;
+    const id = 'DEL-' + Date.now();
     await pool.query(
-      "INSERT INTO delivery_executives (driverName, phone, status) VALUES (?, ?, ?)", 
-      [driverName, phone, status || 'Active']
+      "INSERT INTO delivery_executives (id, name, phone, status) VALUES (?, ?, ?, ?)", 
+      [id, driverName, phone, status || 'Active']
     );
     res.status(201).json({ message: "Delivery Executive Added!" });
-  } catch (error) { res.status(500).json({ message: "Server error", sqlError: error.sqlMessage }); }
+  } catch (error) { 
+    console.error(error);
+    res.status(500).json({ message: "Server error", sqlError: error.sqlMessage }); 
+  }
 };
-
 const deleteDeliveryExecutive = async (req, res) => {
   try {
     const { id } = req.params;
