@@ -73,7 +73,7 @@ class Requisition {
       formatMySQLDate(data.notify_date || data.notifyDate) || null, 
       data.delivery_address || data.deliveryAddress, 
       data.notes || null, 
-      formatMySQLDate(data.logout_date || data.logoutDate) || null, 
+      formatMySQLDate(data.logout_date || data.logoutDate) || null, // 👈 Main Logout Date
       data.bed_no || data.bedNo || "",       
       data.referral || "",                   
       data.status || 'Pending', 
@@ -82,6 +82,9 @@ class Requisition {
     ];
 
     const [result] = await pool.query(sql, values);
+      if (result.affectedRows === 0) {
+       throw new Error("Update Failed: ID not found ya fir data pehle jaisa hi hai!");
+    }
     return result;
   }
   
