@@ -117,9 +117,13 @@ const deleteCategory = async (req, res) => {
 
 const getReferences = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM `references`");
+    const [rows] = await pool.query(
+      "SELECT id, name AS doctorName, contact AS phone, status FROM `references`"
+    );
     res.json(rows);
-  } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
+  } catch (error) { 
+    res.status(500).json({ message: "Server error", error: error.message }); 
+  }
 };
 
 const addReference = async (req, res) => {
