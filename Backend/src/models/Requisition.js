@@ -50,48 +50,48 @@ class Requisition {
     await pool.query(sql, values);
   }
 
- static async update(id, data) {
-    let accValue = data.accessory || data.accessories || "";
-    if (Array.isArray(accValue)) {
-        accValue = accValue.length > 0 ? accValue.join(", ") : "";
-    }
-
-    const sql = `
-       UPDATE requisitions 
-       SET care_center_id = ?, equipment_id = ?, patient_name = ?, quantity = ?, 
-           start_date = ?, payment_type = ?, deal_type = ?, unit = ?, 
-           mode = ?, notify_date = ?, delivery_address = ?, notes = ?,
-           logout_date = ?, bed_no = ?, referral = ?, status = ?, accessory = ?
-       WHERE id = ?
-    `;
-    
-    const values = [
-      data.care_center_id || data.careCenterId, 
-      data.equipment_id || data.equipmentId, 
-      data.patient_name || data.patientName, 
-      data.quantity, 
-      formatMySQLDate(data.start_date || data.startDate) || null, 
-      data.payment_type || data.paymentType, 
-      data.deal_type || data.dealType, 
-      data.unit, 
-      data.mode, 
-      formatMySQLDate(data.notify_date || data.notifyDate) || null, 
-      data.delivery_address || data.deliveryAddress, 
-      data.notes || null, 
-      formatMySQLDate(data.logout_date || data.logoutDate) || null, // 👈 Main Logout Date
-      data.bed_no || data.bedNo || "",       
-      data.referral || "",                   
-      data.status || 'Pending', 
-      accValue, 
-      id 
-    ];
-
-    const [result] = await pool.query(sql, values);
-      if (result.affectedRows === 0) {
-       throw new Error("Update Failed: ID not found ya fir data pehle jaisa hi hai!");
-    }
-    return result;
+static async update(id, data) {
+  let accValue = data.accessory || data.accessories || "";
+  if (Array.isArray(accValue)) {
+      accValue = accValue.length > 0 ? accValue.join(", ") : "";
   }
+  const rawLogoutDate = data.logout_date || data.logoutDate;
+  const rawStartDate = data.start_date || data.startDate;
+  const rawNotifyDate = data.notify_date || data.notifyDate;
+
+  const sql = `
+     UPDATE requisitions 
+     SET care_center_id = ?, equipment_id = ?, patient_name = ?, quantity = ?, 
+         start_date = ?, payment_type = ?, deal_type = ?, unit = ?, 
+         mode = ?, notify_date = ?, delivery_address = ?, notes = ?,
+         logout_date = ?, bed_no = ?, referral = ?, status = ?, accessory = ?
+     WHERE id = ?
+  `;
+  
+  const values = [
+    data.care_center_id || data.careCenterId, 
+    data.equipment_id || data.equipmentId, 
+    data.patient_name || data.patientName, 
+    data.quantity, 
+    formatMySQLDate(rawStartDate), 
+    data.payment_type || data.paymentType, 
+    data.deal_type || data.dealType, 
+    data.unit, 
+    data.mode, 
+    formatMySQLDate(rawNotifyDate), 
+    data.delivery_address || data.deliveryAddress, 
+    data.notes || null, 
+    formatMySQLDate(rawLogoutDate), // 👈 Dual-checked key
+    data.bed_no || data.bedNo || "",       
+    data.referral || "",                   
+    data.status || 'Pending', 
+    accValue, 
+    id 
+  ];
+
+  const [result] = await pool.query(sql, values);
+  return result;
+}
   
   static async delete(id) {
     await pool.query(`DELETE FROM requisitions WHERE id = ?`, [id]);
