@@ -335,15 +335,15 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
               <Field label="Login Date (Rental Start)" required error={errors.startDate}>
                 <TextInput disabled={readOnly} type="date" value={form.startDate} error={errors.startDate} onChange={(e) => set({ startDate: e.target.value })} />
               </Field>
-              <Field label="Logout Date (Return)" required error={errors.logoutDate}>
-               <TextInput 
-             disabled={readOnly} 
-               type="date" 
-                 value={form.logoutDate || form.logout_date || ""} 
-                error={errors.logoutDate} 
-              onChange={(e) => set({ logoutDate: e.target.value, logout_date: e.target.value })} 
-                />
-              </Field>
+                <Field label="Logout Date (Return)" required error={errors.logoutDate}>
+  <TextInput 
+    disabled={readOnly} 
+    type="date" 
+    value={form.logoutDate || form.logout_date || ""} 
+    error={errors.logoutDate} 
+    onChange={(e) => set({ logoutDate: e.target.value, logout_date: e.target.value })} 
+  />
+</Field>
               <div className="sm:col-span-2">
                 <Field label="Delivery Address" required error={errors.deliveryAddress}>
                   <TextInput disabled={readOnly} value={form.deliveryAddress} error={errors.deliveryAddress} placeholder="Where should the equipment be delivered?" onChange={(e) => set({ deliveryAddress: e.target.value })} />
@@ -811,23 +811,24 @@ const fetchLogs = useCallback(async () => {
  const handleEdit = async (data) => {
     try {
       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
-      const selectedLogoutDate = data.logoutDate || data.logout_date || null;
+      const newLogoutDate = data.logoutDate || data.logout_date || null;
+      const newStartDate = data.startDate || data.start_date;
+      const newNotifyDate = data.notifyDate || data.notify_date || null;
 
       const backendData = {
         care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
         equipment_id: data.equipmentId || data.equipment_id,
         patient_name: data.patientName || data.patient_name,
         quantity: data.quantity || 1,
-        start_date: data.startDate || data.start_date,
-        logout_date: selectedLogoutDate,
-        logoutDate: selectedLogoutDate,
+        start_date: newStartDate,
+        logout_date: newLogoutDate,
         bed_no: data.bedNo || data.bed_no || "", 
         referral: data.referral || "",          
         payment_type: data.paymentType || data.payment_type,
         deal_type: data.dealType || data.deal_type,
         unit: data.unit,
         mode: data.mode,
-        notify_date: data.notifyDate || data.notify_date || null,
+        notify_date: newNotifyDate,
         delivery_address: data.deliveryAddress || data.delivery_address,
         notes: data.notes || "",
         status: data.status || "Active",
