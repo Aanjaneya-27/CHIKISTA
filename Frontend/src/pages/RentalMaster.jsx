@@ -32,7 +32,7 @@ function GlobalPolish() {
 }
 
 const getCalculatedStatus = (startDateStr, logoutDateStr, currentStatus) => {
-  if (currentStatus && currentStatus.toString().trim().toLowerCase() === "returned") {
+  if (currentStatus && ["returned", "return"].includes(currentStatus.toString().trim().toLowerCase())) {
     return "Returned";
   }
 
@@ -205,7 +205,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
       const mappedStart = formatForDateInput(initial.startDate || initial.start_date) || todayISO();
       const mappedLogout = formatForDateInput(initial.logoutDate || initial.logout_date);
       const mappedNotify = formatForDateInput(initial.notifyDate || initial.notify_date);
-      const initialStatus = initial.status || initial.requisition_status || "Pending";
+      const initialStatus = initial.status || initial.requisition_status || initial.return_status || "Pending";
       const initialMode = initial.mode || initial.paymentType || initial.payment_type || "Postpaid";
 
       return {
@@ -445,7 +445,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
                 !readOnly && (
                   <button
                     type="button"
-                    onClick={() => set({ status: "Returned" })}
+                    onClick={() => set({ status: "Returned", requisition_status: "Returned", return_status: "Returned" })}
                     className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95 cursor-pointer"
                   >
                     <PackageCheck className="h-4 w-4" /> Mark as Returned
@@ -894,14 +894,31 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
   };
 
   const handleEdit = async (data) => {
+    const targetStatus = data.status || data.requisition_status || data.return_status || "Active";
+    const chosenMode = data.mode || data.paymentType || data.payment_type || "Postpaid";
+
+    // 1. OPTIMISTIC UPDATE: Turant React state update karo taaki UI pe bin delay "Returned" dikhe!
+    setLogs((prevLogs) =>
+      prevLogs.map((l) =>
+        l.id === data.id
+          ? {
+              ...l,
+              ...data,
+              status: targetStatus,
+              requisition_status: targetStatus,
+              return_status: targetStatus,
+              mode: chosenMode,
+              paymentType: chosenMode,
+            }
+          : l
+      )
+    );
+
     try {
       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
       const newLogoutDate = data.logoutDate || data.logout_date || null;
       const newStartDate = data.startDate || data.start_date;
       const newNotifyDate = data.notifyDate || data.notify_date || null;
-
-      const targetStatus = data.status || "Active";
-      const chosenMode = data.mode || data.paymentType || data.payment_type || "Postpaid";
 
       const backendData = {
         care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
@@ -923,16 +940,18 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
         notes: data.notes || "",
         status: targetStatus,
         requisition_status: targetStatus,
+        return_status: targetStatus,
+        returnStatus: targetStatus,
         accessory: accStr,   
         accessories: accStr 
       };
       
       await API.put(`/rental/requisitions/${data.id}`, backendData); 
-      await fetchLogs();
       setModal(null);
-      toast.success(`Requisition updated successfully!`); 
+      toast.success(`Requisition updated! Status: ${targetStatus}`); 
     } catch (err) {
       toast.error("Update failed: " + (err.response?.data?.message || err.message));
+      fetchLogs(); // Error hone par DB se rollback sync kar lo
     }
   };
 
@@ -1031,7 +1050,6 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
                 
                 const currentMode = log.mode || log.paymentType || log.payment_type || "Postpaid";
 
-                // Safe Row Background Color logic for Prepaid vs Postpaid
                 const rowColor = currentMode === "Prepaid" 
                   ? "bg-emerald-50/70 hover:bg-emerald-100" 
                   : currentMode === "Postpaid" 
@@ -1073,7 +1091,7 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
                           <IconAction 
                             title="Mark as Returned" 
                             tone="teal" 
-                            onClick={() => handleEdit({ ...log, status: "Returned" })}
+                            onClick={() => handleEdit({ ...log, status: "Returned", requisition_status: "Returned", return_status: "Returned" })}
                           >
                             <PackageCheck className="h-4 w-4 text-emerald-600" />
                           </IconAction>
