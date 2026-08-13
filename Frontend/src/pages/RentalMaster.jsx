@@ -232,7 +232,6 @@ function RequisitionModal({ mode: modalMode, initial, permissions, careCenters, 
   const [errors, setErrors] = useState({});
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  // Dynamic Status calculation inside Modal
   const modalCurrentStatus = useMemo(() => {
     return getCalculatedStatus(form.startDate, form.logoutDate, form.status);
   }, [form.startDate, form.logoutDate, form.status]);
@@ -423,7 +422,7 @@ function RequisitionModal({ mode: modalMode, initial, permissions, careCenters, 
             </div>
           </div>
 
-          {/* Status & Return Action (Uses dynamic modalCurrentStatus) */}
+          {/* Status & Return Action */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
             <div className="flex items-center justify-between">
               <div>
@@ -1049,6 +1048,17 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1">
+                        {/* 👇 Super Admin 1-Click Mark as Returned Action */}
+                        {permissions?.role === "super_admin" && currentStatus !== "Returned" && (
+                          <IconAction 
+                            title="Mark as Returned" 
+                            tone="teal" 
+                            onClick={() => handleEdit({ ...log, status: "Returned" })}
+                          >
+                            <PackageCheck className="h-4 w-4 text-emerald-600" />
+                          </IconAction>
+                        )}
+
                         <IconAction title="View" tone="teal" onClick={() => setModal({ mode: "view", data: log })}><Eye className="h-4 w-4" /></IconAction>
                         {permissions.canEdit && <IconAction title="Edit" tone="teal" onClick={() => setModal({ mode: "edit", data: log })}><Pencil className="h-4 w-4" /></IconAction>}
                         {permissions.canDelete && <IconAction title="Delete" tone="rose" onClick={() => setConfirmDelete(log)}><Trash2 className="h-4 w-4" /></IconAction>}
