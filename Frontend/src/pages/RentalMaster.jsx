@@ -182,7 +182,7 @@ function KpiCards({ logs }) {
 
 const emptyForm = { careCenterId: "", address: "", contactPerson: "", phone: "", gst: "", equipmentId: "", quantity: 1, startDate: todayISO(), logoutDate: "", patientName: "", paymentType: "Postpaid", dealType: "B2B", unit: "ODCOM", mode: "Postpaid", notifyDate: "", deliveryAddress: "", notes: "", bedNo: "", referral: "", accessory: [] };
 
-function RequisitionModal({ mode: modalMode, initial, permissions, careCenters, equipmentCatalog, references = [], categories = [], onClose, onSubmit }) {
+function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCatalog, references = [], categories = [], onClose, onSubmit }) {
   const readOnly = modalMode === "view";
   
   const [form, setForm] = useState(() => {
@@ -232,6 +232,7 @@ function RequisitionModal({ mode: modalMode, initial, permissions, careCenters, 
   const [errors, setErrors] = useState({});
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
+  // Dynamic Status Calculation for Modal
   const modalCurrentStatus = useMemo(() => {
     return getCalculatedStatus(form.startDate, form.logoutDate, form.status);
   }, [form.startDate, form.logoutDate, form.status]);
@@ -422,7 +423,7 @@ function RequisitionModal({ mode: modalMode, initial, permissions, careCenters, 
             </div>
           </div>
 
-          {/* Status & Return Action */}
+          {/* Status Box & Mark as Returned Button (Always visible in Edit Mode) */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
             <div className="flex items-center justify-between">
               <div>
@@ -435,11 +436,11 @@ function RequisitionModal({ mode: modalMode, initial, permissions, careCenters, 
                   ✓ Unit Returned
                 </span>
               ) : (
-                permissions?.role === "super_admin" && !readOnly && (
+                !readOnly && (
                   <button
                     type="button"
                     onClick={() => set({ status: "Returned" })}
-                    className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95"
+                    className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95 cursor-pointer"
                   >
                     <PackageCheck className="h-4 w-4" /> Mark as Returned
                   </button>
@@ -1048,8 +1049,8 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1">
-                        {/* 👇 Super Admin 1-Click Mark as Returned Action */}
-                        {permissions?.role === "super_admin" && currentStatus !== "Returned" && (
+                        {/* 1-Click Mark as Returned Action Icon */}
+                        {currentStatus !== "Returned" && (
                           <IconAction 
                             title="Mark as Returned" 
                             tone="teal" 
@@ -1089,7 +1090,6 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
         <RequisitionModal 
           mode={modal.mode} 
           initial={modal.data} 
-          permissions={permissions}
           careCenters={careCenters} 
           equipmentCatalog={equipmentCatalog} 
           references={references} 
