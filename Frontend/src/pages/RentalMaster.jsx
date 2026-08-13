@@ -32,7 +32,10 @@ function GlobalPolish() {
 }
 
 const getCalculatedStatus = (startDateStr, logoutDateStr, currentStatus) => {
-  if (currentStatus === "Returned") return "Returned";
+  if (currentStatus && currentStatus.toString().trim().toLowerCase() === "returned") {
+    return "Returned";
+  }
+
   if (!startDateStr || !logoutDateStr) return "Pending";
 
   const parseSafeDate = (dStr) => {
@@ -139,10 +142,11 @@ function MultiSelect({ options, selected, onChange, placeholder = "Select...", e
 
 function KpiCards({ logs }) {
   const count = (s) => logs.filter((l) => {
+    const rawStatus = l.status || l.requisition_status || l.return_status;
     const dynamicStatus = getCalculatedStatus(
       l.startDate || l.start_date, 
       l.logoutDate || l.logout_date, 
-      l.status
+      rawStatus
     );
     return dynamicStatus === s;
   }).length;
@@ -201,10 +205,13 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
       const mappedStart = formatForDateInput(initial.startDate || initial.start_date) || todayISO();
       const mappedLogout = formatForDateInput(initial.logoutDate || initial.logout_date);
       const mappedNotify = formatForDateInput(initial.notifyDate || initial.notify_date);
+      const initialStatus = initial.status || initial.requisition_status || "Pending";
+      const initialMode = initial.mode || initial.paymentType || initial.payment_type || "Postpaid";
 
       return {
         ...emptyForm,
         ...initial,
+        status: initialStatus,
         careCenterId: ccId,
         equipmentId: initial.equipmentId || initial.equipment_id || "",
         patientName: initial.patientName || initial.patient_name || "",
@@ -214,8 +221,8 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
         referral: initial.referral || initial.referral_doctor || initial.referralDoctor || "",
         dealType: initial.dealType || initial.deal_type || "B2B",
         unit: initial.unit || "ODCOM",
-        mode: initial.mode || "Postpaid",
-        paymentType: initial.paymentType || initial.payment_type || "Postpaid",
+        mode: initialMode,
+        paymentType: initialMode,
         notifyDate: mappedNotify,
         deliveryAddress: initial.deliveryAddress || initial.delivery_address || "",
         notes: initial.notes || "",
@@ -232,7 +239,6 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
   const [errors, setErrors] = useState({});
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  // Dynamic Status Calculation for Modal
   const modalCurrentStatus = useMemo(() => {
     return getCalculatedStatus(form.startDate, form.logoutDate, form.status);
   }, [form.startDate, form.logoutDate, form.status]);
@@ -339,7 +345,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label="Deal Type"><Select disabled={readOnly} value={form.dealType} onChange={(e) => set({ dealType: e.target.value })}>{DEAL_TYPE_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}</Select></Field>
               <Field label="Unit"><Select disabled={readOnly} value={form.unit} onChange={(e) => set({ unit: e.target.value })}>{UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}</Select></Field>
-              <Field label="Mode"><Select disabled={readOnly} value={form.mode} onChange={(e) => set({ mode: e.target.value })}>{MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}</Select></Field>
+              <Field label="Mode"><Select disabled={readOnly} value={form.mode} onChange={(e) => set({ mode: e.target.value, paymentType: e.target.value })}>{MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}</Select></Field>
             </div>
           </div>
 
@@ -411,7 +417,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
                 <label className="mb-1.5 block text-xs font-semibold text-slate-600">Payment Type</label>
                 <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
                   {PAYMENT_TYPES.map((pt) => (
-                    <button key={pt} type="button" disabled={readOnly} onClick={() => set({ paymentType: pt })} className={`flex-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-all duration-200 ${form.paymentType === pt ? "bg-white text-teal-700 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"}`}>
+                    <button key={pt} type="button" disabled={readOnly} onClick={() => set({ paymentType: pt, mode: pt })} className={`flex-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-all duration-200 ${form.paymentType === pt ? "bg-white text-teal-700 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"}`}>
                       {pt}
                     </button>
                   ))}
@@ -423,7 +429,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
             </div>
           </div>
 
-          {/* Status Box & Mark as Returned Button (Always visible in Edit Mode) */}
+          {/* Status Box & Mark as Returned Button */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
             <div className="flex items-center justify-between">
               <div>
@@ -574,7 +580,7 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Deal Type" required error={errors.dealType}><Select value={form.dealType} error={errors.dealType} onChange={(e) => set({ dealType: e.target.value })}><option value="">--- Select ---</option>{DEAL_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}</Select></Field>
           <Field label="Unit" required error={errors.unit}><Select value={form.unit} error={errors.unit} onChange={(e) => set({ unit: e.target.value })}><option value="">--- Select ---</option>{UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}</Select></Field>
-          <Field label="Payment Mode" required error={errors.mode}><Select value={form.mode} error={errors.mode} onChange={(e) => set({ mode: e.target.value })}><option value="">--- Select ---</option>{MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}</Select></Field>
+          <Field label="Payment Mode" required error={errors.mode}><Select value={form.mode} error={errors.mode} onChange={(e) => set({ mode: e.target.value, paymentType: e.target.value })}><option value="">--- Select ---</option>{MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}</Select></Field>
         </div>
       </div>
 
@@ -829,7 +835,10 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
       
       const eqId = l.equipmentId || l.equipment_id;
       const eqName = l.equipmentName || equipmentCatalog.find(e => e.id === eqId)?.name || eqId;
-      const currentCalcStatus = getCalculatedStatus(l.startDate || l.start_date, l.logoutDate || l.logout_date, l.status);
+
+      const rawStatus = l.status || l.requisition_status || l.return_status;
+      const currentCalcStatus = getCalculatedStatus(l.startDate || l.start_date, l.logoutDate || l.logout_date, rawStatus);
+      const currentMode = l.mode || l.paymentType || l.payment_type || "";
 
       const matchesSearch = !search || 
         l.id.toString().toLowerCase().includes(search.toLowerCase()) || 
@@ -839,7 +848,7 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
         
       const matchesStatus = statusFilter === "All" || currentCalcStatus === statusFilter;
       const matchesDealType = dealTypeFilter === "All" || (l.dealType || l.deal_type) === dealTypeFilter;
-      const matchesMode = modeFilter === "All" || l.mode === modeFilter;
+      const matchesMode = modeFilter === "All" || currentMode === modeFilter;
       const matchesCareCenter = careCenterFilter === "All" || ccId === careCenterFilter;
 
       return matchesSearch && matchesStatus && matchesDealType && matchesMode && matchesCareCenter;
@@ -849,6 +858,7 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
   const handleAdd = async (data) => {
     try {
       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
+      const chosenMode = data.mode || data.paymentType || "Postpaid";
       
       const backendData = {
         id: data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -861,16 +871,17 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
         bed_number: data.bedNo || data.bed_number || "", 
         referral_doctor: data.referral || data.referralDoctor || data.referral_doctor || "",         
         gst_number: data.gstNo || data.gstNumber || data.gst_number || "",
-        payment_type: data.paymentType || data.mode,
+        payment_type: chosenMode,
         deal_type: data.dealType,
         unit: data.unit,
-        mode: data.mode,
+        mode: chosenMode,
         notify_date: data.notifyDate || null,
         delivery_address: data.deliveryAddress,
         notes: data.notes || "",
         accessory: accStr,
         accessories: accStr, 
-        status: "Active"
+        status: "Active",
+        requisition_status: "Active"
       };
 
       await API.post("/rental/requisitions", backendData);
@@ -889,6 +900,9 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
       const newStartDate = data.startDate || data.start_date;
       const newNotifyDate = data.notifyDate || data.notify_date || null;
 
+      const targetStatus = data.status || "Active";
+      const chosenMode = data.mode || data.paymentType || data.payment_type || "Postpaid";
+
       const backendData = {
         care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
         equipment_id: data.equipmentId || data.equipment_id,
@@ -900,14 +914,15 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
         referral_doctor: data.referral || data.referral_doctor || data.referralDoctor || "",         
         gst_number: data.gst || data.gst_number || data.gstNumber || "",
 
-        payment_type: data.paymentType || data.payment_type,
+        payment_type: chosenMode,
         deal_type: data.dealType || data.deal_type,
         unit: data.unit,
-        mode: data.mode,
+        mode: chosenMode,
         notify_date: newNotifyDate,
         delivery_address: data.deliveryAddress || data.delivery_address,
         notes: data.notes || "",
-        status: data.status || "Active",
+        status: targetStatus,
+        requisition_status: targetStatus,
         accessory: accStr,   
         accessories: accStr 
       };
@@ -915,7 +930,7 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
       await API.put(`/rental/requisitions/${data.id}`, backendData); 
       await fetchLogs();
       setModal(null);
-      toast.success("Requisition updated successfully!"); 
+      toast.success(`Requisition updated successfully!`); 
     } catch (err) {
       toast.error("Update failed: " + (err.response?.data?.message || err.message));
     }
@@ -1011,11 +1026,15 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
               {filtered.map((log, i) => {
                 const actualLogoutDate = log.logoutDate || log.logout_date;
                 const dynamicDays = getDynamicTotalDays(log.startDate || log.start_date, actualLogoutDate, monthFilter);
-                const currentStatus = getCalculatedStatus(log.startDate || log.start_date, actualLogoutDate, log.status);
+                const rawStatus = log.status || log.requisition_status || log.return_status;
+                const currentStatus = getCalculatedStatus(log.startDate || log.start_date, actualLogoutDate, rawStatus);
                 
-                const rowColor = log.mode === "Prepaid" 
+                const currentMode = log.mode || log.paymentType || log.payment_type || "Postpaid";
+
+                // Safe Row Background Color logic for Prepaid vs Postpaid
+                const rowColor = currentMode === "Prepaid" 
                   ? "bg-emerald-50/70 hover:bg-emerald-100" 
-                  : log.mode === "Postpaid" 
+                  : currentMode === "Postpaid" 
                   ? "bg-rose-50/70 hover:bg-rose-100"       
                   : "hover:bg-teal-50/40";                 
 
@@ -1037,7 +1056,7 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
                     </td>
                     <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${(log.dealType || log.deal_type) === "B2B" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{log.dealType || log.deal_type || "—"}</span></td>
                     <td className="px-5 py-3.5 text-slate-600">{log.unit || "—"}</td>
-                    <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${log.mode === "Prepaid" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{log.mode || "—"}</span></td>
+                    <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${currentMode === "Prepaid" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{currentMode}</span></td>
                     <td className="px-5 py-3.5">
                       <span className="font-semibold text-slate-700">{actualDevice}</span>
                     </td>
