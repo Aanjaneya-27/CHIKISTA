@@ -100,26 +100,44 @@ function MultiSelect({ options, selected, onChange, placeholder = "Select...", e
 const getCalculatedStatus = (startDateStr, logoutDateStr, currentStatus) => {
   if (currentStatus === "Returned") return "Returned";
   if (!startDateStr || !logoutDateStr) return "Pending";
+  const parseSafeDate = (dStr) => {
+    if (!dStr) return null;
+    let str = dStr.toString().trim();
+    if (str.includes("T")) str = str.split("T")[0]; 
+      if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(str)) {
+      const p = str.split(/[-/]/);
+      str = `${p[2]}-${p[1]}-${p[0]}`;
+    }
+    
+    const d = new Date(`${str}T00:00:00`);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const start = parseSafeDate(startDateStr);
+  const logout = parseSafeDate(logoutDateStr);
+
+  if (!start || !logout) return currentStatus || "Pending";
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const start = new Date(startDateStr);
-  start.setHours(0, 0, 0, 0);
-
-  const logout = new Date(logoutDateStr);
-  logout.setHours(0, 0, 0, 0);
-
+  const tTime = today.getTime();
+  const sTime = start.getTime();
+  const lTime = logout.getTime();
   const overdueLimit = new Date(logout);
   overdueLimit.setDate(overdueLimit.getDate() + 3);
-
-  if (today >= start && today <= logout) return "Active";
-  if (today > logout && today <= overdueLimit) return "Pending";
-  if (today > overdueLimit) return "Overdue";
-
+  const oTime = overdueLimit.getTime();
+  if (tTime >= sTime && tTime <= lTime) {
+    return "Active";
+  }
+  if (tTime > lTime && tTime <= oTime) {
+    return "Pending";
+  }
+  if (tTime > oTime) {
+    return "Overdue";
+  }
   return "Pending";
 };
-
 function KpiCards({ logs }) {
   const count = (s) => logs.filter((l) => {
     const dynamicStatus = getCalculatedStatus(
