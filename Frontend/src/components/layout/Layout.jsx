@@ -212,8 +212,7 @@ export function Footer() {
   return (
     <footer className="mt-auto border-t border-slate-200 bg-white py-4 px-6 text-slate-500">
       <div className="flex flex-col items-center justify-between gap-2 text-xs sm:flex-row">
-        <p>© 2026 Evoquesys . All rights reserved.</p>
-        <p className="font-semibold text-slate-600">Chikitsa Rental Master</p>
+        <p className="font-semibold text-slate-600">© 2026 Evoquesys . All rights reserved.</p>
       </div>
     </footer>
   );
