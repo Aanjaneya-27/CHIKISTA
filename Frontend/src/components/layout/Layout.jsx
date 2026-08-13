@@ -210,22 +210,21 @@ export function NotificationsPanel({ open, onClose, notifications, onMarkRead, o
 
 export function Footer() {
   return (
-    <footer className="mt-10 mb-4 rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-sm shadow-slate-200/50 transition-all">
-      <div className="flex flex-col items-center justify-between gap-3 text-xs sm:flex-row sm:px-2">
+    <footer className="mt-auto border-t border-slate-200 bg-white px-4 py-4 sm:px-6 text-slate-500">
+      <div className="flex flex-col items-center justify-between gap-2.5 text-xs sm:flex-row">
         
-        {/* Left Side: Brand & Copyright */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className="font-bold text-slate-700">© 2026 Evoquesys .</span>
           <span className="text-slate-400">All rights reserved.</span>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-full bg-teal-50/80 px-3 py-1 border border-teal-100">
+          <div className="flex items-center gap-2 rounded-full bg-teal-50 px-2.5 py-1 border border-teal-100">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
             </span>
-            <span className="text-[11px] font-semibold text-teal-700"></span>
+            <span className="text-[11px] font-semibold text-teal-700">Chikitsa Live System</span>
           </div>
 
           <span className="hidden text-slate-300 sm:inline">|</span>
