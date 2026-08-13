@@ -31,6 +31,26 @@
 //   );
 // }
 
+// const getOptionLabel = (item) => {
+//   if (!item) return "";
+//   if (typeof item === "string") return item;
+//   return item.name || item.categoryName || item.category_name || item.title || item.label || item.doctorName || "";
+// };
+
+// // Filters out any item that is inactive
+// const filterActive = (list = []) => {
+//   if (!Array.isArray(list)) return [];
+//   return list.filter((item) => {
+//     if (!item) return false;
+//     if (typeof item === "string") return true;
+//     const st = (item.status || item.state || "").toString().trim().toLowerCase();
+//     if (st === "inactive" || st === "disabled" || item.is_active === 0 || item.isActive === false) {
+//       return false;
+//     }
+//     return true;
+//   });
+// };
+
 // const getCalculatedStatus = (startDateStr, logoutDateStr, currentStatus) => {
 //   if (currentStatus && ["returned", "return"].includes(currentStatus.toString().trim().toLowerCase())) {
 //     return "Returned";
@@ -84,20 +104,31 @@
 //   return "";
 // };
 
-// function MultiSelect({ options, selected, onChange, placeholder = "Select...", error, disabled }) {
+// function MultiSelect({ options = [], selected = [], onChange, placeholder = "Select...", error, disabled }) {
 //   const [isOpen, setIsOpen] = useState(false);
 
-//   const toggleOption = (opt) => {
-//     if (selected.includes(opt)) {
-//       onChange(selected.filter((item) => item !== opt));
+//   // Robust parsing for string, array, or object items
+//   const safeSelected = useMemo(() => {
+//     if (Array.isArray(selected)) {
+//       return selected.map(getOptionLabel).filter(Boolean);
+//     }
+//     if (typeof selected === "string" && selected.trim() !== "") {
+//       return selected.split(",").map((item) => item.trim()).filter(Boolean);
+//     }
+//     return [];
+//   }, [selected]);
+
+//   const toggleOption = (optName) => {
+//     if (safeSelected.includes(optName)) {
+//       onChange(safeSelected.filter((item) => item !== optName));
 //     } else {
-//       onChange([...selected, opt]);
+//       onChange([...safeSelected, optName]);
 //     }
 //   };
 
-//   const removeOption = (e, opt) => {
+//   const removeOption = (e, optName) => {
 //     e.stopPropagation();
-//     onChange(selected.filter((item) => item !== opt));
+//     onChange(safeSelected.filter((item) => item !== optName));
 //   };
 
 //   return (
@@ -107,8 +138,8 @@
 //         className={`flex min-h-[42px] w-full flex-wrap items-center justify-between gap-1.5 rounded-lg border bg-white px-3 py-2 text-sm transition-all ${error ? 'border-rose-300 ring-4 ring-rose-500/10' : 'border-slate-200 hover:border-teal-300 focus:border-teal-500'} ${disabled ? 'bg-slate-50 cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
 //       >
 //         <div className="flex flex-wrap gap-1.5 items-center flex-1">
-//           {selected.length === 0 && <span className="text-slate-400">{placeholder}</span>}
-//           {selected.map((sel) => (
+//           {safeSelected.length === 0 && <span className="text-slate-400">{placeholder}</span>}
+//           {safeSelected.map((sel) => (
 //             <span key={sel} className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 border border-amber-200 shadow-sm">
 //               {sel}
 //               {!disabled && (
@@ -124,15 +155,23 @@
 //         <>
 //           <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}></div>
 //           <div className="absolute z-[99] mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl ring-1 ring-black/5">
-//             {options.map((opt) => (
-//               <div 
-//                 key={opt} 
-//                 onClick={() => toggleOption(opt)} 
-//                 className={`cursor-pointer px-4 py-2 text-sm transition-colors hover:bg-teal-50 ${selected.includes(opt) ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-slate-700'}`}
-//               >
-//                 {opt}
-//               </div>
-//             ))}
+//             {options.length === 0 ? (
+//               <div className="px-4 py-2 text-xs text-slate-400">No active accessories available</div>
+//             ) : (
+//               options.map((opt) => {
+//                 const optName = typeof opt === "string" ? opt : getOptionLabel(opt);
+//                 const isSel = safeSelected.includes(optName);
+//                 return (
+//                   <div 
+//                     key={optName} 
+//                     onClick={() => toggleOption(optName)} 
+//                     className={`cursor-pointer px-4 py-2 text-sm transition-colors hover:bg-teal-50 ${isSel ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-slate-700'}`}
+//                   >
+//                     {optName}
+//                   </div>
+//                 );
+//               })
+//             )}
 //           </div>
 //         </>
 //       )}
@@ -195,9 +234,9 @@
 //       let parsedAcc = [];
       
 //       if (Array.isArray(rawAcc)) {
-//         parsedAcc = rawAcc;
+//         parsedAcc = rawAcc.map(getOptionLabel).filter(Boolean);
 //       } else if (typeof rawAcc === 'string' && rawAcc.trim() !== "") {
-//         parsedAcc = rawAcc.split(',').map(item => item.trim());
+//         parsedAcc = rawAcc.split(',').map(item => item.trim()).filter(Boolean);
 //       }
 
 //       const ccId = initial.careCenterId || initial.care_center_id || "";
@@ -290,6 +329,12 @@
 
 //   const titles = { add: "New Log Requisition", edit: "Edit Requisition", view: "Requisition Details" };
 
+//   // Only Active Options Filtered
+//   const activeCareCenters = useMemo(() => filterActive(careCenters), [careCenters]);
+//   const activeEquipment = useMemo(() => filterActive(equipmentCatalog), [equipmentCatalog]);
+//   const activeReferrals = useMemo(() => filterActive(references), [references]);
+//   const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
+
 //   return (
 //     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:items-center sm:p-4">
 //       <div className="fade-slide-up flex w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/20 ring-1 ring-black/5 sm:rounded-2xl" style={{ maxHeight: "92vh" }}>
@@ -312,7 +357,7 @@
 //                 <Field label="Select Care Center" required error={errors.careCenterId}>
 //                   <Select disabled={readOnly} value={form.careCenterId} error={errors.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
 //                     <option value="">Choose a care center…</option>
-//                     {careCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+//                     {activeCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
 //                     <option value="other">Other (Add New)</option>
 //                   </Select>
 //                 </Field>
@@ -327,7 +372,7 @@
 //                 <Field label="Referral">
 //                   <Select disabled={readOnly} value={form.referral || form.referral_doctor || form.referralDoctor || ""} onChange={(e) => set({ referral: e.target.value, referral_doctor: e.target.value })}>
 //                     <option value="">-- Select Referral --</option>
-//                     {references.map((r) => (
+//                     {activeReferrals.map((r) => (
 //                       <option key={r.id} value={r.doctorName || r.name}>
 //                         {r.doctorName || r.name} {r.domain ? `(${r.domain})` : ""}
 //                       </option>
@@ -367,16 +412,16 @@
 //                 <Field label="Equipment" required error={errors.equipmentId}>
 //                   <Select disabled={readOnly} value={form.equipmentId} error={errors.equipmentId} onChange={(e) => set({ equipmentId: e.target.value })}>
 //                     <option value="">Select equipment…</option>
-//                     {equipmentCatalog.map((eq) => <option key={eq.id} value={eq.id}>{eq.name} — ₹{eq.dailyRate}/day</option>)}
+//                     {activeEquipment.map((eq) => <option key={eq.id} value={eq.id}>{eq.name} — ₹{eq.dailyRate}/day</option>)}
 //                   </Select>
 //                 </Field>
 //               </div>
               
 //               <div className="sm:col-span-2">
-//                 <Field label="Select Accessory" required error={errors.accessory}>
+//                 <Field label="Select Accessory" error={errors.accessory}>
 //                   <MultiSelect
-//                     options={categories.map(c => c.name)}
-//                     selected={Array.isArray(form.accessory) ? form.accessory : []}
+//                     options={activeCategories}
+//                     selected={form.accessory}
 //                     onChange={(newAccessories) => set({ accessory: newAccessories })}
 //                     placeholder="-- Choose Accessories --"
 //                     error={errors.accessory}
@@ -429,7 +474,7 @@
 //             </div>
 //           </div>
 
-//           {/* Status Box & Mark as Returned Button */}
+
 //           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
 //             <div className="flex items-center justify-between">
 //               <div>
@@ -488,6 +533,11 @@
 //   const [photos, setPhotos] = useState([]);
 //   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
+//   const activeCareCenters = useMemo(() => filterActive(careCenters), [careCenters]);
+//   const activeEquipment = useMemo(() => filterActive(equipmentCatalog), [equipmentCatalog]);
+//   const activeReferrals = useMemo(() => filterActive(references), [references]);
+//   const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
+
 //   const handleCareCenterChange = (id) => {
 //     if (id === "other") {
 //       set({ careCenterId: "other", careAddress: "", pocMobile: "" });
@@ -520,7 +570,6 @@
 //     if (!form.unit) e.unit = "Please select a unit.";
 //     if (!form.mode) e.mode = "Please select a mode.";
 //     if (!form.deviceModel) e.deviceModel = "Please choose an equipment model.";
-//     if (!form.accessory || form.accessory.length === 0) e.accessory = "Please choose at least one accessory.";
 //     if (!form.loginDate) e.loginDate = "Log in date is required.";
 //     if (!form.logoutDate) e.logoutDate = "Logout date is required to calculate total days.";
 //     if (!form.billingType) e.billingType = "Please select a billing type.";
@@ -590,14 +639,14 @@
 //           <Field label="Select Device Model" required error={errors.deviceModel}>
 //             <Select value={form.deviceModel} error={errors.deviceModel} onChange={(e) => set({ deviceModel: e.target.value })}>
 //               <option value="">-- Choose Equipment Model --</option>
-//               {equipmentCatalog.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
+//               {activeEquipment.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
 //             </Select>
 //           </Field>
           
-//           <Field label="Select Accessory" required error={errors.accessory}>
+//           <Field label="Select Accessory" error={errors.accessory}>
 //             <MultiSelect
-//               options={categories.map(c => c.name)}
-//               selected={Array.isArray(form.accessory) ? form.accessory : []}
+//               options={activeCategories}
+//               selected={form.accessory}
 //               onChange={(newAccessories) => set({ accessory: newAccessories })}
 //               placeholder="-- Choose Accessories --"
 //               error={errors.accessory}
@@ -640,7 +689,7 @@
 //               <Field label="Care Center Name">
 //                 <Select value={form.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
 //                   <option value="">-- Select Care Center --</option>
-//                   {careCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+//                   {activeCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
 //                   <option value="other">Other (Add New)</option>
 //                 </Select>
 //               </Field>
@@ -656,7 +705,7 @@
 //                 <Field label="Referral">
 //                   <Select value={form.referral} onChange={(e) => set({ referral: e.target.value })}>
 //                     <option value="">-- Select Referral --</option>
-//                     {references.map((r) => (
+//                     {activeReferrals.map((r) => (
 //                       <option key={r.id} value={r.doctorName || r.name}>
 //                         {r.doctorName || r.name} {r.domain ? `(${r.domain})` : ""}
 //                       </option>
@@ -857,7 +906,7 @@
 
 //   const handleAdd = async (data) => {
 //     try {
-//       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
+//       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
 //       const chosenMode = data.mode || data.paymentType || "Postpaid";
       
 //       const backendData = {
@@ -896,8 +945,9 @@
 //   const handleEdit = async (data) => {
 //     const targetStatus = data.status || data.requisition_status || data.return_status || "Active";
 //     const chosenMode = data.mode || data.paymentType || data.payment_type || "Postpaid";
+//     const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
 
-//     // 1. OPTIMISTIC UPDATE: Turant React state update karo taaki UI pe bin delay "Returned" dikhe!
+//     // 1. OPTIMISTIC UPDATE: Local state update
 //     setLogs((prevLogs) =>
 //       prevLogs.map((l) =>
 //         l.id === data.id
@@ -909,13 +959,14 @@
 //               return_status: targetStatus,
 //               mode: chosenMode,
 //               paymentType: chosenMode,
+//               accessory: accStr,
+//               accessories: accStr
 //             }
 //           : l
 //       )
 //     );
 
 //     try {
-//       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
 //       const newLogoutDate = data.logoutDate || data.logout_date || null;
 //       const newStartDate = data.startDate || data.start_date;
 //       const newNotifyDate = data.notifyDate || data.notify_date || null;
@@ -948,10 +999,10 @@
       
 //       await API.put(`/rental/requisitions/${data.id}`, backendData); 
 //       setModal(null);
-//       toast.success(`Requisition updated! Status: ${targetStatus}`); 
+//       toast.success(`Requisition updated!`); 
 //     } catch (err) {
 //       toast.error("Update failed: " + (err.response?.data?.message || err.message));
-//       fetchLogs(); // Error hone par DB se rollback sync kar lo
+//       fetchLogs(); 
 //     }
 //   };
 
@@ -997,7 +1048,7 @@
 
 //             <select value={careCenterFilter} onChange={(e) => setCareCenterFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
 //               <option value="All">All Care Centers</option>
-//               {careCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+//               {filterActive(careCenters).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
 //             </select>
 
 //             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
@@ -1174,14 +1225,12 @@ function GlobalPolish() {
   );
 }
 
-// Safe name/label extractor for objects or strings
 const getOptionLabel = (item) => {
   if (!item) return "";
   if (typeof item === "string") return item;
   return item.name || item.categoryName || item.category_name || item.title || item.label || item.doctorName || "";
 };
 
-// Filters out any item that is inactive
 const filterActive = (list = []) => {
   if (!Array.isArray(list)) return [];
   return list.filter((item) => {
@@ -1251,7 +1300,6 @@ const formatForDateInput = (d) => {
 function MultiSelect({ options = [], selected = [], onChange, placeholder = "Select...", error, disabled }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Robust parsing for string, array, or object items
   const safeSelected = useMemo(() => {
     if (Array.isArray(selected)) {
       return selected.map(getOptionLabel).filter(Boolean);
@@ -1473,7 +1521,6 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
 
   const titles = { add: "New Log Requisition", edit: "Edit Requisition", view: "Requisition Details" };
 
-  // Only Active Options Filtered
   const activeCareCenters = useMemo(() => filterActive(careCenters), [careCenters]);
   const activeEquipment = useMemo(() => filterActive(equipmentCatalog), [equipmentCatalog]);
   const activeReferrals = useMemo(() => filterActive(references), [references]);
@@ -1618,7 +1665,6 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
             </div>
           </div>
 
-          {/* Status Box & Mark as Returned Button */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
             <div className="flex items-center justify-between">
               <div>
@@ -1928,26 +1974,52 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
 }
 
 export default function RentalMaster({ permissions, careCenters, equipmentCatalog, references = [], categories = [] }) {
-  const [logs, setLogs] = useState([]); 
+  // 1. Local Cache State Initialization
+  const [logs, setLogs] = useState(() => {
+    try {
+      const cached = localStorage.getItem("cached_requisitions");
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  }); 
+
+  const [loading, setLoading] = useState(() => logs.length === 0);
   
+  // 2. Pure Fetch Logs Function
   const fetchLogs = useCallback(async () => {
     try {
       const response = await API.get(`/rental/requisitions?t=${Date.now()}`);
       setLogs(response.data);
+      localStorage.setItem("cached_requisitions", JSON.stringify(response.data));
     } catch (error) {
       console.error("Failed to fetch logs:", error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
+  // 3. Safe Mount Effect (Prevents Re-render Loops)
   useEffect(() => {
     let isMounted = true;
-    API.get(`/rental/requisitions?t=${Date.now()}`)
-      .then((response) => {
+
+    const loadData = async () => {
+      try {
+        const response = await API.get(`/rental/requisitions?t=${Date.now()}`);
         if (isMounted) {
           setLogs(response.data);
+          localStorage.setItem("cached_requisitions", JSON.stringify(response.data));
         }
-      })
-      .catch((err) => console.error("Failed to fetch logs:", err));
+      } catch (error) {
+        console.error("Failed to fetch logs:", error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
 
     return () => {
       isMounted = false;
@@ -2091,9 +2163,8 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
     const chosenMode = data.mode || data.paymentType || data.payment_type || "Postpaid";
     const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
 
-    // 1. OPTIMISTIC UPDATE: Local state update
-    setLogs((prevLogs) =>
-      prevLogs.map((l) =>
+    setLogs((prevLogs) => {
+      const updated = prevLogs.map((l) =>
         l.id === data.id
           ? {
               ...l,
@@ -2107,8 +2178,10 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
               accessories: accStr
             }
           : l
-      )
-    );
+      );
+      localStorage.setItem("cached_requisitions", JSON.stringify(updated));
+      return updated;
+    });
 
     try {
       const newLogoutDate = data.logoutDate || data.logout_date || null;
@@ -2153,9 +2226,7 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
   const handleDelete = async () => {
     try {
       await API.delete(`/rental/requisitions/${confirmDelete.id}`);
-      
       await fetchLogs();
-      
       setConfirmDelete(null);
       toast.success("Requisition deleted successfully!"); 
     } catch (err) {
@@ -2237,70 +2308,22 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map((log, i) => {
-                const actualLogoutDate = log.logoutDate || log.logout_date;
-                const dynamicDays = getDynamicTotalDays(log.startDate || log.start_date, actualLogoutDate, monthFilter);
-                const rawStatus = log.status || log.requisition_status || log.return_status;
-                const currentStatus = getCalculatedStatus(log.startDate || log.start_date, actualLogoutDate, rawStatus);
-                
-                const currentMode = log.mode || log.paymentType || log.payment_type || "Postpaid";
-
-                const rowColor = currentMode === "Prepaid" 
-                  ? "bg-emerald-50/70 hover:bg-emerald-100" 
-                  : currentMode === "Postpaid" 
-                  ? "bg-rose-50/70 hover:bg-rose-100"       
-                  : "hover:bg-teal-50/40";                 
-
-                const eqId = log.equipmentId || log.equipment_id;
-                let actualDevice = eqId || log.equipmentName || "—";
-                
-                const catMatch = equipmentCatalog.find(e => e.id === eqId);
-                if (catMatch) actualDevice = catMatch.name;
-
-                return (
-                  <tr 
-                    key={log.id} 
-                    style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }} 
-                    className={`rise-in group/row relative transition-colors duration-150 ${rowColor}`}
-                  >
-                    <td className="relative px-5 py-3.5">
-                      <span className="absolute left-0 top-1/2 h-0 w-0.5 -translate-y-1/2 bg-teal-500 transition-all duration-200 group-hover/row:h-6" />
-                      <StatusBadge status={currentStatus} glow={currentStatus === "Active"} />
-                    </td>
-                    <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${(log.dealType || log.deal_type) === "B2B" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{log.dealType || log.deal_type || "—"}</span></td>
-                    <td className="px-5 py-3.5 text-slate-600">{log.unit || "—"}</td>
-                    <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${currentMode === "Prepaid" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{currentMode}</span></td>
-                    <td className="px-5 py-3.5">
-                      <span className="font-semibold text-slate-700">{actualDevice}</span>
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-600">{log.patientName || log.patient_name || "—"}</td>
-                    <td className="px-5 py-3.5 text-slate-600">{formatDateShort(log.startDate || log.start_date)}</td>
-                    <td className="px-5 py-3.5 text-slate-600">{actualLogoutDate ? formatDateShort(actualLogoutDate) : "—"}</td>
-                    <td className="px-5 py-3.5">
-                      <span className="font-semibold text-slate-700 bg-slate-50/50 border border-slate-200/60 px-2 py-1 rounded-md shadow-sm">{dynamicDays}</span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center justify-end gap-1">
-                        {/* 1-Click Mark as Returned Action Icon */}
-                        {currentStatus !== "Returned" && (
-                          <IconAction 
-                            title="Mark as Returned" 
-                            tone="teal" 
-                            onClick={() => handleEdit({ ...log, status: "Returned", requisition_status: "Returned", return_status: "Returned" })}
-                          >
-                            <PackageCheck className="h-4 w-4 text-emerald-600" />
-                          </IconAction>
-                        )}
-
-                        <IconAction title="View" tone="teal" onClick={() => setModal({ mode: "view", data: log })}><Eye className="h-4 w-4" /></IconAction>
-                        {permissions.canEdit && <IconAction title="Edit" tone="teal" onClick={() => setModal({ mode: "edit", data: log })}><Pencil className="h-4 w-4" /></IconAction>}
-                        {permissions.canDelete && <IconAction title="Delete" tone="rose" onClick={() => setConfirmDelete(log)}><Trash2 className="h-4 w-4" /></IconAction>}
-                      </div>
-                    </td>
+              {loading && filtered.length === 0 ? (
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="px-5 py-4"><div className="h-5 w-16 bg-slate-100 rounded-md"></div></td>
+                    <td className="px-5 py-4"><div className="h-5 w-12 bg-slate-100 rounded-full"></div></td>
+                    <td className="px-5 py-4"><div className="h-5 w-14 bg-slate-100 rounded-md"></div></td>
+                    <td className="px-5 py-4"><div className="h-5 w-16 bg-slate-100 rounded-full"></div></td>
+                    <td className="px-5 py-4"><div className="h-5 w-28 bg-slate-100 rounded-md"></div></td>
+                    <td className="px-5 py-4"><div className="h-5 w-24 bg-slate-100 rounded-md"></div></td>
+                    <td className="px-5 py-4"><div className="h-5 w-20 bg-slate-100 rounded-md"></div></td>
+                    <td className="px-5 py-4"><div className="h-5 w-20 bg-slate-100 rounded-md"></div></td>
+                    <td className="px-5 py-4"><div className="h-5 w-10 bg-slate-100 rounded-md"></div></td>
+                    <td className="px-5 py-4"><div className="h-5 w-16 bg-slate-100 rounded-md ml-auto"></div></td>
                   </tr>
-                );
-              })}
-              {filtered.length === 0 && (
+                ))
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="px-5 py-14 text-center">
                     <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100"><Search className="h-5 w-5 text-slate-400" /></div>
@@ -2308,6 +2331,69 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
                     <p className="text-xs text-slate-400">Try adjusting the search or filter criteria</p>
                   </td>
                 </tr>
+              ) : (
+                filtered.map((log, i) => {
+                  const actualLogoutDate = log.logoutDate || log.logout_date;
+                  const dynamicDays = getDynamicTotalDays(log.startDate || log.start_date, actualLogoutDate, monthFilter);
+                  const rawStatus = log.status || log.requisition_status || log.return_status;
+                  const currentStatus = getCalculatedStatus(log.startDate || log.start_date, actualLogoutDate, rawStatus);
+                  
+                  const currentMode = log.mode || log.paymentType || log.payment_type || "Postpaid";
+
+                  const rowColor = currentMode === "Prepaid" 
+                    ? "bg-emerald-50/70 hover:bg-emerald-100" 
+                    : currentMode === "Postpaid" 
+                    ? "bg-rose-50/70 hover:bg-rose-100"       
+                    : "hover:bg-teal-50/40";                 
+
+                  const eqId = log.equipmentId || log.equipment_id;
+                  let actualDevice = eqId || log.equipmentName || "—";
+                  
+                  const catMatch = equipmentCatalog.find(e => e.id === eqId);
+                  if (catMatch) actualDevice = catMatch.name;
+
+                  return (
+                    <tr 
+                      key={log.id} 
+                      style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }} 
+                      className={`rise-in group/row relative transition-colors duration-150 ${rowColor}`}
+                    >
+                      <td className="relative px-5 py-3.5">
+                        <span className="absolute left-0 top-1/2 h-0 w-0.5 -translate-y-1/2 bg-teal-500 transition-all duration-200 group-hover/row:h-6" />
+                        <StatusBadge status={currentStatus} glow={currentStatus === "Active"} />
+                      </td>
+                      <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${(log.dealType || log.deal_type) === "B2B" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{log.dealType || log.deal_type || "—"}</span></td>
+                      <td className="px-5 py-3.5 text-slate-600">{log.unit || "—"}</td>
+                      <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${currentMode === "Prepaid" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{currentMode}</span></td>
+                      <td className="px-5 py-3.5">
+                        <span className="font-semibold text-slate-700">{actualDevice}</span>
+                      </td>
+                      <td className="px-5 py-3.5 text-slate-600">{log.patientName || log.patient_name || "—"}</td>
+                      <td className="px-5 py-3.5 text-slate-600">{formatDateShort(log.startDate || log.start_date)}</td>
+                      <td className="px-5 py-3.5 text-slate-600">{actualLogoutDate ? formatDateShort(actualLogoutDate) : "—"}</td>
+                      <td className="px-5 py-3.5">
+                        <span className="font-semibold text-slate-700 bg-slate-50/50 border border-slate-200/60 px-2 py-1 rounded-md shadow-sm">{dynamicDays}</span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center justify-end gap-1">
+                          {currentStatus !== "Returned" && (
+                            <IconAction 
+                              title="Mark as Returned" 
+                              tone="teal" 
+                              onClick={() => handleEdit({ ...log, status: "Returned", requisition_status: "Returned", return_status: "Returned" })}
+                            >
+                              <PackageCheck className="h-4 w-4 text-emerald-600" />
+                            </IconAction>
+                          )}
+
+                          <IconAction title="View" tone="teal" onClick={() => setModal({ mode: "view", data: log })}><Eye className="h-4 w-4" /></IconAction>
+                          {permissions.canEdit && <IconAction title="Edit" tone="teal" onClick={() => setModal({ mode: "edit", data: log })}><Pencil className="h-4 w-4" /></IconAction>}
+                          {permissions.canDelete && <IconAction title="Delete" tone="rose" onClick={() => setConfirmDelete(log)}><Trash2 className="h-4 w-4" /></IconAction>}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
