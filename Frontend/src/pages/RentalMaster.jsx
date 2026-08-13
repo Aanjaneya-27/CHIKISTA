@@ -30,6 +30,7 @@ function GlobalPolish() {
     `}</style>
   );
 }
+
 const getCalculatedStatus = (startDateStr, logoutDateStr, currentStatus) => {
   if (currentStatus === "Returned") return "Returned";
   if (!startDateStr || !logoutDateStr) return "Pending";
@@ -62,7 +63,6 @@ const getCalculatedStatus = (startDateStr, logoutDateStr, currentStatus) => {
   overdueLimit.setDate(overdueLimit.getDate() + 3);
   const oTime = overdueLimit.getTime();
 
-  // Rules:
   if (tTime >= sTime && tTime <= lTime) return "Active";
   if (tTime > lTime && tTime <= oTime) return "Pending";
   if (tTime > oTime) return "Overdue";
@@ -182,7 +182,7 @@ function KpiCards({ logs }) {
 
 const emptyForm = { careCenterId: "", address: "", contactPerson: "", phone: "", gst: "", equipmentId: "", quantity: 1, startDate: todayISO(), logoutDate: "", patientName: "", paymentType: "Postpaid", dealType: "B2B", unit: "ODCOM", mode: "Postpaid", notifyDate: "", deliveryAddress: "", notes: "", bedNo: "", referral: "", accessory: [] };
 
-function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCatalog, references = [], categories = [], onClose, onSubmit }) {
+function RequisitionModal({ mode: modalMode, initial, permissions, careCenters, equipmentCatalog, references = [], categories = [], onClose, onSubmit }) {
   const readOnly = modalMode === "view";
   
   const [form, setForm] = useState(() => {
@@ -198,8 +198,6 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
 
       const ccId = initial.careCenterId || initial.care_center_id || "";
       const cc = careCenters.find((c) => c.id === ccId);
-      
-      // 🔥 Date Mapping Fixed Here
       const mappedStart = formatForDateInput(initial.startDate || initial.start_date) || todayISO();
       const mappedLogout = formatForDateInput(initial.logoutDate || initial.logout_date);
       const mappedNotify = formatForDateInput(initial.notifyDate || initial.notify_date);
@@ -212,8 +210,8 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
         patientName: initial.patientName || initial.patient_name || "",
         startDate: mappedStart,
         logoutDate: mappedLogout,
-        bedNo: initial.bedNo || initial.bed_no || "",
-        referral: initial.referral || "",
+        bedNo: initial.bedNo || initial.bed_no || initial.bed_number || "",
+        referral: initial.referral || initial.referral_doctor || initial.referralDoctor || "",
         dealType: initial.dealType || initial.deal_type || "B2B",
         unit: initial.unit || "ODCOM",
         mode: initial.mode || "Postpaid",
@@ -223,7 +221,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
         notes: initial.notes || "",
         contactPerson: initial.contactPerson || initial.contact_person || cc?.contactPerson || "",
         phone: initial.phone || cc?.phone || "",
-        gst: initial.gst || cc?.gst || "",
+        gst: initial.gst || initial.gst_number || initial.gstNumber || cc?.gst || "",
         address: initial.address || cc?.address || "",
         accessory: parsedAcc
       };
@@ -310,21 +308,22 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
               </div>
               <Field label="Contact Person / Doctor"><TextInput disabled={readOnly} value={form.contactPerson} onChange={(e) => set({ contactPerson: e.target.value })} placeholder="Enter name" /></Field>
               <Field label="Phone"><TextInput disabled={readOnly} value={form.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="Enter phone" /></Field>
-               <Field label="GST / ID Number"><TextInput disabled={readOnly} value={form.gst || form.gst_number || form.gstNumber || ""} onChange={(e) => set({ gst: e.target.value })} placeholder="Enter GST/ID" /></Field>
-<Field label="Address"><TextInput disabled={readOnly} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder="Enter full address" /></Field>              
+              <Field label="GST / ID Number"><TextInput disabled={readOnly} value={form.gst || form.gst_number || form.gstNumber || ""} onChange={(e) => set({ gst: e.target.value })} placeholder="Enter GST/ID" /></Field>
+              <Field label="Address"><TextInput disabled={readOnly} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder="Enter full address" /></Field>
+              
               <div className="sm:col-span-2 grid grid-cols-2 gap-4">
-  <Field label="Bed No"><TextInput disabled={readOnly} value={form.bedNo || form.bed_number || form.bedNumber || ""} onChange={(e) => set({ bedNo: e.target.value, bed_number: e.target.value })} /></Field>
-  <Field label="Referral">
-    <Select disabled={readOnly} value={form.referral || form.referral_doctor || form.referralDoctor || ""} onChange={(e) => set({ referral: e.target.value, referral_doctor: e.target.value })}>
-      <option value="">-- Select Referral --</option>
-      {references.map((r) => (
-        <option key={r.id} value={r.doctorName || r.name}>
-          {r.doctorName || r.name} {r.domain ? `(${r.domain})` : ""}
-        </option>
-      ))}
-    </Select>
-  </Field>
-</div>
+                <Field label="Bed No"><TextInput disabled={readOnly} value={form.bedNo || form.bed_number || form.bedNumber || ""} onChange={(e) => set({ bedNo: e.target.value, bed_number: e.target.value })} /></Field>
+                <Field label="Referral">
+                  <Select disabled={readOnly} value={form.referral || form.referral_doctor || form.referralDoctor || ""} onChange={(e) => set({ referral: e.target.value, referral_doctor: e.target.value })}>
+                    <option value="">-- Select Referral --</option>
+                    {references.map((r) => (
+                      <option key={r.id} value={r.doctorName || r.name}>
+                        {r.doctorName || r.name} {r.domain ? `(${r.domain})` : ""}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
             </div>
           </div>
 
@@ -381,15 +380,15 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
               <Field label="Login Date (Rental Start)" required error={errors.startDate}>
                 <TextInput disabled={readOnly} type="date" value={form.startDate} error={errors.startDate} onChange={(e) => set({ startDate: e.target.value })} />
               </Field>
-<Field label="Logout Date (Return)" required error={errors.logoutDate}>
-  <TextInput 
-    disabled={readOnly} 
-    type="date" 
-    value={form.logoutDate || ""} 
-    error={errors.logoutDate} 
-    onChange={(e) => set({ logoutDate: e.target.value, logout_date: e.target.value })} 
-  />
-</Field>
+              <Field label="Logout Date (Return)" required error={errors.logoutDate}>
+                <TextInput 
+                  disabled={readOnly} 
+                  type="date" 
+                  value={form.logoutDate || ""} 
+                  error={errors.logoutDate} 
+                  onChange={(e) => set({ logoutDate: e.target.value, logout_date: e.target.value })} 
+                />
+              </Field>
               <div className="sm:col-span-2">
                 <Field label="Delivery Address" required error={errors.deliveryAddress}>
                   <TextInput disabled={readOnly} value={form.deliveryAddress} error={errors.deliveryAddress} placeholder="Where should the equipment be delivered?" onChange={(e) => set({ deliveryAddress: e.target.value })} />
@@ -416,6 +415,32 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
               <Field label="Notify Date" required={form.paymentType === "Prepaid"} error={errors.notifyDate} hint={form.paymentType === "Postpaid" ? "Optional for postpaid requisitions" : "Required — customer will be notified on this date"}>
                 <TextInput disabled={readOnly} type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
               </Field>
+            </div>
+          </div>
+
+          {/* Status & Return Action */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">Current Status</p>
+                <p className="text-sm font-bold text-slate-800">{form.status || "Auto (Date Calculated)"}</p>
+              </div>
+
+              {form.status === "Returned" ? (
+                <span className="rounded-md bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+                  ✓ Unit Returned
+                </span>
+              ) : (
+                permissions?.role === "super_admin" && !readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => set({ status: "Returned" })}
+                    className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95"
+                  >
+                    <PackageCheck className="h-4 w-4" /> Mark as Returned
+                  </button>
+                )
+              )}
             </div>
           </div>
 
@@ -446,7 +471,6 @@ function SectionHeading({ icon: Icon, children }) {
   );
 }
 
-// Same NewRequisitionPage structure
 function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], categories = [], onCancel, onSubmit }) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
@@ -545,7 +569,7 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Deal Type" required error={errors.dealType}><Select value={form.dealType} error={errors.dealType} onChange={(e) => set({ dealType: e.target.value })}><option value="">--- Select ---</option>{DEAL_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}</Select></Field>
           <Field label="Unit" required error={errors.unit}><Select value={form.unit} error={errors.unit} onChange={(e) => set({ unit: e.target.value })}><option value="">--- Select ---</option>{UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}</Select></Field>
-            <Field label="Payment Mode" required error={errors.mode}><Select value={form.mode} error={errors.mode} onChange={(e) => set({ mode: e.target.value })}><option value="">--- Select ---</option>{MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}</Select></Field>
+          <Field label="Payment Mode" required error={errors.mode}><Select value={form.mode} error={errors.mode} onChange={(e) => set({ mode: e.target.value })}><option value="">--- Select ---</option>{MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}</Select></Field>
         </div>
       </div>
 
@@ -699,12 +723,10 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
   );
 }
 
-
 export default function RentalMaster({ permissions, careCenters, equipmentCatalog, references = [], categories = [] }) {
-  
   const [logs, setLogs] = useState([]); 
   
-const fetchLogs = useCallback(async () => {
+  const fetchLogs = useCallback(async () => {
     try {
       const response = await API.get(`/rental/requisitions?t=${Date.now()}`);
       setLogs(response.data);
@@ -795,7 +817,7 @@ const fetchLogs = useCallback(async () => {
     return `${X}/${Y}`;
   };
 
-const filtered = useMemo(() => {
+  const filtered = useMemo(() => {
     return logs.filter((l) => {
       const ccId = l.careCenterId || l.care_center_id;
       const ccName = l.careCenterName || careCenters.find((c) => c.id === ccId)?.name || ccId;
@@ -810,7 +832,7 @@ const filtered = useMemo(() => {
         (l.patientName || l.patient_name || "").toLowerCase().includes(search.toLowerCase()) || 
         (ccName || "").toLowerCase().includes(search.toLowerCase());
         
-      const matchesStatus = statusFilter === "All" || currentCalcStatus === statusFilter; // 👈 match with calculated
+      const matchesStatus = statusFilter === "All" || currentCalcStatus === statusFilter;
       const matchesDealType = dealTypeFilter === "All" || (l.dealType || l.deal_type) === dealTypeFilter;
       const matchesMode = modeFilter === "All" || l.mode === modeFilter;
       const matchesCareCenter = careCenterFilter === "All" || ccId === careCenterFilter;
@@ -819,114 +841,80 @@ const filtered = useMemo(() => {
     });
   }, [logs, search, statusFilter, dealTypeFilter, modeFilter, careCenterFilter, careCenters, equipmentCatalog]);
 
-//   const handleAdd = async (data) => {
-//   try {
-//     const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
-    
-//     const backendData = {
-//       id: data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
-//       care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
-//       equipment_id: data.equipmentId || data.deviceModel,
-//       patient_name: data.patientName,
-//       quantity: data.quantity || 1,
-//       start_date: data.startDate || data.loginDate, 
-//       logout_date: data.logoutDate || data.logout_date || data.startDate || data.loginDate, 
-//       bed_no: data.bedNo || "", 
-//       referral: data.referral || "",          
-//       payment_type: data.paymentType || data.mode,
-//       deal_type: data.dealType,
-//       unit: data.unit,
-//       mode: data.mode,
-//       notify_date: data.notifyDate || null,
-//       delivery_address: data.deliveryAddress,
-//       notes: data.notes || "",
-//       accessory: accStr,
-//       accessories: accStr, 
-//       status: "Active"
-//     };
+  const handleAdd = async (data) => {
+    try {
+      const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
+      
+      const backendData = {
+        id: data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
+        care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
+        equipment_id: data.equipmentId || data.deviceModel,
+        patient_name: data.patientName,
+        quantity: data.quantity || 1,
+        start_date: data.startDate || data.loginDate, 
+        logout_date: data.logoutDate || data.logout_date || data.startDate || data.loginDate, 
+        bed_number: data.bedNo || data.bed_number || "", 
+        referral_doctor: data.referral || data.referralDoctor || data.referral_doctor || "",         
+        gst_number: data.gstNo || data.gstNumber || data.gst_number || "",
+        payment_type: data.paymentType || data.mode,
+        deal_type: data.dealType,
+        unit: data.unit,
+        mode: data.mode,
+        notify_date: data.notifyDate || null,
+        delivery_address: data.deliveryAddress,
+        notes: data.notes || "",
+        accessory: accStr,
+        accessories: accStr, 
+        status: "Active"
+      };
 
-//     await API.post("/rental/requisitions", backendData);
-//     await fetchLogs();
-//     setShowAddPage(false);
-//     toast.success("Requisition saved successfully!");
-//   } catch (err) {
-//     toast.error("Error saving Requisition: " + (err.response?.data?.message || err.message)); 
-//   }
-// };
+      await API.post("/rental/requisitions", backendData);
+      await fetchLogs();
+      setShowAddPage(false);
+      toast.success("Requisition saved successfully!");
+    } catch (err) {
+      toast.error("Error saving Requisition: " + (err.response?.data?.message || err.message)); 
+    }
+  };
 
-const handleAdd = async (data) => {
-  try {
-    const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
-    
-    const backendData = {
-      id: data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
-      care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
-      equipment_id: data.equipmentId || data.deviceModel,
-      patient_name: data.patientName,
-      quantity: data.quantity || 1,
-      start_date: data.startDate || data.loginDate, 
-      logout_date: data.logoutDate || data.logout_date || data.startDate || data.loginDate, 
-      bed_number: data.bedNo || data.bed_number || "", 
-      referral_doctor: data.referral || data.referralDoctor || data.referral_doctor || "",         
-      gst_number: data.gstNo || data.gstNumber || data.gst_number || "",
-      payment_type: data.paymentType || data.mode,
-      deal_type: data.dealType,
-      unit: data.unit,
-      mode: data.mode,
-      notify_date: data.notifyDate || null,
-      delivery_address: data.deliveryAddress,
-      notes: data.notes || "",
-      accessory: accStr,
-      accessories: accStr, 
-      status: "Active"
-    };
+  const handleEdit = async (data) => {
+    try {
+      const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
+      const newLogoutDate = data.logoutDate || data.logout_date || null;
+      const newStartDate = data.startDate || data.start_date;
+      const newNotifyDate = data.notifyDate || data.notify_date || null;
 
-    await API.post("/rental/requisitions", backendData);
-    await fetchLogs();
-    setShowAddPage(false);
-    toast.success("Requisition saved successfully!");
-  } catch (err) {
-    toast.error("Error saving Requisition: " + (err.response?.data?.message || err.message)); 
-  }
-};
- const handleEdit = async (data) => {
-  try {
-    const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : data.accessory;
-    const newLogoutDate = data.logoutDate || data.logout_date || null;
-    const newStartDate = data.startDate || data.start_date;
-    const newNotifyDate = data.notifyDate || data.notify_date || null;
+      const backendData = {
+        care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
+        equipment_id: data.equipmentId || data.equipment_id,
+        patient_name: data.patientName || data.patient_name,
+        quantity: data.quantity || 1,
+        start_date: newStartDate,
+        logout_date: newLogoutDate,
+        bed_number: data.bedNo || data.bed_number || data.bedNumber || "", 
+        referral_doctor: data.referral || data.referral_doctor || data.referralDoctor || "",         
+        gst_number: data.gst || data.gst_number || data.gstNumber || "",
 
-    const backendData = {
-      care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
-      equipment_id: data.equipmentId || data.equipment_id,
-      patient_name: data.patientName || data.patient_name,
-      quantity: data.quantity || 1,
-      start_date: newStartDate,
-      logout_date: newLogoutDate,
-      bed_number: data.bedNo || data.bed_number || data.bedNumber || "", 
-      referral_doctor: data.referral || data.referral_doctor || data.referralDoctor || "",         
-      gst_number: data.gst || data.gst_number || data.gstNumber || "",
-
-      payment_type: data.paymentType || data.payment_type,
-      deal_type: data.dealType || data.deal_type,
-      unit: data.unit,
-      mode: data.mode,
-      notify_date: newNotifyDate,
-      delivery_address: data.deliveryAddress || data.delivery_address,
-      notes: data.notes || "",
-      status: data.status || "Active",
-      accessory: accStr,   
-      accessories: accStr 
-    };
-    
-    await API.put(`/rental/requisitions/${data.id}`, backendData); 
-    await fetchLogs();
-    setModal(null);
-    toast.success("Requisition updated successfully!"); 
-  } catch (err) {
-    toast.error("Update failed: " + (err.response?.data?.message || err.message));
-  }
-};
+        payment_type: data.paymentType || data.payment_type,
+        deal_type: data.dealType || data.deal_type,
+        unit: data.unit,
+        mode: data.mode,
+        notify_date: newNotifyDate,
+        delivery_address: data.deliveryAddress || data.delivery_address,
+        notes: data.notes || "",
+        status: data.status || "Active",
+        accessory: accStr,   
+        accessories: accStr 
+      };
+      
+      await API.put(`/rental/requisitions/${data.id}`, backendData); 
+      await fetchLogs();
+      setModal(null);
+      toast.success("Requisition updated successfully!"); 
+    } catch (err) {
+      toast.error("Update failed: " + (err.response?.data?.message || err.message));
+    }
+  };
 
   const handleDelete = async () => {
     try {
@@ -1024,7 +1012,7 @@ const handleAdd = async (data) => {
                   ? "bg-emerald-50/70 hover:bg-emerald-100" 
                   : log.mode === "Postpaid" 
                   ? "bg-rose-50/70 hover:bg-rose-100"       
-                  : "hover:bg-teal-50/40";                
+                  : "hover:bg-teal-50/40";                 
 
                 const eqId = log.equipmentId || log.equipment_id;
                 let actualDevice = eqId || log.equipmentName || "—";
@@ -1040,7 +1028,6 @@ const handleAdd = async (data) => {
                   >
                     <td className="relative px-5 py-3.5">
                       <span className="absolute left-0 top-1/2 h-0 w-0.5 -translate-y-1/2 bg-teal-500 transition-all duration-200 group-hover/row:h-6" />
-                      {/* <StatusBadge status={log.status} glow={log.status === "Active"} /><p className="mt-1 text-xs font-medium text-slate-400">{log.id}</p> */}
                       <StatusBadge status={currentStatus} glow={currentStatus === "Active"} />
                     </td>
                     <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${(log.dealType || log.deal_type) === "B2B" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{log.dealType || log.deal_type || "—"}</span></td>
@@ -1083,7 +1070,19 @@ const handleAdd = async (data) => {
         </div>
       </div>
 
-      {modal && <RequisitionModal mode={modal.mode} initial={modal.data} careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} categories={categories} onClose={() => setModal(null)} onSubmit={modal.mode === "add" ? handleAdd : handleEdit} />}
+      {modal && (
+        <RequisitionModal 
+          mode={modal.mode} 
+          initial={modal.data} 
+          permissions={permissions}
+          careCenters={careCenters} 
+          equipmentCatalog={equipmentCatalog} 
+          references={references} 
+          categories={categories} 
+          onClose={() => setModal(null)} 
+          onSubmit={modal.mode === "add" ? handleAdd : handleEdit} 
+        />
+      )}
 
       <ConfirmDialog open={!!confirmDelete} title="Delete this requisition?" message={confirmDelete ? `${confirmDelete.id} will be permanently removed. This cannot be undone.` : ""} onCancel={() => setConfirmDelete(null)} onConfirm={handleDelete} />
     </div>
