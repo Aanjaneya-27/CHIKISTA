@@ -30,6 +30,45 @@ function GlobalPolish() {
     `}</style>
   );
 }
+const getCalculatedStatus = (startDateStr, logoutDateStr, currentStatus) => {
+  if (currentStatus === "Returned") return "Returned";
+  if (!startDateStr || !logoutDateStr) return "Pending";
+
+  const parseSafeDate = (dStr) => {
+    if (!dStr) return null;
+    let str = dStr.toString().trim();
+    if (str.includes("T")) str = str.split("T")[0];
+    if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(str)) {
+      const p = str.split(/[-/]/);
+      str = `${p[2]}-${p[1]}-${p[0]}`;
+    }
+    const d = new Date(`${str}T00:00:00`);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const start = parseSafeDate(startDateStr);
+  const logout = parseSafeDate(logoutDateStr);
+
+  if (!start || !logout) return currentStatus || "Pending";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const tTime = today.getTime();
+  const sTime = start.getTime();
+  const lTime = logout.getTime();
+
+  const overdueLimit = new Date(logout);
+  overdueLimit.setDate(overdueLimit.getDate() + 3);
+  const oTime = overdueLimit.getTime();
+
+  // Rules:
+  if (tTime >= sTime && tTime <= lTime) return "Active";
+  if (tTime > lTime && tTime <= oTime) return "Pending";
+  if (tTime > oTime) return "Overdue";
+
+  return "Pending";
+};
 
 const formatForDateInput = (d) => {
   if (!d) return "";
@@ -97,47 +136,7 @@ function MultiSelect({ options, selected, onChange, placeholder = "Select...", e
     </div>
   );
 }
-const getCalculatedStatus = (startDateStr, logoutDateStr, currentStatus) => {
-  if (currentStatus === "Returned") return "Returned";
-  if (!startDateStr || !logoutDateStr) return "Pending";
-  const parseSafeDate = (dStr) => {
-    if (!dStr) return null;
-    let str = dStr.toString().trim();
-    if (str.includes("T")) str = str.split("T")[0]; 
-      if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(str)) {
-      const p = str.split(/[-/]/);
-      str = `${p[2]}-${p[1]}-${p[0]}`;
-    }
-    
-    const d = new Date(`${str}T00:00:00`);
-    return isNaN(d.getTime()) ? null : d;
-  };
 
-  const start = parseSafeDate(startDateStr);
-  const logout = parseSafeDate(logoutDateStr);
-
-  if (!start || !logout) return currentStatus || "Pending";
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const tTime = today.getTime();
-  const sTime = start.getTime();
-  const lTime = logout.getTime();
-  const overdueLimit = new Date(logout);
-  overdueLimit.setDate(overdueLimit.getDate() + 3);
-  const oTime = overdueLimit.getTime();
-  if (tTime >= sTime && tTime <= lTime) {
-    return "Active";
-  }
-  if (tTime > lTime && tTime <= oTime) {
-    return "Pending";
-  }
-  if (tTime > oTime) {
-    return "Overdue";
-  }
-  return "Pending";
-};
 function KpiCards({ logs }) {
   const count = (s) => logs.filter((l) => {
     const dynamicStatus = getCalculatedStatus(
@@ -796,13 +795,14 @@ const fetchLogs = useCallback(async () => {
     return `${X}/${Y}`;
   };
 
-  const filtered = useMemo(() => {
+const filtered = useMemo(() => {
     return logs.filter((l) => {
       const ccId = l.careCenterId || l.care_center_id;
       const ccName = l.careCenterName || careCenters.find((c) => c.id === ccId)?.name || ccId;
       
       const eqId = l.equipmentId || l.equipment_id;
       const eqName = l.equipmentName || equipmentCatalog.find(e => e.id === eqId)?.name || eqId;
+      const currentCalcStatus = getCalculatedStatus(l.startDate || l.start_date, l.logoutDate || l.logout_date, l.status);
 
       const matchesSearch = !search || 
         l.id.toString().toLowerCase().includes(search.toLowerCase()) || 
@@ -810,7 +810,7 @@ const fetchLogs = useCallback(async () => {
         (l.patientName || l.patient_name || "").toLowerCase().includes(search.toLowerCase()) || 
         (ccName || "").toLowerCase().includes(search.toLowerCase());
         
-      const matchesStatus = statusFilter === "All" || l.status === statusFilter;
+      const matchesStatus = statusFilter === "All" || currentCalcStatus === statusFilter; // 👈 match with calculated
       const matchesDealType = dealTypeFilter === "All" || (l.dealType || l.deal_type) === dealTypeFilter;
       const matchesMode = modeFilter === "All" || l.mode === modeFilter;
       const matchesCareCenter = careCenterFilter === "All" || ccId === careCenterFilter;
@@ -1018,6 +1018,7 @@ const handleAdd = async (data) => {
               {filtered.map((log, i) => {
                 const actualLogoutDate = log.logoutDate || log.logout_date;
                 const dynamicDays = getDynamicTotalDays(log.startDate || log.start_date, actualLogoutDate, monthFilter);
+                const currentStatus = getCalculatedStatus(log.startDate || log.start_date, actualLogoutDate, log.status);
                 
                 const rowColor = log.mode === "Prepaid" 
                   ? "bg-emerald-50/70 hover:bg-emerald-100" 
@@ -1039,7 +1040,8 @@ const handleAdd = async (data) => {
                   >
                     <td className="relative px-5 py-3.5">
                       <span className="absolute left-0 top-1/2 h-0 w-0.5 -translate-y-1/2 bg-teal-500 transition-all duration-200 group-hover/row:h-6" />
-                      <StatusBadge status={log.status} glow={log.status === "Active"} /><p className="mt-1 text-xs font-medium text-slate-400">{log.id}</p>
+                      {/* <StatusBadge status={log.status} glow={log.status === "Active"} /><p className="mt-1 text-xs font-medium text-slate-400">{log.id}</p> */}
+                      <StatusBadge status={currentStatus} glow={currentStatus === "Active"} />
                     </td>
                     <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${(log.dealType || log.deal_type) === "B2B" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{log.dealType || log.deal_type || "—"}</span></td>
                     <td className="px-5 py-3.5 text-slate-600">{log.unit || "—"}</td>
