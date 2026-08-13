@@ -232,6 +232,11 @@ function RequisitionModal({ mode: modalMode, initial, permissions, careCenters, 
   const [errors, setErrors] = useState({});
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
+  // Dynamic Status calculation inside Modal
+  const modalCurrentStatus = useMemo(() => {
+    return getCalculatedStatus(form.startDate, form.logoutDate, form.status);
+  }, [form.startDate, form.logoutDate, form.status]);
+
   const handleCareCenterChange = (id) => {
     if (id === "other") {
       set({ careCenterId: "other", address: "", contactPerson: "", phone: "", gst: "" });
@@ -418,15 +423,15 @@ function RequisitionModal({ mode: modalMode, initial, permissions, careCenters, 
             </div>
           </div>
 
-          {/* Status & Return Action */}
+          {/* Status & Return Action (Uses dynamic modalCurrentStatus) */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-slate-500">Current Status</p>
-                <p className="text-sm font-bold text-slate-800">{form.status || "Auto (Date Calculated)"}</p>
+                <p className="text-sm font-bold text-slate-800">{modalCurrentStatus}</p>
               </div>
 
-              {form.status === "Returned" ? (
+              {modalCurrentStatus === "Returned" ? (
                 <span className="rounded-md bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
                   ✓ Unit Returned
                 </span>
