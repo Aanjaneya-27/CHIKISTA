@@ -4,6 +4,48 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { trendData, DONUT_COLORS } from "../data/MockData";
 import { StatusBadge } from "../components/UiComponents";
 
+const getCalculatedStatus = (startDateStr, logoutDateStr, currentStatus) => {
+  if (currentStatus && ["returned", "return"].includes(currentStatus.toString().trim().toLowerCase())) {
+    return "Returned";
+  }
+
+  if (!startDateStr || !logoutDateStr) return "Pending";
+
+  const parseSafeDate = (dStr) => {
+    if (!dStr) return null;
+    let str = dStr.toString().trim();
+    if (str.includes("T")) str = str.split("T")[0];
+    if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(str)) {
+      const p = str.split(/[-/]/);
+      str = `${p[2]}-${p[1]}-${p[0]}`;
+    }
+    const d = new Date(`${str}T00:00:00`);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const start = parseSafeDate(startDateStr);
+  const logout = parseSafeDate(logoutDateStr);
+
+  if (!start || !logout) return currentStatus || "Pending";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const tTime = today.getTime();
+  const sTime = start.getTime();
+  const lTime = logout.getTime();
+
+  const overdueLimit = new Date(logout);
+  overdueLimit.setDate(overdueLimit.getDate() + 3);
+  const oTime = overdueLimit.getTime();
+
+  if (tTime >= sTime && tTime <= lTime) return "Active";
+  if (tTime > lTime && tTime <= oTime) return "Pending";
+  if (tTime > oTime) return "Overdue";
+
+  return "Pending";
+};
+
 function DashboardStat({ label, value, icon: Icon, tone, delta, deltaUp }) {
   const toneMap = {
     teal: "bg-teal-50 text-teal-600",
@@ -31,18 +73,31 @@ function DashboardStat({ label, value, icon: Icon, tone, delta, deltaUp }) {
 }
 
 export default function AdminDashboard({ logs, careCenters, equipmentCatalog, deliveryExecutives, setActiveModule }) {
-  const activeCount = logs.filter((l) => l.status === "Active").length;
-  const pendingCount = logs.filter((l) => l.status === "Pending").length;
-  const overdueCount = logs.filter((l) => l.status === "Overdue").length;
+  // Safe Log Helper
+  const getLogStatus = (l) => {
+    const rawStatus = l.status || l.requisition_status || l.return_status;
+    return getCalculatedStatus(
+      l.startDate || l.start_date,
+      l.logoutDate || l.logout_date,
+      rawStatus
+    );
+  };
+
+  const activeCount = logs.filter((l) => getLogStatus(l) === "Active").length;
+  const pendingCount = logs.filter((l) => getLogStatus(l) === "Pending").length;
+  const overdueCount = logs.filter((l) => getLogStatus(l) === "Overdue").length;
+
   const revenue = logs.reduce((sum, l) => {
-    const eq = equipmentCatalog.find((e) => e.id === l.equipmentId);
-    return sum + (eq ? eq.dailyRate * l.quantity : 0);
+    const eqId = l.equipmentId || l.equipment_id;
+    const eq = equipmentCatalog.find((e) => e.id === eqId);
+    return sum + (eq ? eq.dailyRate * (l.quantity || 1) : 0);
   }, 0);
 
   const categoryData = useMemo(() => {
     const map = {};
     logs.forEach((l) => {
-      map[l.category] = (map[l.category] || 0) + l.quantity;
+      const cat = l.category || "General";
+      map[cat] = (map[cat] || 0) + (l.quantity || 1);
     });
     return Object.entries(map).map(([name, value]) => ({ name, value }));
   }, [logs]);
@@ -135,20 +190,26 @@ export default function AdminDashboard({ logs, careCenters, equipmentCatalog, de
             </button>
           </div>
           <div className="divide-y divide-slate-100">
-            {recentLogs.map((log) => (
-              <div key={log.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
-                <div className="flex items-center gap-3">
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-500">
-                    <Package className="h-4 w-4" />
+            {recentLogs.map((log) => {
+              const currentStatus = getLogStatus(log);
+              const ccId = log.careCenterId || log.care_center_id;
+              const eqName = log.equipmentName || equipmentCatalog.find(e => e.id === (log.equipmentId || log.equipment_id))?.name || "Equipment";
+
+              return (
+                <div key={log.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-500">
+                      <Package className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">{eqName}</p>
+                      <p className="text-xs text-slate-400">{log.id} · {careCenterName(ccId)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-700">{log.equipmentName}</p>
-                    <p className="text-xs text-slate-400">{log.id} · {careCenterName(log.careCenterId)}</p>
-                  </div>
+                  <StatusBadge status={currentStatus} glow={currentStatus === "Active"} />
                 </div>
-                <StatusBadge status={log.status} glow={log.status === "Active"} />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
