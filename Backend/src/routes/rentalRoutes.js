@@ -15,7 +15,8 @@
 //     const { 
 //       id, care_center_id, equipment_id, patient_name, quantity, 
 //       start_date, logout_date, deal_type, unit, mode, notify_date, 
-//       delivery_address, notes, bed_number, bedNumber, referral_doctor, referralDoctor, gst_number, gstNumber 
+//       delivery_address, notes, bed_number, bedNumber, referral_doctor, referralDoctor, gst_number, gstNumber,
+//       status, requisition_status
 //     } = req.body;
 
 //     const cleanStartDate = getSafeDate(start_date);
@@ -26,11 +27,12 @@
 //     const finalBed = bed_number || bedNumber || '';
 //     const finalRefDoc = referral_doctor || referralDoctor || '';
 //     const finalGst = gst_number || gstNumber || '';
+//     const finalStatus = status || requisition_status || 'Active';
 
 //     await pool.query(
 //       `INSERT INTO requisitions 
-//       (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, deal_type, unit, mode, notify_date, delivery_address, notes, bed_number, referral_doctor, gst_number) 
-//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//       (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, deal_type, unit, mode, notify_date, delivery_address, notes, bed_number, referral_doctor, gst_number, status) 
+//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 //       [
 //         reqId, 
 //         care_center_id || "CARE-NEW", 
@@ -47,7 +49,8 @@
 //         notes || "",
 //         finalBed,
 //         finalRefDoc,
-//         finalGst
+//         finalGst,
+//         finalStatus
 //       ]
 //     );
 
@@ -97,7 +100,8 @@
 //     const { 
 //       care_center_id, equipment_id, patient_name, quantity, 
 //       start_date, logout_date, deal_type, unit, mode, notify_date, 
-//       delivery_address, notes, bed_number, bedNumber, referral_doctor, referralDoctor, gst_number, gstNumber 
+//       delivery_address, notes, bed_number, bedNumber, referral_doctor, referralDoctor, gst_number, gstNumber,
+//       status, requisition_status, return_status
 //     } = req.body;
 
 //     const cleanStartDate = getSafeDate(start_date);
@@ -107,15 +111,18 @@
 //     const finalBed = bed_number !== undefined ? bed_number : (bedNumber || '');
 //     const finalRefDoc = referral_doctor !== undefined ? referral_doctor : (referralDoctor || '');
 //     const finalGst = gst_number !== undefined ? gst_number : (gstNumber || '');
+    
+//     // Status update parameter
+//     const finalStatus = status || requisition_status || return_status || 'Active';
 
 //     await pool.query(
 //       `UPDATE requisitions 
-//        SET care_center_id=?, equipment_id=?, patient_name=?, quantity=?, start_date=?, logout_date=?, deal_type=?, unit=?, mode=?, notify_date=?, delivery_address=?, notes=?, bed_number=?, referral_doctor=?, gst_number=?
+//        SET care_center_id=?, equipment_id=?, patient_name=?, quantity=?, start_date=?, logout_date=?, deal_type=?, unit=?, mode=?, notify_date=?, delivery_address=?, notes=?, bed_number=?, referral_doctor=?, gst_number=?, status=?
 //        WHERE id=?`,
 //       [
 //         care_center_id || null, equipment_id || null, patient_name || "Unknown Patient", quantity || 1, 
 //         cleanStartDate, cleanLogoutDate, deal_type || "B2B", unit || "ODCOM", mode || "Postpaid", 
-//         cleanNotifyDate, delivery_address || "", notes || "", finalBed, finalRefDoc, finalGst, id
+//         cleanNotifyDate, delivery_address || "", notes || "", finalBed, finalRefDoc, finalGst, finalStatus, id
 //       ]
 //     );
 
@@ -157,7 +164,7 @@ router.post("/requisitions", async (req, res) => {
       id, care_center_id, equipment_id, patient_name, quantity, 
       start_date, logout_date, deal_type, unit, mode, notify_date, 
       delivery_address, notes, bed_number, bedNumber, referral_doctor, referralDoctor, gst_number, gstNumber,
-      status, requisition_status
+      status, requisition_status, accessory, accessories 
     } = req.body;
 
     const cleanStartDate = getSafeDate(start_date);
@@ -169,11 +176,12 @@ router.post("/requisitions", async (req, res) => {
     const finalRefDoc = referral_doctor || referralDoctor || '';
     const finalGst = gst_number || gstNumber || '';
     const finalStatus = status || requisition_status || 'Active';
+    const finalAccessory = accessory || accessories || ''; 
 
     await pool.query(
       `INSERT INTO requisitions 
-      (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, deal_type, unit, mode, notify_date, delivery_address, notes, bed_number, referral_doctor, gst_number, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, deal_type, unit, mode, notify_date, delivery_address, notes, bed_number, referral_doctor, gst_number, status, accessory) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         reqId, 
         care_center_id || "CARE-NEW", 
@@ -191,7 +199,8 @@ router.post("/requisitions", async (req, res) => {
         finalBed,
         finalRefDoc,
         finalGst,
-        finalStatus
+        finalStatus,
+        finalAccessory 
       ]
     );
 
@@ -242,7 +251,8 @@ router.put("/requisitions/:id", async (req, res) => {
       care_center_id, equipment_id, patient_name, quantity, 
       start_date, logout_date, deal_type, unit, mode, notify_date, 
       delivery_address, notes, bed_number, bedNumber, referral_doctor, referralDoctor, gst_number, gstNumber,
-      status, requisition_status, return_status
+      status, requisition_status, return_status,
+      accessory, accessories
     } = req.body;
 
     const cleanStartDate = getSafeDate(start_date);
@@ -252,18 +262,17 @@ router.put("/requisitions/:id", async (req, res) => {
     const finalBed = bed_number !== undefined ? bed_number : (bedNumber || '');
     const finalRefDoc = referral_doctor !== undefined ? referral_doctor : (referralDoctor || '');
     const finalGst = gst_number !== undefined ? gst_number : (gstNumber || '');
-    
-    // Status update parameter
     const finalStatus = status || requisition_status || return_status || 'Active';
+    const finalAccessory = accessory || accessories || ''; // 👈 Accessory Handling
 
     await pool.query(
       `UPDATE requisitions 
-       SET care_center_id=?, equipment_id=?, patient_name=?, quantity=?, start_date=?, logout_date=?, deal_type=?, unit=?, mode=?, notify_date=?, delivery_address=?, notes=?, bed_number=?, referral_doctor=?, gst_number=?, status=?
+       SET care_center_id=?, equipment_id=?, patient_name=?, quantity=?, start_date=?, logout_date=?, deal_type=?, unit=?, mode=?, notify_date=?, delivery_address=?, notes=?, bed_number=?, referral_doctor=?, gst_number=?, status=?, accessory=?
        WHERE id=?`,
       [
         care_center_id || null, equipment_id || null, patient_name || "Unknown Patient", quantity || 1, 
         cleanStartDate, cleanLogoutDate, deal_type || "B2B", unit || "ODCOM", mode || "Postpaid", 
-        cleanNotifyDate, delivery_address || "", notes || "", finalBed, finalRefDoc, finalGst, finalStatus, id
+        cleanNotifyDate, delivery_address || "", notes || "", finalBed, finalRefDoc, finalGst, finalStatus, finalAccessory, id
       ]
     );
 
