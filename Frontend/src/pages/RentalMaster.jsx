@@ -97,9 +97,39 @@ function MultiSelect({ options, selected, onChange, placeholder = "Select...", e
     </div>
   );
 }
+const getCalculatedStatus = (startDateStr, logoutDateStr, currentStatus) => {
+  if (currentStatus === "Returned") return "Returned";
+  if (!startDateStr || !logoutDateStr) return "Pending";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const start = new Date(startDateStr);
+  start.setHours(0, 0, 0, 0);
+
+  const logout = new Date(logoutDateStr);
+  logout.setHours(0, 0, 0, 0);
+
+  const overdueLimit = new Date(logout);
+  overdueLimit.setDate(overdueLimit.getDate() + 3);
+
+  if (today >= start && today <= logout) return "Active";
+  if (today > logout && today <= overdueLimit) return "Pending";
+  if (today > overdueLimit) return "Overdue";
+
+  return "Pending";
+};
 
 function KpiCards({ logs }) {
-  const count = (s) => logs.filter((l) => l.status === s).length;
+  const count = (s) => logs.filter((l) => {
+    const dynamicStatus = getCalculatedStatus(
+      l.startDate || l.start_date, 
+      l.logoutDate || l.logout_date, 
+      l.status
+    );
+    return dynamicStatus === s;
+  }).length;
+
   const cards = [
     { label: "Active Rentals", value: count("Active"), icon: Activity, tone: "teal" },
     { label: "Pending Requisitions", value: count("Pending"), icon: Clock, tone: "amber" },
