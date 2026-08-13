@@ -56,7 +56,7 @@ export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNo
               <ShieldCheck className="h-3.5 w-3.5 text-teal-400" /> Role Access
             </p>
             <p className="mt-1 text-xs leading-relaxed text-slate-500">
-              Viewing as <span className="font-semibold text-slate-300">{ROLES[role].label}</span>
+              Viewing as <span className="font-semibold text-slate-300">{ROLES[role]?.label || role}</span>
             </p>
           </div>
         </div>
@@ -70,7 +70,7 @@ export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, 
   const location = useLocation();
   const navigate = useNavigate(); 
   
-  const currentUser = { name: DEMO_USER_NAMES[role], role: ROLES[role].label };
+  const currentUser = { name: DEMO_USER_NAMES[role] || "User", role: ROLES[role]?.label || role };
 
   const getTitle = () => {
     if (location.pathname.includes("/dashboard")) return "Admin Dashboard";
@@ -205,5 +205,16 @@ export function NotificationsPanel({ open, onClose, notifications, onMarkRead, o
         </div>
       </div>
     </div>
+  );
+}
+
+export function Footer() {
+  return (
+    <footer className="mt-auto border-t border-slate-200 bg-white py-4 px-6 text-slate-500">
+      <div className="flex flex-col items-center justify-between gap-2 text-xs sm:flex-row">
+        <p>© 2026 Evoquesys . All rights reserved.</p>
+        <p className="font-semibold text-slate-600">Chikitsa Rental Master</p>
+      </div>
+    </footer>
   );
 }
