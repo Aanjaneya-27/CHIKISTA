@@ -14,8 +14,7 @@
 //       .smooth-scroll-x::-webkit-scrollbar { width: 8px; height: 8px; }
 //       .smooth-scroll::-webkit-scrollbar-track,
 //       .smooth-scroll-x::-webkit-scrollbar-track { background: transparent; }
-//       .smooth-scroll::-webkit-scrollbar-thumb,
-//       .smooth-scroll-x::-webkit-scrollbar-thumb {
+//       .smooth-scroll::-webkit-scrollbar-thumb {
 //         background-color: rgba(13, 148, 136, 0.25);
 //         border-radius: 9999px;
 //         transition: background-color 0.2s ease;
@@ -780,7 +779,6 @@
 // }
 
 // export default function RentalMaster({ permissions, careCenters, equipmentCatalog, references = [], categories = [] }) {
-//   // 1. Local Cache State Initialization
 //   const [logs, setLogs] = useState(() => {
 //     try {
 //       const cached = localStorage.getItem("cached_requisitions");
@@ -792,7 +790,6 @@
 
 //   const [loading, setLoading] = useState(() => logs.length === 0);
   
-//   // 2. Pure Fetch Logs Function
 //   const fetchLogs = useCallback(async () => {
 //     try {
 //       const response = await API.get(`/rental/requisitions?t=${Date.now()}`);
@@ -805,7 +802,6 @@
 //     }
 //   }, []);
 
-//   // 3. Safe Mount Effect (Prevents Re-render Loops)
 //   useEffect(() => {
 //     let isMounted = true;
 
@@ -835,6 +831,7 @@
 //   const [search, setSearch] = useState("");
 //   const [statusFilter, setStatusFilter] = useState("All");
 //   const [dealTypeFilter, setDealTypeFilter] = useState("All");
+//   const [unitFilter, setUnitFilter] = useState("All"); 
 //   const [modeFilter, setModeFilter] = useState("All");
 //   const [monthFilter, setMonthFilter] = useState(0); 
 //   const [careCenterFilter, setCareCenterFilter] = useState("All"); 
@@ -910,6 +907,7 @@
 //       const rawStatus = l.status || l.requisition_status || l.return_status;
 //       const currentCalcStatus = getCalculatedStatus(l.startDate || l.start_date, l.logoutDate || l.logout_date, rawStatus);
 //       const currentMode = l.mode || l.paymentType || l.payment_type || "";
+//       const currentUnit = l.unit || "";
 
 //       const matchesSearch = !search || 
 //         l.id.toString().toLowerCase().includes(search.toLowerCase()) || 
@@ -919,12 +917,13 @@
         
 //       const matchesStatus = statusFilter === "All" || currentCalcStatus === statusFilter;
 //       const matchesDealType = dealTypeFilter === "All" || (l.dealType || l.deal_type) === dealTypeFilter;
+//       const matchesUnit = unitFilter === "All" || currentUnit === unitFilter;
 //       const matchesMode = modeFilter === "All" || currentMode === modeFilter;
 //       const matchesCareCenter = careCenterFilter === "All" || ccId === careCenterFilter;
 
-//       return matchesSearch && matchesStatus && matchesDealType && matchesMode && matchesCareCenter;
+//       return matchesSearch && matchesStatus && matchesDealType && matchesUnit && matchesMode && matchesCareCenter;
 //     });
-//   }, [logs, search, statusFilter, dealTypeFilter, modeFilter, careCenterFilter, careCenters, equipmentCatalog]);
+//   }, [logs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, careCenters, equipmentCatalog]);
 
 //   const handleAdd = async (data) => {
 //     try {
@@ -1048,6 +1047,8 @@
 //     <div className="space-y-5">
 //       <GlobalPolish />
 //       <KpiCards logs={logs} />
+      
+//       {/* 🔍 Top Filter Bar (Care Center, Status, Deal, Units, Modes) */}
 //       <div style={{ animationDelay: "80ms" }} className="rise-in flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40 xl:flex-row xl:items-center xl:justify-between">
 //         <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center md:flex-wrap">
 //           <div className="group relative flex-1 sm:max-w-xs">
@@ -1058,6 +1059,7 @@
 //           <div className="flex flex-wrap items-center gap-2">
 //             <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400" />
             
+//             {/* Month Filter */}
 //             <div className="relative group flex items-center justify-center h-9 w-9 rounded-lg border border-slate-200 bg-white hover:bg-teal-50 transition cursor-pointer shrink-0 shadow-sm" title="Filter by Month">
 //               <Calendar className="h-4.5 w-4.5 text-slate-500 group-hover:text-teal-600" />
 //               <select value={monthFilter} onChange={(e) => setMonthFilter(Number(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
@@ -1067,21 +1069,31 @@
 //               </select>
 //             </div>
 
+//             {/* Care Center Filter */}
 //             <select value={careCenterFilter} onChange={(e) => setCareCenterFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
 //               <option value="All">All Care Centers</option>
 //               {filterActive(careCenters).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
 //             </select>
 
+//             {/* Status Filter */}
 //             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
 //               <option value="All">All Status</option>
 //               {RENTAL_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
 //             </select>
             
+//             {/* Deal Types Filter */}
 //             <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
 //               <option value="All">All Deal Types</option>
 //               {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
 //             </select>
             
+//             {/* 👈 Units Filter Added Here */}
+//             <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
+//               <option value="All">All Units</option>
+//               {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+//             </select>
+
+//             {/* Modes Filter */}
 //             <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
 //               <option value="All">All Modes</option>
 //               {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -1096,15 +1108,13 @@
 //         )}
 //       </div>
 
+//       {/* 📊 Clean Table (Status, Device, Patients, Login Date, Logout Date, Total Days, Actions) */}
 //       <div style={{ animationDelay: "140ms" }} className="rise-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/40">
 //         <div className="smooth-scroll-x overflow-x-auto">
-//           <table className="w-full text-left text-sm" style={{ minWidth: 1080 }}>
+//           <table className="w-full text-left text-sm" style={{ minWidth: 800 }}>
 //             <thead>
 //               <tr className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 text-xs font-bold uppercase tracking-wide text-slate-400 backdrop-blur">
 //                 <th className="px-5 py-3">Status</th>
-//                 <th className="px-5 py-3">Deal Types</th>
-//                 <th className="px-5 py-3">Units</th>
-//                 <th className="px-5 py-3">Modes</th>
 //                 <th className="px-5 py-3">Device</th>
 //                 <th className="px-5 py-3">Patients</th>
 //                 <th className="px-5 py-3">Login Date</th>
@@ -1118,9 +1128,6 @@
 //                 Array.from({ length: 5 }).map((_, idx) => (
 //                   <tr key={idx} className="animate-pulse">
 //                     <td className="px-5 py-4"><div className="h-5 w-16 bg-slate-100 rounded-md"></div></td>
-//                     <td className="px-5 py-4"><div className="h-5 w-12 bg-slate-100 rounded-full"></div></td>
-//                     <td className="px-5 py-4"><div className="h-5 w-14 bg-slate-100 rounded-md"></div></td>
-//                     <td className="px-5 py-4"><div className="h-5 w-16 bg-slate-100 rounded-full"></div></td>
 //                     <td className="px-5 py-4"><div className="h-5 w-28 bg-slate-100 rounded-md"></div></td>
 //                     <td className="px-5 py-4"><div className="h-5 w-24 bg-slate-100 rounded-md"></div></td>
 //                     <td className="px-5 py-4"><div className="h-5 w-20 bg-slate-100 rounded-md"></div></td>
@@ -1131,7 +1138,7 @@
 //                 ))
 //               ) : filtered.length === 0 ? (
 //                 <tr>
-//                   <td colSpan={10} className="px-5 py-14 text-center">
+//                   <td colSpan={7} className="px-5 py-14 text-center">
 //                     <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100"><Search className="h-5 w-5 text-slate-400" /></div>
 //                     <p className="mt-3 text-sm font-semibold text-slate-500">No requisitions match your filters</p>
 //                     <p className="text-xs text-slate-400">Try adjusting the search or filter criteria</p>
@@ -1143,7 +1150,6 @@
 //                   const dynamicDays = getDynamicTotalDays(log.startDate || log.start_date, actualLogoutDate, monthFilter);
 //                   const rawStatus = log.status || log.requisition_status || log.return_status;
 //                   const currentStatus = getCalculatedStatus(log.startDate || log.start_date, actualLogoutDate, rawStatus);
-                  
 //                   const currentMode = log.mode || log.paymentType || log.payment_type || "Postpaid";
 
 //                   const rowColor = currentMode === "Prepaid" 
@@ -1168,9 +1174,6 @@
 //                         <span className="absolute left-0 top-1/2 h-0 w-0.5 -translate-y-1/2 bg-teal-500 transition-all duration-200 group-hover/row:h-6" />
 //                         <StatusBadge status={currentStatus} glow={currentStatus === "Active"} />
 //                       </td>
-//                       <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${(log.dealType || log.deal_type) === "B2B" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{log.dealType || log.deal_type || "—"}</span></td>
-//                       <td className="px-5 py-3.5 text-slate-600">{log.unit || "—"}</td>
-//                       <td className="px-5 py-3.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${currentMode === "Prepaid" ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-500"}`}>{currentMode}</span></td>
 //                       <td className="px-5 py-3.5">
 //                         <span className="font-semibold text-slate-700">{actualDevice}</span>
 //                       </td>
@@ -1244,7 +1247,8 @@ function GlobalPolish() {
       .smooth-scroll-x::-webkit-scrollbar { width: 8px; height: 8px; }
       .smooth-scroll::-webkit-scrollbar-track,
       .smooth-scroll-x::-webkit-scrollbar-track { background: transparent; }
-      .smooth-scroll::-webkit-scrollbar-thumb {
+      .smooth-scroll::-webkit-scrollbar-thumb,
+      .smooth-scroll-x::-webkit-scrollbar-thumb {
         background-color: rgba(13, 148, 136, 0.25);
         border-radius: 9999px;
         transition: background-color 0.2s ease;
@@ -2233,7 +2237,6 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
         bed_number: data.bedNo || data.bed_number || data.bedNumber || "", 
         referral_doctor: data.referral || data.referral_doctor || data.referralDoctor || "",         
         gst_number: data.gst || data.gst_number || data.gstNumber || "",
-
         payment_type: chosenMode,
         deal_type: data.dealType || data.deal_type,
         unit: data.unit,
@@ -2276,69 +2279,103 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
   return (
     <div className="space-y-5">
       <GlobalPolish />
-      <KpiCards logs={logs} />
       
-      {/* 🔍 Top Filter Bar (Care Center, Status, Deal, Units, Modes) */}
-      <div style={{ animationDelay: "80ms" }} className="rise-in flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center md:flex-wrap">
-          <div className="group relative flex-1 sm:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-teal-500" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by ID, patient, device, care center…" className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400" />
-            
-            {/* Month Filter */}
-            <div className="relative group flex items-center justify-center h-9 w-9 rounded-lg border border-slate-200 bg-white hover:bg-teal-50 transition cursor-pointer shrink-0 shadow-sm" title="Filter by Month">
-              <Calendar className="h-4.5 w-4.5 text-slate-500 group-hover:text-teal-600" />
-              <select value={monthFilter} onChange={(e) => setMonthFilter(Number(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                {monthOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Care Center Filter */}
-            <select value={careCenterFilter} onChange={(e) => setCareCenterFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
-              <option value="All">All Care Centers</option>
-              {filterActive(careCenters).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-
-            {/* Status Filter */}
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
-              <option value="All">All Status</option>
-              {RENTAL_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-            
-            {/* Deal Types Filter */}
-            <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
-              <option value="All">All Deal Types</option>
-              {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-            
-            {/* 👈 Units Filter Added Here */}
-            <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
-              <option value="All">All Units</option>
-              {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
-            </select>
-
-            {/* Modes Filter */}
-            <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500">
-              <option value="All">All Modes</option>
-              {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
+      {/* 🏷️ Top Header with Log Requisition Button */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-800">RentalMaster Sheet</h1>
+          <p className="text-xs font-medium text-slate-400 mt-0.5">Live view &amp; allocation of equipment requisitions</p>
         </div>
 
         {permissions.canAdd && (
-          <PrimaryButton onClick={() => setShowAddPage(true)} className="shrink-0 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]">
+          <PrimaryButton onClick={() => setShowAddPage(true)} className="shrink-0 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98] px-4.5 py-2.5">
             <Plus className="h-4 w-4" /> New Log Requisition
           </PrimaryButton>
         )}
       </div>
 
-      {/* 📊 Clean Table (Status, Device, Patients, Login Date, Logout Date, Total Days, Actions) */}
+      {/* 📊 KPI Cards */}
+      <KpiCards logs={logs} />
+      
+      {/* 🔍 Full Width Balanced Filter Bar (Box completely filled) */}
+      <div style={{ animationDelay: "80ms" }} className="rise-in rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm shadow-slate-200/40">
+        <div className="flex flex-wrap items-center gap-2.5 w-full">
+          
+          {/* Search Box - Stretches nicely */}
+          <div className="group relative flex-[2] min-w-[220px]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-teal-500" />
+            <input 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+              placeholder="Search by ID, patient, device, care center…" 
+              className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" 
+            />
+          </div>
+
+          <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400 hidden sm:block" />
+          
+          {/* Calendar Month Picker */}
+          <div className="relative group flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-slate-200 bg-slate-50/70 hover:bg-teal-50 transition cursor-pointer shrink-0 shadow-2xs" title="Filter by Month">
+            <Calendar className="h-4 w-4 text-slate-500 group-hover:text-teal-600" />
+            <select value={monthFilter} onChange={(e) => setMonthFilter(Number(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+              {monthOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Care Center Dropdown */}
+          <select value={careCenterFilter} onChange={(e) => setCareCenterFilter(e.target.value)} className="flex-1 min-w-[130px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+            <option value="All">All Care Centers</option>
+            {filterActive(careCenters).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+
+          {/* Status Dropdown */}
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+            <option value="All">All Status</option>
+            {RENTAL_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          
+          {/* Deal Types Dropdown */}
+          <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[115px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+            <option value="All">All Deal Types</option>
+            {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          
+          {/* Units Dropdown */}
+          <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+            <option value="All">All Units</option>
+            {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+          </select>
+
+          {/* Modes Dropdown */}
+          <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+            <option value="All">All Modes</option>
+            {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+
+          {/* 👈 Reset Button (Cross Mark) */}
+          <button 
+            type="button"
+            onClick={() => {
+              setSearch("");
+              setStatusFilter("All");
+              setDealTypeFilter("All");
+              setUnitFilter("All");
+              setModeFilter("All");
+              setCareCenterFilter("All");
+              setMonthFilter(0);
+              toast.success("Filters reset");
+            }}
+            title="Reset all filters"
+            className="flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition cursor-pointer shrink-0"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* 📊 Original Clean Table */}
       <div style={{ animationDelay: "140ms" }} className="rise-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/40">
         <div className="smooth-scroll-x overflow-x-auto">
           <table className="w-full text-left text-sm" style={{ minWidth: 800 }}>
@@ -2404,8 +2441,8 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
                         <span className="absolute left-0 top-1/2 h-0 w-0.5 -translate-y-1/2 bg-teal-500 transition-all duration-200 group-hover/row:h-6" />
                         <StatusBadge status={currentStatus} glow={currentStatus === "Active"} />
                       </td>
-                      <td className="px-5 py-3.5">
-                        <span className="font-semibold text-slate-700">{actualDevice}</span>
+                      <td className="px-5 py-3.5 font-bold text-slate-800">
+                        {actualDevice}
                       </td>
                       <td className="px-5 py-3.5 text-slate-600">{log.patientName || log.patient_name || "—"}</td>
                       <td className="px-5 py-3.5 text-slate-600">{formatDateShort(log.startDate || log.start_date)}</td>
