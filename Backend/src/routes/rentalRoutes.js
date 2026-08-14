@@ -146,4 +146,15 @@ router.delete("/requisitions/:id", async (req, res) => {
   }
 });
 
+router.delete("/notifications/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query(`DELETE FROM notifications WHERE id = ?`, [id]);
+    res.status(200).json({ message: "Notification Deleted Successfully!" });
+  } catch (err) {
+    console.error("Delete Notification Error:", err);
+    res.status(500).json({ message: "Error deleting notification", error: err.message });
+  }
+});
+
 module.exports = router;

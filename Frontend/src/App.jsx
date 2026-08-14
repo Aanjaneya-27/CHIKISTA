@@ -61,6 +61,7 @@
 //   const unreadCount = notifications.filter((n) => !n.read).length;
 //   const markNotifRead = (id) => setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
 //   const markAllNotifRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+//   const deleteNotif = (id) => setNotifications((prev) => prev.filter((n) => n.id !== id));
 
 //   const permissions = {
 //     canViewMaster: role === "super_admin",
@@ -148,70 +149,44 @@
 //     fetchAllData();
 //   }, []);
 
- 
 //   return (
-//   <div className="font-body flex h-screen w-full overflow-hidden bg-slate-50">
-//     <Sidebar role={role} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} unreadCount={unreadCount} onOpenNotifications={() => setNotifOpen(true)} />
-    
-//     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-//       <Topbar role={role} setMobileOpen={setMobileOpen} unreadCount={unreadCount} onOpenNotifications={() => setNotifOpen(true)} onLogout={handleLogout} />
+//     <div className="font-body flex h-screen w-full overflow-hidden bg-slate-50">
+//       <Sidebar role={role} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} unreadCount={unreadCount} onOpenNotifications={() => setNotifOpen(true)} />
       
-//       <div className="smooth-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
+//       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+//         <Topbar role={role} setMobileOpen={setMobileOpen} unreadCount={unreadCount} onOpenNotifications={() => setNotifOpen(true)} onLogout={handleLogout} />
         
-//         <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6">
-//           <Routes>
-//             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-//             <Route path="/dashboard" element={<AdminDashboard role={role} logs={logs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} deliveryExecutives={deliveryExecutives} />} />
-//             <Route path="/rental" element={<RentalMaster role={role} permissions={permissions} logs={logs} setLogs={setLogs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} categories={categories}/>} />
-//             <Route path="/master" element={
-//               permissions.canViewMaster ? (
-//                 <MasterInfo careCenters={careCenters} setCareCenters={setCareCenters} equipmentCatalog={equipmentCatalog} setEquipmentCatalog={setEquipmentCatalog} categories={categories} setCategories={setCategories} references={references} setReferences={setReferences} deliveryExecutives={deliveryExecutives} setDeliveryExecutives={setDeliveryExecutives} />
-//               ) : (
-//                 <AccessDenied role={role} />
-//               )
-//             } />
-//             <Route path="/profile" element={<UserProfile />} />
-//             <Route path="*" element={<Navigate to="/dashboard" replace />} />
-//           </Routes>
-//         </main>
-//         <Footer />
+//         <div className="smooth-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
+//           <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6">
+//             <Routes>
+//               <Route path="/" element={<Navigate to="/dashboard" replace />} />
+//               <Route path="/dashboard" element={<AdminDashboard role={role} logs={logs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} deliveryExecutives={deliveryExecutives} />} />
+//               <Route path="/rental" element={<RentalMaster role={role} permissions={permissions} logs={logs} setLogs={setLogs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} categories={categories}/>} />
+//               <Route path="/master" element={
+//                 permissions.canViewMaster ? (
+//                   <MasterInfo careCenters={careCenters} setCareCenters={setCareCenters} equipmentCatalog={equipmentCatalog} setEquipmentCatalog={setEquipmentCatalog} categories={categories} setCategories={setCategories} references={references} setReferences={setReferences} deliveryExecutives={deliveryExecutives} setDeliveryExecutives={setDeliveryExecutives} />
+//                 ) : (
+//                   <AccessDenied role={role} />
+//                 )
+//               } />
+//               <Route path="/profile" element={<UserProfile />} />
+//               <Route path="*" element={<Navigate to="/dashboard" replace />} />
+//             </Routes>
+//           </main>
+//           <Footer />
+//         </div>
 //       </div>
+
+//       <NotificationsPanel 
+//         open={notifOpen} 
+//         onClose={() => setNotifOpen(false)} 
+//         notifications={notifications} 
+//         onMarkRead={markNotifRead} 
+//         onMarkAllRead={markAllNotifRead} 
+//         onDeleteNotif={deleteNotif}
+//       />
 //     </div>
-
-//     <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} notifications={notifications} onMarkRead={markNotifRead} onMarkAllRead={markAllNotifRead} />
-//   </div>
-// );
-//   //   <div className="font-body flex h-screen w-full overflow-hidden bg-slate-50">
-//   //     <Sidebar role={role} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} unreadCount={unreadCount} onOpenNotifications={() => setNotifOpen(true)} />
-//   //     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-//   //       <Topbar role={role} setMobileOpen={setMobileOpen} unreadCount={unreadCount} onOpenNotifications={() => setNotifOpen(true)} onLogout={handleLogout} />
-        
-//   //       <main className="smooth-scroll flex min-h-0 flex-1 flex-col justify-between overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
-//   //         <div className="flex-1 pb-6">
-//   //           <Routes>
-//   //             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-//   //             <Route path="/dashboard" element={<AdminDashboard role={role} logs={logs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} deliveryExecutives={deliveryExecutives} />} />
-//   //             <Route path="/rental" element={<RentalMaster role={role} permissions={permissions} logs={logs} setLogs={setLogs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} categories={categories}/>} />
-              
-//   //             <Route path="/master" element={
-//   //               permissions.canViewMaster ? (
-//   //                 <MasterInfo careCenters={careCenters} setCareCenters={setCareCenters} equipmentCatalog={equipmentCatalog} setEquipmentCatalog={setEquipmentCatalog} categories={categories} setCategories={setCategories} references={references} setReferences={setReferences} deliveryExecutives={deliveryExecutives} setDeliveryExecutives={setDeliveryExecutives} />
-//   //               ) : (
-//   //                 <AccessDenied role={role} />
-//   //               )
-//   //             } />
-
-//   //             <Route path="/profile" element={<UserProfile />} />
-//   //             <Route path="*" element={<Navigate to="/dashboard" replace />} />
-//   //           </Routes>
-//   //         </div>
-//   //         <Footer />
-//   //       </main>
-//   //     </div>
-
-//   //     <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} notifications={notifications} onMarkRead={markNotifRead} onMarkAllRead={markAllNotifRead} />
-//   //   </div>
-//   // );
+//   );
 // }
 
 // export default function App() {
@@ -315,10 +290,26 @@ function MainAppLayout({ role, handleLogout }) {
   const [deliveryExecutives, setDeliveryExecutives] = useState([]);
   const [logs, setLogs] = useState([]);
   const [notifications, setNotifications] = useState([]);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Notification Handlers
   const markNotifRead = (id) => setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   const markAllNotifRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  const deleteNotif = (id) => setNotifications((prev) => prev.filter((n) => n.id !== id));
+  
+  // 👈 Permanent Delete with Backend DB Sync
+  const deleteNotif = async (id) => {
+    // 1. UI se turant hatao
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+
+    try {
+      // 2. Database se permanently delete karo
+      await API.delete(`/rental/notifications/${id}`);
+    } catch (err) {
+      console.error("Failed to delete notification from DB:", err);
+      toast.error("Failed to delete notification from server");
+    }
+  };
 
   const permissions = {
     canViewMaster: role === "super_admin",
