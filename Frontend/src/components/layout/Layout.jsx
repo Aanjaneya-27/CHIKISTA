@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { HeartPulse, ClipboardList, Database, ChevronRight, Bell, ShieldCheck, Menu, User, SlidersHorizontal, LogOut, ChevronDown, X, CheckCircle2, AlertTriangle } from "lucide-react";
+import { HeartPulse, ClipboardList, Database, ChevronRight, Bell, ShieldCheck, Menu, User, SlidersHorizontal, LogOut, ChevronDown, X, CheckCircle2, AlertTriangle, Trash2, CheckCheck } from "lucide-react";
 import { ROLES, DEMO_USER_NAMES } from "../../data/MockData";
 
 export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNotifications }) {
@@ -152,7 +152,7 @@ function notifStyle(type) {
   }
 }
 
-export function NotificationsPanel({ open, onClose, notifications, onMarkRead, onMarkAllRead }) {
+export function NotificationsPanel({ open, onClose, notifications = [], onMarkRead, onMarkAllRead, onDeleteNotif }) {
   if (!open) return null;
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -160,49 +160,85 @@ export function NotificationsPanel({ open, onClose, notifications, onMarkRead, o
     <div className="fixed inset-0 z-50">
       <div className="fade-in absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
       <div className="slide-in-right absolute right-0 top-0 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl">
+        
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
             <h2 className="font-display text-base font-bold text-slate-800">Notifications</h2>
             <p className="text-xs text-slate-400">{unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}</p>
           </div>
-          <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button>
+          <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100">
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         {unreadCount > 0 && (
-          <div className="flex justify-end border-b border-slate-100 px-5 py-2.5">
-            <button onClick={onMarkAllRead} className="text-xs font-semibold text-teal-600 hover:text-teal-700">Mark all as read</button>
+          <div className="flex justify-between items-center border-b border-slate-100 bg-slate-50/50 px-5 py-2">
+            <span className="text-[11px] font-semibold text-slate-400">{unreadCount} New Alerts</span>
+            <button 
+              onClick={onMarkAllRead} 
+              className="flex items-center gap-1 text-xs font-bold text-teal-600 transition hover:text-teal-700 cursor-pointer"
+            >
+              <CheckCheck className="h-3.5 w-3.5" /> Mark all as read
+            </button>
           </div>
         )}
 
         <div className="smooth-scroll min-h-0 flex-1 overflow-y-auto">
-          {notifications.length === 0 && (
+          {notifications.length === 0 ? (
             <div className="grid h-full place-items-center px-6 text-center">
               <div>
-                <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100"><Bell className="h-5 w-5 text-slate-400" /></div>
-                <p className="mt-3 text-sm font-semibold text-slate-500">No notifications yet</p>
+                <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100">
+                  <Bell className="h-5 w-5 text-slate-400" />
+                </div>
+                <p className="mt-3 text-sm font-semibold text-slate-500">No notifications</p>
+                <p className="text-xs text-slate-400 mt-1">New updates will appear here</p>
               </div>
             </div>
-          )}
-          <div className="divide-y divide-slate-100">
-            {notifications.map((n) => {
-              const s = notifStyle(n.type);
-              const Icon = s.icon;
-              return (
-                <button key={n.id} onClick={() => onMarkRead(n.id)} className={`flex w-full items-start gap-3 px-5 py-4 text-left transition hover:bg-slate-50 ${!n.read ? "bg-teal-50/40" : ""}`}>
-                  <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${s.bg} ${s.text}`}><Icon className="h-4 w-4" /></div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold text-slate-700">{n.title}</p>
-                      {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />}
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {notifications.map((n) => {
+                const s = notifStyle(n.type);
+                const Icon = s.icon;
+                return (
+                  <div 
+                    key={n.id} 
+                    className={`group relative flex items-start justify-between gap-3 px-5 py-4 transition hover:bg-slate-50/80 ${!n.read ? "bg-teal-50/30" : ""}`}
+                  >
+                    <div 
+                      onClick={() => onMarkRead && onMarkRead(n.id)} 
+                      className="flex flex-1 items-start gap-3 cursor-pointer min-w-0"
+                    >
+                      <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${s.bg} ${s.text}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-sm font-semibold text-slate-700">{n.title}</p>
+                          {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />}
+                        </div>
+                        <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.message}</p>
+                        <p className="mt-1 text-[11px] font-medium text-slate-400">{n.time}</p>
+                      </div>
                     </div>
-                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.message}</p>
-                    <p className="mt-1 text-xs text-slate-400">{n.time}</p>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteNotif && onDeleteNotif(n.id);
+                      }}
+                      title="Delete notification"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg shrink-0 cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
-                </button>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
+
       </div>
     </div>
   );
@@ -212,12 +248,10 @@ export function Footer() {
   return (
     <footer className="mt-auto border-t border-slate-200 bg-white px-4 py-4 sm:px-6 text-slate-500">
       <div className="flex flex-col items-center justify-between gap-2.5 text-xs sm:flex-row">
-        
         <div className="flex items-center gap-1.5">
           <span className="font-bold text-slate-700">© 2026 Evoquesys .</span>
           <span className="text-slate-400">All rights reserved.</span>
         </div>
-
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 rounded-full bg-teal-50 px-2.5 py-1 border border-teal-100">
             <span className="relative flex h-2 w-2">
@@ -226,14 +260,9 @@ export function Footer() {
             </span>
             <span className="text-[11px] font-semibold text-teal-700">Chikitsa</span>
           </div>
-
           <span className="hidden text-slate-300 sm:inline">|</span>
-
-          <span className="hidden font-medium text-slate-400 sm:inline">
-            Healthcare Logistics Platform
-          </span>
+          <span className="hidden font-medium text-slate-400 sm:inline">Healthcare Logistics Platform</span>
         </div>
-
       </div>
     </footer>
   );
