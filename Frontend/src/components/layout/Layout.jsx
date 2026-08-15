@@ -14,13 +14,43 @@ export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNo
 
   return (
     <>
+      <style>{`
+        @keyframes heartbeat {
+          0%, 100% { transform: scale(1); }
+          15% { transform: scale(1.3); }
+          30% { transform: scale(1); }
+          45% { transform: scale(1.2); }
+          60% { transform: scale(1); }
+        }
+        @keyframes heartbeat-glow {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.5); }
+          15% { box-shadow: 0 0 0 6px rgba(20, 184, 166, 0.15); }
+          30% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.4); }
+          45% { box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1); }
+          60% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
+        }
+        @keyframes heartbeat-color {
+          0%, 100% { background-color: #14b8a6; }
+          15% { background-color: #2dd4bf; }
+          30% { background-color: #14b8a6; }
+          45% { background-color: #5eead4; }
+          60% { background-color: #14b8a6; }
+        }
+        .animate-heartbeat {
+          animation: heartbeat 1.4s ease-in-out infinite;
+          transform-origin: center;
+        }
+        .heartbeat-wrapper {
+          animation: heartbeat-glow 1.4s ease-in-out infinite, heartbeat-color 1.4s ease-in-out infinite;
+        }
+      `}</style>
+
       {mobileOpen && <div className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden" onClick={() => setMobileOpen(false)} />}
       <aside className={`fixed z-50 flex h-full w-64 flex-col bg-slate-950 text-slate-300 transition-transform duration-200 will-change-transform lg:static lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
         
-        {/* Brand Header */}
         <button onClick={() => { navigate("/dashboard"); setMobileOpen(false); }} className={`flex w-full items-center gap-2.5 border-b px-5 py-5 text-left transition ${location.pathname === "/dashboard" ? "border-teal-500/30 bg-teal-500/10" : "border-white/10 hover:bg-white/5"}`}>
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-teal-500 shadow-lg shadow-teal-500/30">
-            <HeartPulse className="h-5 w-5 text-white" />
+          <div className="heartbeat-wrapper grid h-9 w-9 shrink-0 place-items-center rounded-xl shadow-lg shadow-teal-500/30">
+            <HeartPulse className="h-5 w-5 text-white animate-heartbeat" />
           </div>
           <div>
             <p className="font-display text-sm font-extrabold leading-tight text-white">Chikitsa</p>
