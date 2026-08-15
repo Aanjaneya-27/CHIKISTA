@@ -1,7 +1,7 @@
-// import { useState, useRef, useEffect } from "react";
+// import { useState, useRef, useEffect, useMemo } from "react";
 // import { useNavigate, useLocation } from "react-router-dom";
-// import { HeartPulse, ClipboardList, Database, ChevronRight, Bell, Menu, User, SlidersHorizontal, LogOut, ChevronDown, X, CheckCircle2, AlertTriangle, Trash2, CheckCheck } from "lucide-react";
-// import { ROLES, DEMO_USER_NAMES } from "../../data/MockData";
+// import { HeartPulse, ClipboardList, Database, ChevronRight, Bell, Menu, User, LogOut, ChevronDown, X, CheckCircle2, AlertTriangle, Trash2, CheckCheck } from "lucide-react";
+// import { ROLES } from "../../data/MockData";
 
 // export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNotifications }) {
 //   const navigate = useNavigate();
@@ -91,7 +91,27 @@
 //   const location = useLocation();
 //   const navigate = useNavigate(); 
   
-//   const currentUser = { name: DEMO_USER_NAMES[role] || "User", role: ROLES[role]?.label || role };
+//   // 🟢 Live user read from localStorage
+//   const loggedUser = useMemo(() => {
+//     try {
+//       return JSON.parse(localStorage.getItem("user") || "{}");
+//     } catch {
+//       return {};
+//     }
+//   }, []);
+
+//   const isCareCenter = (role === "care_center") || (loggedUser?.role === "care_center");
+//   const isSuperAdmin = (role === "super_admin" || role === "admin") || (loggedUser?.role === "super_admin");
+
+//   const displayName = isCareCenter 
+//     ? (loggedUser?.careCenterName || loggedUser?.name || "Care Center")
+//     : isSuperAdmin 
+//     ? (loggedUser?.name || "Super Admin")
+//     : (loggedUser?.name || "User");
+
+//   const displayRole = isCareCenter ? "Care Center" : isSuperAdmin ? "Super Admin" : (ROLES[role]?.label || role || "User");
+
+//   const avatarInitial = displayName.trim().charAt(0).toUpperCase();
 
 //   useEffect(() => {
 //     const handleClickOutside = (event) => {
@@ -138,12 +158,12 @@
 //             onClick={() => setProfileMenuOpen((v) => !v)} 
 //             className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 transition hover:bg-slate-50 cursor-pointer"
 //           >
-//             <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-600 text-xs font-bold text-white">
-//               {currentUser.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+//             <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-600 text-xs font-bold text-white uppercase shadow-sm">
+//               {avatarInitial}
 //             </div>
-//             <div className="hidden text-left sm:block">
-//               <p className="text-xs font-semibold text-slate-700 leading-none">{currentUser.name}</p>
-//               <p className="mt-1 text-xs text-slate-400 leading-none">{currentUser.role}</p>
+//             <div className="hidden text-left sm:block max-w-[140px]">
+//               <p className="text-xs font-semibold text-slate-700 leading-none truncate">{displayName}</p>
+//               <p className="mt-1 text-[11px] text-slate-400 leading-none">{displayRole}</p>
 //             </div>
 //             <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${profileMenuOpen ? "rotate-180" : ""}`} />
 //           </button>
@@ -151,22 +171,15 @@
 //           {profileMenuOpen && (
 //             <div className="fade-slide-up absolute right-0 top-full z-40 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5">
 //               <div className="border-b border-slate-100 px-3.5 py-3 bg-slate-50/50">
-//                 <p className="text-sm font-semibold text-slate-700">{currentUser.name}</p>
-//                 <p className="text-xs text-slate-400">{currentUser.role}</p>
+//                 <p className="text-sm font-semibold text-slate-700 truncate">{displayName}</p>
+//                 <p className="text-xs text-slate-400">{displayRole}</p>
 //               </div>
               
 //               <button 
 //                 onClick={() => { setProfileMenuOpen(false); navigate("/profile"); }} 
 //                 className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-600 transition hover:bg-slate-50 cursor-pointer"
 //               >
-//                 <User className="h-4 w-4 text-slate-400" /> My Profile
-//               </button>
-              
-//               <button 
-//                 onClick={() => { setProfileMenuOpen(false); navigate("/profile"); }} 
-//                 className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-600 transition hover:bg-slate-50 cursor-pointer"
-//               >
-//                 <SlidersHorizontal className="h-4 w-4 text-slate-400" /> Account Settings
+//                 <User className="h-4 w-4 text-slate-400" /> Account Settings
 //               </button>
               
 //               <button 
@@ -192,8 +205,38 @@
 // }
 
 // export function NotificationsPanel({ open, onClose, notifications = [], onMarkRead, onMarkAllRead, onDeleteNotif }) {
+//   const loggedUser = useMemo(() => {
+//     try {
+//       return JSON.parse(localStorage.getItem("user") || "{}");
+//     } catch {
+//       return {};
+//     }
+//   }, []);
+
+//   const isCareCenterUser = loggedUser?.role === "care_center";
+//   const myCenterId = loggedUser?.careCenterId || loggedUser?.id;
+//   const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
+
+//   const scopedNotifications = useMemo(() => {
+//     if (!isCareCenterUser) return notifications;
+
+//     return notifications.filter((n) => {
+//       const nCcId = n.careCenterId || n.care_center_id || n.centerId;
+//       const nCcName = (n.careCenterName || n.careCenter || n.centerName || "").toLowerCase().trim();
+//       const nTitle = (n.title || "").toLowerCase();
+//       const nMessage = (n.message || "").toLowerCase();
+
+//       if (nCcId && myCenterId && String(nCcId) === String(myCenterId)) return true;
+//       if (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) return true;
+//       if (myCenterName && (nTitle.includes(myCenterName) || nMessage.includes(myCenterName))) return true;
+//       if (!nCcId && !nCcName && n.role === "care_center") return true;
+
+//       return false;
+//     });
+//   }, [notifications, isCareCenterUser, myCenterId, myCenterName]);
+
 //   if (!open) return null;
-//   const unreadCount = notifications.filter((n) => !n.read).length;
+//   const unreadCount = scopedNotifications.filter((n) => !n.read).length;
 
 //   return (
 //     <div className="fixed inset-0 z-50">
@@ -224,7 +267,7 @@
 //         )}
 
 //         <div className="smooth-scroll min-h-0 flex-1 overflow-y-auto">
-//           {notifications.length === 0 ? (
+//           {scopedNotifications.length === 0 ? (
 //             <div className="grid h-full place-items-center px-6 text-center">
 //               <div>
 //                 <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100">
@@ -236,7 +279,7 @@
 //             </div>
 //           ) : (
 //             <div className="divide-y divide-slate-100">
-//               {notifications.map((n) => {
+//               {scopedNotifications.map((n) => {
 //                 const s = notifStyle(n.type);
 //                 const Icon = s.icon;
 //                 return (
@@ -244,7 +287,6 @@
 //                     key={n.id} 
 //                     className={`group relative flex items-start justify-between gap-3 px-5 py-4 transition hover:bg-slate-50/80 ${!n.read ? "bg-teal-50/30" : ""}`}
 //                   >
-
 //                     <div 
 //                       onClick={() => onMarkRead && onMarkRead(n.id)} 
 //                       className="flex flex-1 items-start gap-3 cursor-pointer min-w-0"
@@ -290,7 +332,18 @@
 //     <footer className="mt-auto border-t border-slate-200 bg-white px-4 py-4 sm:px-6 text-slate-500">
 //       <div className="flex flex-col items-center justify-between gap-2.5 text-xs sm:flex-row">
 //         <div className="flex items-center gap-1.5">
-//           <span className="font-bold text-slate-700">© 2026 Evoquesys .</span>
+//           <span className="font-bold text-slate-700">
+//             © 2026{" "}
+//             <a
+//               href="https://evoquesys.com/"
+//               target="_blank"
+//               rel="noopener noreferrer"
+//               className="text-teal-600 hover:text-teal-700 hover:underline transition-colors cursor-pointer"
+//             >
+//               Evoquesys
+//             </a>
+//             .
+//           </span>
 //           <span className="text-slate-400">All rights reserved.</span>
 //         </div>
 //         <div className="flex items-center gap-3">
@@ -402,7 +455,6 @@ export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, 
   const location = useLocation();
   const navigate = useNavigate(); 
   
-  // 🟢 Live user read from localStorage
   const loggedUser = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}");
@@ -421,7 +473,6 @@ export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, 
     : (loggedUser?.name || "User");
 
   const displayRole = isCareCenter ? "Care Center" : isSuperAdmin ? "Super Admin" : (ROLES[role]?.label || role || "User");
-
   const avatarInitial = displayName.trim().charAt(0).toUpperCase();
 
   useEffect(() => {
@@ -525,26 +576,30 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
   }, []);
 
   const isCareCenterUser = loggedUser?.role === "care_center";
-  const myCenterId = loggedUser?.careCenterId || loggedUser?.id;
+  const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
+  const myCenterIdNumeric = myCenterId.replace(/\D/g, "");
   const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
+  const myCenterPhone = (loggedUser?.phone || "").toString().replace(/\D/g, "").slice(-10);
 
   const scopedNotifications = useMemo(() => {
     if (!isCareCenterUser) return notifications;
 
     return notifications.filter((n) => {
-      const nCcId = n.careCenterId || n.care_center_id || n.centerId;
+      const nCcId = (n.care_center_id || n.careCenterId || n.centerId || "").toString().trim().toLowerCase();
+      const nCcIdNumeric = nCcId.replace(/\D/g, "");
       const nCcName = (n.careCenterName || n.careCenter || n.centerName || "").toLowerCase().trim();
       const nTitle = (n.title || "").toLowerCase();
       const nMessage = (n.message || "").toLowerCase();
 
-      if (nCcId && myCenterId && String(nCcId) === String(myCenterId)) return true;
+      if (nCcId && myCenterId && (nCcId === myCenterId || (nCcIdNumeric && nCcIdNumeric === myCenterIdNumeric))) return true;
       if (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) return true;
       if (myCenterName && (nTitle.includes(myCenterName) || nMessage.includes(myCenterName))) return true;
-      if (!nCcId && !nCcName && n.role === "care_center") return true;
+      if (myCenterPhone && (nTitle.includes(myCenterPhone) || nMessage.includes(myCenterPhone))) return true;
+      if (!nCcId || nCcId === "all" || nCcId === "null" || nCcId === "") return true;
 
       return false;
     });
-  }, [notifications, isCareCenterUser, myCenterId, myCenterName]);
+  }, [notifications, isCareCenterUser, myCenterId, myCenterIdNumeric, myCenterName, myCenterPhone]);
 
   if (!open) return null;
   const unreadCount = scopedNotifications.filter((n) => !n.read).length;
@@ -611,7 +666,7 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
                           {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />}
                         </div>
                         <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.message}</p>
-                        <p className="mt-1 text-[11px] font-medium text-slate-400">{n.time}</p>
+                        <p className="mt-1 text-[11px] font-medium text-slate-400">{n.time || n.created_at || "Just now"}</p>
                       </div>
                     </div>
 
