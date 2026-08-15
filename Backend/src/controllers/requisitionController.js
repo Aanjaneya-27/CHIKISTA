@@ -44,12 +44,23 @@ const deleteRequisition = async (req, res) => {
   }
 };
 
+// const getNotifications = async (req, res) => {
+//   try {
+//     const rows = await Notification.getAll();
+//     res.json(rows);
+//   } catch (error) { 
+//     res.status(500).json({ message: "Server error", error: error.message }); 
+//   }
+// };
 const getNotifications = async (req, res) => {
   try {
-    const rows = await Notification.getAll();
-    res.json(rows);
-  } catch (error) { 
-    res.status(500).json({ message: "Server error", error: error.message }); 
+    const careCenterId = req.query.careCenterId || req.user?.careCenterId || req.user?.id;
+    const role = req.query.role || req.user?.role;
+
+    const data = await Notification.getAll(careCenterId, role);
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
