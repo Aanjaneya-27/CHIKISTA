@@ -383,22 +383,24 @@ export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNo
   const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
   const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
 
-  // 🎯 Accurate badge count calculation for Care Center
+  // 🎯 Accurate badge count for Sidebar
   const activeUnreadCount = useMemo(() => {
     if (!notifications || notifications.length === 0) return unreadCount || 0;
     if (!isCareCenter) return notifications.filter((n) => !n.read).length;
 
     return notifications.filter((n) => {
       if (n.read) return false;
-      const nCcId = (n.care_center_id || n.careCenterId || "").toString().trim().toLowerCase();
-      const nCcName = (n.careCenterName || n.careCenter || "").toLowerCase().trim();
-      const nMsg = ((n.title || "") + " " + (n.message || "")).toLowerCase();
+      const nCcId = (n.care_center_id || n.careCenterId || n.centerId || "").toString().trim().toLowerCase();
+      const nCcName = (n.careCenterName || n.careCenter || n.centerName || "").toLowerCase().trim();
+      const nText = ((n.title || "") + " " + (n.message || "")).toLowerCase();
 
-      return (
-        (nCcId && myCenterId && nCcId === myCenterId) ||
+      // Agar ID match ho, ya naam match ho, ya message me center ka naam ho
+      const isMyNotif = 
+        (nCcId && myCenterId && (nCcId === myCenterId || nCcId.replace(/\D/g, "") === myCenterId.replace(/\D/g, ""))) ||
         (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) ||
-        (myCenterName && nMsg.includes(myCenterName))
-      );
+        (myCenterName && nText.includes(myCenterName));
+
+      return isMyNotif;
     }).length;
   }, [notifications, unreadCount, isCareCenter, myCenterId, myCenterName]);
 
@@ -507,15 +509,16 @@ export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, 
 
     return notifications.filter((n) => {
       if (n.read) return false;
-      const nCcId = (n.care_center_id || n.careCenterId || "").toString().trim().toLowerCase();
-      const nCcName = (n.careCenterName || n.careCenter || "").toLowerCase().trim();
-      const nMsg = ((n.title || "") + " " + (n.message || "")).toLowerCase();
+      const nCcId = (n.care_center_id || n.careCenterId || n.centerId || "").toString().trim().toLowerCase();
+      const nCcName = (n.careCenterName || n.careCenter || n.centerName || "").toLowerCase().trim();
+      const nText = ((n.title || "") + " " + (n.message || "")).toLowerCase();
 
-      return (
-        (nCcId && myCenterId && nCcId === myCenterId) ||
+      const isMyNotif = 
+        (nCcId && myCenterId && (nCcId === myCenterId || nCcId.replace(/\D/g, "") === myCenterId.replace(/\D/g, ""))) ||
         (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) ||
-        (myCenterName && nMsg.includes(myCenterName))
-      );
+        (myCenterName && nText.includes(myCenterName));
+
+      return isMyNotif;
     }).length;
   }, [notifications, unreadCount, isCareCenter, myCenterId, myCenterName]);
 
@@ -619,7 +622,7 @@ function notifStyle(type) {
   switch (type) {
     case "warning": return { bg: "bg-amber-50", text: "text-amber-600", icon: AlertTriangle };
     case "success": return { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2 };
-    default: return { bg: "bg-indigo-50", text: "text-indigo-600", icon: Bell };
+    default: return { bg: "bg-teal-50", text: "text-teal-600", icon: Bell };
   }
 }
 
@@ -634,29 +637,31 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
 
   const isCareCenterUser = loggedUser?.role === "care_center";
   const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
-  const myCenterIdNumeric = myCenterId.replace(/\D/g, "");
   const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
-  const myCenterPhone = (loggedUser?.phone || "").toString().replace(/\D/g, "").slice(-10);
 
-  // 🔒 Strict filter: Only show notifications that belong to this Care Center
+  // 🔔 Bulletproof Scoped Notifications
   const scopedNotifications = useMemo(() => {
-    if (!isCareCenterUser) return notifications;
+    if (!isCareCenterUser) return notifications; // Super admin ko sabhi alerts dikhenge
 
     return notifications.filter((n) => {
       const nCcId = (n.care_center_id || n.careCenterId || n.centerId || "").toString().trim().toLowerCase();
-      const nCcIdNumeric = nCcId.replace(/\D/g, "");
       const nCcName = (n.careCenterName || n.careCenter || n.centerName || "").toLowerCase().trim();
       const nTitle = (n.title || "").toLowerCase();
       const nMessage = (n.message || "").toLowerCase();
+      const nFullText = `${nTitle} ${nMessage}`;
 
-      const idMatch = (nCcId && myCenterId && (nCcId === myCenterId || (nCcIdNumeric && nCcIdNumeric === myCenterIdNumeric)));
-      const nameMatch = (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName)));
-      const textMatch = (myCenterName && (nTitle.includes(myCenterName) || nMessage.includes(myCenterName))) ||
-                        (myCenterPhone && (nTitle.includes(myCenterPhone) || nMessage.includes(myCenterPhone)));
+      // 1. Direct ID match ya numeric match (e.g., CC-1 ya 1)
+      const idMatch = nCcId && myCenterId && (nCcId === myCenterId || nCcId.replace(/\D/g, "") === myCenterId.replace(/\D/g, ""));
+
+      // 2. Direct Name match
+      const nameMatch = nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName));
+
+      // 3. Message/Title ke andar center ka naam aana (Jaise: "by Apollo Test Center")
+      const textMatch = myCenterName && nFullText.includes(myCenterName);
 
       return idMatch || nameMatch || textMatch;
     });
-  }, [notifications, isCareCenterUser, myCenterId, myCenterIdNumeric, myCenterName, myCenterPhone]);
+  }, [notifications, isCareCenterUser, myCenterId, myCenterName]);
 
   if (!open) return null;
   const unreadCount = scopedNotifications.filter((n) => !n.read).length;
@@ -696,7 +701,7 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
                   <Bell className="h-5 w-5 text-slate-400" />
                 </div>
                 <p className="mt-3 text-sm font-semibold text-slate-500">No notifications</p>
-                <p className="text-xs text-slate-400 mt-1">New updates for your center will appear here</p>
+                <p className="text-xs text-slate-400 mt-1">Updates for your center will appear here</p>
               </div>
             </div>
           ) : (
