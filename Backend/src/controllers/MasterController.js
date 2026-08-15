@@ -11,9 +11,12 @@ const pool = require("../config/database");
 // };
 const getCareCenters = async (req, res) => {
   try {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
     const [ccRows] = await pool.query("SELECT * FROM care_centers ORDER BY id DESC");
 
-    // 2. Users table se registered care centers lo
     const [userRows] = await pool.query(
       "SELECT id, name, phone, 'Active' as status FROM users WHERE role = 'care_center'"
     );
@@ -76,6 +79,7 @@ const addCareCenter = async (req, res) => {
 };
 
 // const updateCareCenter = async (req, res) => {
+
 //   try {
 //     const { id } = req.params;
 //     const { 
@@ -111,28 +115,7 @@ const addCareCenter = async (req, res) => {
 //     res.status(400).json({ message: error.sqlMessage || error.message });
 //   }
 // };
-const updateCareCenter = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, contact_person, phone, address, gst, status } = req.body;
 
-    await pool.query(
-      `UPDATE care_centers 
-       SET name = COALESCE(?, name),
-           contact_person = COALESCE(?, contact_person),
-           phone = COALESCE(?, phone),
-           address = COALESCE(?, address),
-           gst = COALESCE(?, gst),
-           status = COALESCE(?, status)
-       WHERE id = ?`,
-      [name, contact_person, phone, address, gst, status, id]
-    );
-
-    res.status(200).json({ message: "Care Center details updated successfully!" });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to update care center: " + error.message });
-  }
-};
 
 // const deleteCareCenter = async (req, res) => {
 //   try {
@@ -141,6 +124,53 @@ const updateCareCenter = async (req, res) => {
 //     res.status(200).json({ message: "Care center deleted successfully" });
 //   } catch (error) { res.status(500).json({ message: error.message, sqlError: error.sqlMessage }); }
 // };
+const updateCareCenter = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, contact_person, phone, address, gst, status = "Active" } = req.body;
+    const cleanPhone = (phone || "").toString().replace(/\D/g, "");
+    const [existing] = await pool.query(
+      "SELECT * FROM care_centers WHERE id = ? OR phone = ? OR phone LIKE ?",
+      [id, cleanPhone, `%${cleanPhone.slice(-10)}`]
+    );
+
+    if (existing.length > 0) {
+      const targetId = existing[0].id;
+      await pool.query(
+        `UPDATE care_centers 
+         SET name = COALESCE(?, name),
+             contact_person = COALESCE(?, contact_person),
+             phone = COALESCE(?, phone),
+             address = COALESCE(?, address),
+             gst = COALESCE(?, gst),
+             status = COALESCE(?, status)
+         WHERE id = ?`,
+        [name, contact_person, phone, address, gst, status, targetId]
+      );
+    } else {
+      // ➕ Agar table mein entry nahi thi (sirf user bana tha), toh INSERT karo
+      await pool.query(
+        `INSERT INTO care_centers (id, name, contact_person, phone, address, gst, status) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, name.trim(), contact_person || "", cleanPhone, address || "", gst || "", status]
+      );
+    }
+
+    // users table mein bhi name update kar do agar change hua ho
+    if (name && cleanPhone) {
+      await pool.query(
+        "UPDATE users SET name = ? WHERE phone = ? OR phone LIKE ?",
+        [name.trim(), cleanPhone, `%${cleanPhone.slice(-10)}`]
+      );
+    }
+
+    res.status(200).json({ message: "Care Center details updated successfully!" });
+  } catch (error) {
+    console.error("Update Care Center Error:", error);
+    res.status(500).json({ message: "Failed to update care center: " + error.message });
+  }
+};
+
 const deleteCareCenter = async (req, res) => {
   try {
     const { id } = req.params;
