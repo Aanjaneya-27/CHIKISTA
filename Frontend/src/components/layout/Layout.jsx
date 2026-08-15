@@ -367,9 +367,40 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { HeartPulse, ClipboardList, Database, ChevronRight, Bell, Menu, User, LogOut, ChevronDown, X, CheckCircle2, AlertTriangle, Trash2, CheckCheck } from "lucide-react";
 import { ROLES } from "../../data/MockData";
 
-export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNotifications }) {
+export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNotifications, notifications = [] }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const loggedUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const isCareCenter = (role === "care_center") || (loggedUser?.role === "care_center");
+  const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
+  const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
+
+  // 🎯 Accurate badge count calculation for Care Center
+  const activeUnreadCount = useMemo(() => {
+    if (!notifications || notifications.length === 0) return unreadCount || 0;
+    if (!isCareCenter) return notifications.filter((n) => !n.read).length;
+
+    return notifications.filter((n) => {
+      if (n.read) return false;
+      const nCcId = (n.care_center_id || n.careCenterId || "").toString().trim().toLowerCase();
+      const nCcName = (n.careCenterName || n.careCenter || "").toLowerCase().trim();
+      const nMsg = ((n.title || "") + " " + (n.message || "")).toLowerCase();
+
+      return (
+        (nCcId && myCenterId && nCcId === myCenterId) ||
+        (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) ||
+        (myCenterName && nMsg.includes(myCenterName))
+      );
+    }).length;
+  }, [notifications, unreadCount, isCareCenter, myCenterId, myCenterName]);
 
   const items = [
     { key: "/rental", label: "Rental Master", icon: ClipboardList, show: true },
@@ -441,7 +472,7 @@ export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNo
           <button onClick={() => { onOpenNotifications(); setMobileOpen(false); }} className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-400 transition hover:bg-white/5 hover:text-white cursor-pointer">
             <Bell className="h-4 w-4 text-slate-500 group-hover:text-slate-300" />
             <span className="flex-1 text-left">Notifications</span>
-            {unreadCount > 0 && <span className="grid h-5 place-items-center rounded-full bg-rose-500 px-1.5 text-xs font-bold text-white" style={{ minWidth: 20 }}>{unreadCount}</span>}
+            {activeUnreadCount > 0 && <span className="grid h-5 place-items-center rounded-full bg-rose-500 px-1.5 text-xs font-bold text-white" style={{ minWidth: 20 }}>{activeUnreadCount}</span>}
           </button>
         </nav>
       </aside>
@@ -449,7 +480,7 @@ export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNo
   );
 }
 
-export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, onLogout }) {
+export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, onLogout, notifications = [] }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
   const location = useLocation();
@@ -465,6 +496,28 @@ export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, 
 
   const isCareCenter = (role === "care_center") || (loggedUser?.role === "care_center");
   const isSuperAdmin = (role === "super_admin" || role === "admin") || (loggedUser?.role === "super_admin");
+
+  const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
+  const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
+
+  // 🎯 Topbar Badge exact count
+  const activeUnreadCount = useMemo(() => {
+    if (!notifications || notifications.length === 0) return unreadCount || 0;
+    if (!isCareCenter) return notifications.filter((n) => !n.read).length;
+
+    return notifications.filter((n) => {
+      if (n.read) return false;
+      const nCcId = (n.care_center_id || n.careCenterId || "").toString().trim().toLowerCase();
+      const nCcName = (n.careCenterName || n.careCenter || "").toLowerCase().trim();
+      const nMsg = ((n.title || "") + " " + (n.message || "")).toLowerCase();
+
+      return (
+        (nCcId && myCenterId && nCcId === myCenterId) ||
+        (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) ||
+        (myCenterName && nMsg.includes(myCenterName))
+      );
+    }).length;
+  }, [notifications, unreadCount, isCareCenter, myCenterId, myCenterName]);
 
   const displayName = isCareCenter 
     ? (loggedUser?.careCenterName || loggedUser?.name || "Care Center")
@@ -512,7 +565,11 @@ export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, 
       <div className="flex items-center gap-2 sm:gap-3">
         <button onClick={onOpenNotifications} className="relative grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 cursor-pointer">
           <Bell className="h-4 w-4" />
-          {unreadCount > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />}
+          {activeUnreadCount > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white ring-2 ring-white">
+              {activeUnreadCount}
+            </span>
+          )}
         </button>
 
         <div className="relative" ref={profileMenuRef}>
@@ -581,6 +638,7 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
   const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
   const myCenterPhone = (loggedUser?.phone || "").toString().replace(/\D/g, "").slice(-10);
 
+  // 🔒 Strict filter: Only show notifications that belong to this Care Center
   const scopedNotifications = useMemo(() => {
     if (!isCareCenterUser) return notifications;
 
@@ -591,13 +649,12 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
       const nTitle = (n.title || "").toLowerCase();
       const nMessage = (n.message || "").toLowerCase();
 
-      if (nCcId && myCenterId && (nCcId === myCenterId || (nCcIdNumeric && nCcIdNumeric === myCenterIdNumeric))) return true;
-      if (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) return true;
-      if (myCenterName && (nTitle.includes(myCenterName) || nMessage.includes(myCenterName))) return true;
-      if (myCenterPhone && (nTitle.includes(myCenterPhone) || nMessage.includes(myCenterPhone))) return true;
-      if (!nCcId || nCcId === "all" || nCcId === "null" || nCcId === "") return true;
+      const idMatch = (nCcId && myCenterId && (nCcId === myCenterId || (nCcIdNumeric && nCcIdNumeric === myCenterIdNumeric)));
+      const nameMatch = (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName)));
+      const textMatch = (myCenterName && (nTitle.includes(myCenterName) || nMessage.includes(myCenterName))) ||
+                        (myCenterPhone && (nTitle.includes(myCenterPhone) || nMessage.includes(myCenterPhone)));
 
-      return false;
+      return idMatch || nameMatch || textMatch;
     });
   }, [notifications, isCareCenterUser, myCenterId, myCenterIdNumeric, myCenterName, myCenterPhone]);
 
@@ -609,7 +666,6 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
       <div className="fade-in absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
       <div className="slide-in-right absolute right-0 top-0 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl">
         
-        {/* Panel Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
             <h2 className="font-display text-base font-bold text-slate-800">Notifications</h2>
@@ -640,7 +696,7 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
                   <Bell className="h-5 w-5 text-slate-400" />
                 </div>
                 <p className="mt-3 text-sm font-semibold text-slate-500">No notifications</p>
-                <p className="text-xs text-slate-400 mt-1">New updates will appear here</p>
+                <p className="text-xs text-slate-400 mt-1">New updates for your center will appear here</p>
               </div>
             </div>
           ) : (
