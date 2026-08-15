@@ -97,6 +97,7 @@ const generateToken = (id, role) => {
 
 // controllers/userController.js
 
+// 📝 REGISTER CONTROLLER
 const register = async (req, res) => {
   const { name, phone, role = "care_center" } = req.body;
 
@@ -107,18 +108,16 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "Valid Name and 10-digit Phone number are required." });
     }
 
-    // 1. Duplicate check in users table
     const [existing] = await pool.query("SELECT id FROM users WHERE phone = ?", [cleanPhone]);
     if (existing && existing.length > 0) {
       return res.status(400).json({ message: "This phone number is already registered. Please login." });
     }
 
-    // 2. Hash Password (Last 4 digits)
     const autoPassword = cleanPhone.slice(-4);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(autoPassword, salt);
 
-    // 3. Insert into USERS table
+    // 3. Insert into USERS
     const [userResult] = await pool.query(
       "INSERT INTO users (name, phone, password, role) VALUES (?, ?, ?, ?)",
       [name.trim(), cleanPhone, hashedPassword, role]
@@ -127,29 +126,21 @@ const register = async (req, res) => {
     const userId = userResult.insertId;
     const masterId = `CC-${userId}`;
 
-    // 4. Safe sync to care_centers / references / delivery_executives
-    try {
-      if (role === "care_center") {
+    if (role === "care_center") {
+      try {
         await pool.query(
-          "INSERT INTO care_centers (id, name, phone, address, contact_person, status) VALUES (?, ?, ?, '', '', 'Active') ON DUPLICATE KEY UPDATE name = VALUES(name)",
+          "INSERT INTO care_centers (id, name, phone, address, contact_person, status) VALUES (?, ?, ?, '', '', 'Active')",
           [masterId, name.trim(), cleanPhone]
         );
-      } else if (role === "reference") {
+      } catch (err) {
+        // Fallback agar id column auto-increment ho
         await pool.query(
-          "INSERT INTO `references` (doctorName, phone, status) VALUES (?, ?, 'Active')",
-          [name.trim(), cleanPhone]
-        );
-      } else if (role === "delivery_executive") {
-        await pool.query(
-          "INSERT INTO delivery_executives (driverName, phone, status) VALUES (?, ?, 'Active')",
+          "INSERT INTO care_centers (name, phone, address, contact_person, status) VALUES (?, ?, '', '', 'Active')",
           [name.trim(), cleanPhone]
         );
       }
-    } catch (syncErr) {
-      console.warn("Master Table Sync Warning:", syncErr.message);
     }
 
-    // 5. Generate Auth Token
     const token = generateToken(userId, role);
 
     return res.status(201).json({
@@ -167,9 +158,7 @@ const register = async (req, res) => {
 
   } catch (error) {
     console.error("REGISTER ERROR:", error);
-    return res.status(500).json({ 
-      message: "Database Error: " + (error.sqlMessage || error.message)
-    });
+    return res.status(500).json({ message: "Database Error: " + (error.sqlMessage || error.message) });
   }
 };
 

@@ -11,9 +11,36 @@ const pool = require("../config/database");
 // };
 const getCareCenters = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM care_centers ORDER BY created_at DESC");
-    res.status(200).json(rows);
+    const [ccRows] = await pool.query("SELECT * FROM care_centers ORDER BY id DESC");
+
+    // 2. Users table se registered care centers lo
+    const [userRows] = await pool.query(
+      "SELECT id, name, phone, 'Active' as status FROM users WHERE role = 'care_center'"
+    );
+
+    const existingPhones = new Set(
+      ccRows.map((c) => (c.phone || "").toString().replace(/\D/g, "").slice(-10))
+    );
+    const mergedList = [...ccRows];
+
+    for (const u of userRows) {
+      const uPhone = (u.phone || "").toString().replace(/\D/g, "").slice(-10);
+      if (uPhone && !existingPhones.has(uPhone)) {
+        mergedList.push({
+          id: `CC-${u.id}`,
+          name: u.name,
+          phone: u.phone,
+          address: "",
+          contact_person: "",
+          status: "Active"
+        });
+        existingPhones.add(uPhone);
+      }
+    }
+
+    res.status(200).json(mergedList);
   } catch (error) {
+    console.error("Fetch Care Centers Error:", error);
     res.status(500).json({ message: "Failed to fetch care centers: " + error.message });
   }
 };
