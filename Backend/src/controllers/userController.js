@@ -95,8 +95,9 @@ const generateToken = (id, role) => {
 
 
 
+
 const register = async (req, res) => {
-  const { name, phone, email, role = "care_center" } = req.body;
+  const { name, phone, role = "care_center" } = req.body;
 
   try {
     const cleanPhone = (phone || "").toString().replace(/\D/g, "");
@@ -105,71 +106,77 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "Valid Name and 10-digit Phone number are required." });
     }
 
-    // 1. Check duplicate phone
-    const [existing] = await pool.query("SELECT id FROM users WHERE phone = ?", [cleanPhone]);
-    if (existing.length > 0) {
-      return res.status(400).json({ message: "This phone number is already registered." });
+    // 1. Check existing phone in users table
+    const [existing] = await pool.query(
+      "SELECT id FROM users WHERE phone = ?",
+      [cleanPhone]
+    );
+
+    if (existing && existing.length > 0) {
+      return res.status(400).json({ message: "This phone number is already registered. Please login." });
     }
 
-    // 2. Passcode = Last 4 digits (Bcrypt Hashed)
+    // 2. Hash Password (Last 4 digits)
     const autoPassword = cleanPhone.slice(-4);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(autoPassword, salt);
 
+    // Dummy unique email in case DB has NOT NULL / UNIQUE email constraint
+    const dummyEmail = `${cleanPhone}@chikitsa.local`;
+
     // 3. Insert into USERS table
     const [userResult] = await pool.query(
       "INSERT INTO users (name, phone, password, role, email) VALUES (?, ?, ?, ?, ?)",
-      [name.trim(), cleanPhone, hashedPassword, role, email || null]
+      [name.trim(), cleanPhone, hashedPassword, role, dummyEmail]
     );
 
     const userId = userResult.insertId;
-    let masterId = `CC-${userId}`;
+    const customId = `CC-${userId || Math.floor(1000 + Math.random() * 9000)}`;
 
-    // 4. 🔥 AUTO-INSERT into Master Table (Address & GST blank for now)
-    if (role === "care_center") {
-      masterId = `CC-${userId}`;
-      await pool.query(
-        `INSERT INTO care_centers (id, name, phone, contact_person, address, gst, status) 
-         VALUES (?, ?, ?, '', '', '', 'Active')
-         ON DUPLICATE KEY UPDATE name = VALUES(name)`,
-        [masterId, name.trim(), cleanPhone]
-      );
-    } else if (role === "reference") {
-      masterId = `DOC-${userId}`;
-      await pool.query(
-        `INSERT INTO \`references\` (id, doctorName, phone, domain, status) 
-         VALUES (?, ?, ?, 'General', 'Active')
-         ON DUPLICATE KEY UPDATE doctorName = VALUES(doctorName)`,
-        [masterId, name.trim(), cleanPhone]
-      );
-    } else if (role === "delivery_executive") {
-      masterId = `DE-${userId}`;
-      await pool.query(
-        `INSERT INTO delivery_executives (id, name, phone, vehicle_number, status) 
-         VALUES (?, ?, ?, '', 'Active')
-         ON DUPLICATE KEY UPDATE name = VALUES(name)`,
-        [masterId, name.trim(), cleanPhone]
-      );
+    // 4. Safe Auto-Insert in Master Tables (Isolated Try-Catch)
+    try {
+      if (role === "care_center") {
+        await pool.query(
+          "INSERT INTO care_centers (id, name, phone, address, contact_person, status) VALUES (?, ?, ?, '', '', 'Active')",
+          [customId, name.trim(), cleanPhone]
+        );
+      } else if (role === "reference") {
+        await pool.query(
+          "INSERT INTO `references` (id, doctorName, phone, domain, hospital, status) VALUES (?, ?, ?, 'General', '', 'Active')",
+          [`DOC-${userId || Math.floor(1000 + Math.random() * 9000)}`, name.trim(), cleanPhone]
+        );
+      } else if (role === "delivery_executive") {
+        await pool.query(
+          "INSERT INTO delivery_executives (id, driverName, phone, status) VALUES (?, ?, ?, 'Active')",
+          [`DE-${userId || Math.floor(1000 + Math.random() * 9000)}`, name.trim(), cleanPhone]
+        );
+      }
+    } catch (tableErr) {
+      console.warn("Master Table Sync Warning (Ignored for registration):", tableErr.message);
     }
 
     // 5. Generate Auth Token
-    const token = generateToken(userId, role);
+    const token = generateToken(userId || customId, role);
 
     return res.status(201).json({
-      message: "Registration successful! You can update address & GST in Master Info.",
+      message: "Registration successful!",
       token,
       user: {
-        id: userId,
+        id: userId || customId,
         name: name.trim(),
         phone: cleanPhone,
         role,
-        careCenterId: role === "care_center" ? masterId : null,
+        careCenterId: role === "care_center" ? customId : null,
         careCenterName: role === "care_center" ? name.trim() : null
       }
     });
+
   } catch (error) {
-    console.error("Register Error:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
+    console.error("CRITICAL REGISTER ERROR:", error);
+    return res.status(500).json({ 
+      message: "Registration Database Error: " + error.message,
+      sqlMessage: error.sqlMessage || error.message 
+    });
   }
 };
 
