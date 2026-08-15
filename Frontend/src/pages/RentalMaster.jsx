@@ -1788,8 +1788,18 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
       c.id === loggedUser.id || 
       (c.phone && loggedUser.phone && String(c.phone).replace(/\D/g, "").slice(-10) === String(loggedUser.phone).replace(/\D/g, "").slice(-10)) ||
       (c.name && loggedUser.name && c.name.trim().toLowerCase() === loggedUser.name.trim().toLowerCase())
-    );
+    ) || {
+      id: loggedUser.careCenterId || loggedUser.id || "CC-ME",
+      name: loggedUser.careCenterName || loggedUser.name || "My Care Center"
+    };
   }, [careCenters, isCareCenterUser, loggedUser]);
+
+  const modalDropdownCareCenters = useMemo(() => {
+    if (isCareCenterUser && matchedUserCenter) {
+      return [matchedUserCenter];
+    }
+    return filterActive(careCenters);
+  }, [careCenters, isCareCenterUser, matchedUserCenter]);
   
   const [form, setForm] = useState(() => {
     if (initial) {
@@ -1838,7 +1848,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
       };
     }
 
-    const defaultCcId = matchedUserCenter?.id || (isCareCenterUser ? (loggedUser.careCenterId || loggedUser.id || "CC-ME") : "");
+    const defaultCcId = matchedUserCenter?.id || "";
     return {
       ...emptyForm,
       careCenterId: defaultCcId,
@@ -1886,9 +1896,9 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
       return;
     }
     const equipment = equipmentCatalog.find((eq) => eq.id === form.equipmentId);
-    let careCenterName = "Other";
-    if (form.careCenterId !== "other") {
-      careCenterName = careCenters.find((c) => c.id === form.careCenterId)?.name || (isCareCenterUser ? (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "") : "");
+    let careCenterName = isCareCenterUser ? (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "") : "Other";
+    if (form.careCenterId !== "other" && !isCareCenterUser) {
+      careCenterName = careCenters.find((c) => c.id === form.careCenterId)?.name || "";
     }
     onSubmit({ 
       ...form, 
@@ -1903,7 +1913,6 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
 
   const titles = { add: "New Log Requisition", edit: "Edit Requisition", view: "Requisition Details" };
 
-  const activeCareCenters = useMemo(() => filterActive(careCenters), [careCenters]);
   const activeEquipment = useMemo(() => filterActive(equipmentCatalog), [equipmentCatalog]);
   const activeReferrals = useMemo(() => filterActive(references), [references]);
   const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
@@ -1929,9 +1938,9 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
               <div className="sm:col-span-2">
                 <Field label="Select Care Center" required error={errors.careCenterId}>
                   <Select disabled={readOnly} value={form.careCenterId} error={errors.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
-                    <option value="">Choose a care center…</option>
-                    {activeCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    <option value="other">Other (Add New)</option>
+                    {!isCareCenterUser && <option value="">Choose a care center…</option>}
+                    {modalDropdownCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {!isCareCenterUser && <option value="other">Other (Add New)</option>}
                   </Select>
                 </Field>
               </div>
@@ -2116,11 +2125,21 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
       c.id === loggedUser.id || 
       (c.phone && loggedUser.phone && String(c.phone).replace(/\D/g, "").slice(-10) === String(loggedUser.phone).replace(/\D/g, "").slice(-10)) ||
       (c.name && loggedUser.name && c.name.trim().toLowerCase() === loggedUser.name.trim().toLowerCase())
-    );
+    ) || {
+      id: loggedUser.careCenterId || loggedUser.id || "CC-ME",
+      name: loggedUser.careCenterName || loggedUser.name || "My Care Center"
+    };
   }, [careCenters, isCareCenterUser, loggedUser]);
 
+  const pageDropdownCareCenters = useMemo(() => {
+    if (isCareCenterUser && matchedUserCenter) {
+      return [matchedUserCenter];
+    }
+    return filterActive(careCenters);
+  }, [careCenters, isCareCenterUser, matchedUserCenter]);
+
   const [form, setForm] = useState(() => {
-    const defaultCcId = matchedUserCenter?.id || (isCareCenterUser ? (loggedUser.careCenterId || loggedUser.id || "CC-ME") : "");
+    const defaultCcId = matchedUserCenter?.id || "";
     return {
       ...emptyForm,
       careCenterId: defaultCcId,
@@ -2135,7 +2154,6 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
   const [photos, setPhotos] = useState([]);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  const activeCareCenters = useMemo(() => filterActive(careCenters), [careCenters]);
   const activeEquipment = useMemo(() => filterActive(equipmentCatalog), [equipmentCatalog]);
   const activeReferrals = useMemo(() => filterActive(references), [references]);
   const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
@@ -2190,9 +2208,9 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
       return; 
     }
     const equipment = equipmentCatalog.find((eq) => eq.id === form.deviceModel);
-    let careCenterName = "Other";
-    if (form.careCenterId !== "other") {
-      careCenterName = careCenters.find((c) => c.id === form.careCenterId)?.name || (isCareCenterUser ? (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "") : "");
+    let careCenterName = isCareCenterUser ? (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "") : "Other";
+    if (form.careCenterId !== "other" && !isCareCenterUser) {
+      careCenterName = careCenters.find((c) => c.id === form.careCenterId)?.name || "";
     }
     onSubmit({
       ...form, 
@@ -2297,9 +2315,9 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
             <div className="space-y-4">
               <Field label="Care Center Name">
                 <Select value={form.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
-                  <option value="">-- Select Care Center --</option>
-                  {activeCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  <option value="other">Other (Add New)</option>
+                  {!isCareCenterUser && <option value="">-- Select Care Center --</option>}
+                  {pageDropdownCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {!isCareCenterUser && <option value="other">Other (Add New)</option>}
                 </Select>
               </Field>
               <div className="grid grid-cols-2 gap-4">
@@ -2371,7 +2389,7 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
                           <span className="w-full truncate text-[9px] font-semibold">{file.name}</span>
                         </div>
                       )}
-                      <button type="button" onClick={() => removeFile(idx)} className="absolute right-1 top-1 hidden h-5 w-5 place-items-center rounded-full bg-rose-500 text-white shadow-md transition hover:bg-rose-600 group-hover:grid">
+                      <button type="button" onClick={() => removeFile(idx)} className="absolute right-1 top-1 hidden h-5 w-5 place-items-center rounded-full bg-rose-500 text-white shadow-md transition hover:bg-rose-600 group-hover:grid cursor-pointer">
                         <X className="h-3 w-3" />
                       </button>
                     </div>
@@ -2409,8 +2427,18 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       c.id === loggedUser.id || 
       (c.phone && loggedUser.phone && String(c.phone).replace(/\D/g, "").slice(-10) === String(loggedUser.phone).replace(/\D/g, "").slice(-10)) ||
       (c.name && loggedUser.name && c.name.trim().toLowerCase() === loggedUser.name.trim().toLowerCase())
-    );
+    ) || {
+      id: loggedUser.careCenterId || loggedUser.id || "CC-ME",
+      name: loggedUser.careCenterName || loggedUser.name || "My Care Center"
+    };
   }, [careCenters, isCareCenterUser, loggedUser]);
+
+  const filterBarDropdownCareCenters = useMemo(() => {
+    if (isCareCenterUser && matchedUserCenter) {
+      return [matchedUserCenter];
+    }
+    return filterActive(careCenters);
+  }, [careCenters, isCareCenterUser, matchedUserCenter]);
 
   const [logs, setLogs] = useState(() => {
     try {
@@ -2486,7 +2514,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       const ccId = l.careCenterId || l.care_center_id;
       const ccName = (l.careCenterName || careCenters.find((c) => c.id === ccId)?.name || ccId || "").toLowerCase();
       return (ccId && myCenterId && String(ccId) === String(myCenterId)) || 
-             (ccName && myCenterName && ccName.includes(myCenterName));
+             (ccName && myCenterName && (ccName.includes(myCenterName) || myCenterName.includes(ccName)));
     });
   }, [logs, isCareCenterUser, matchedUserCenter, loggedUser, careCenters]);
 
@@ -2739,12 +2767,17 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             </select>
           </div>
 
-          {!isCareCenterUser && (
-            <select value={careCenterFilter} onChange={(e) => setCareCenterFilter(e.target.value)} className="flex-1 min-w-[130px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
-              <option value="All">All Care Centers</option>
-              {filterActive(careCenters).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          )}
+          {/* Care Center Dropdown: Super Admin sees All + List, Care Center sees ONLY their Center */}
+          <select 
+            value={careCenterFilter} 
+            onChange={(e) => setCareCenterFilter(e.target.value)} 
+            className="flex-1 min-w-[130px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+          >
+            {!isCareCenterUser && <option value="All">All Care Centers</option>}
+            {filterBarDropdownCareCenters.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
 
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
             <option value="All">All Status</option>
