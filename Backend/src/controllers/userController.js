@@ -94,7 +94,7 @@ const generateToken = (id, role) => {
 // };
 
 
-
+// controllers/userController.js
 
 const register = async (req, res) => {
   const { name, phone, role = "care_center" } = req.body;
@@ -106,12 +106,8 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "Valid Name and 10-digit Phone number are required." });
     }
 
-    // 1. Check existing phone in users table
-    const [existing] = await pool.query(
-      "SELECT id FROM users WHERE phone = ?",
-      [cleanPhone]
-    );
-
+    // 1. Duplicate check in users table
+    const [existing] = await pool.query("SELECT id FROM users WHERE phone = ?", [cleanPhone]);
     if (existing && existing.length > 0) {
       return res.status(400).json({ message: "This phone number is already registered. Please login." });
     }
@@ -121,61 +117,57 @@ const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(autoPassword, salt);
 
-    // Dummy unique email in case DB has NOT NULL / UNIQUE email constraint
-    const dummyEmail = `${cleanPhone}@chikitsa.local`;
-
     // 3. Insert into USERS table
     const [userResult] = await pool.query(
-      "INSERT INTO users (name, phone, password, role, email) VALUES (?, ?, ?, ?, ?)",
-      [name.trim(), cleanPhone, hashedPassword, role, dummyEmail]
+      "INSERT INTO users (name, phone, password, role) VALUES (?, ?, ?, ?)",
+      [name.trim(), cleanPhone, hashedPassword, role]
     );
 
     const userId = userResult.insertId;
-    const customId = `CC-${userId || Math.floor(1000 + Math.random() * 9000)}`;
+    const masterId = `CC-${userId}`;
 
-    // 4. Safe Auto-Insert in Master Tables (Isolated Try-Catch)
+    // 4. Safe sync to care_centers / references / delivery_executives
     try {
       if (role === "care_center") {
         await pool.query(
-          "INSERT INTO care_centers (id, name, phone, address, contact_person, status) VALUES (?, ?, ?, '', '', 'Active')",
-          [customId, name.trim(), cleanPhone]
+          "INSERT INTO care_centers (id, name, phone, address, contact_person, status) VALUES (?, ?, ?, '', '', 'Active') ON DUPLICATE KEY UPDATE name = VALUES(name)",
+          [masterId, name.trim(), cleanPhone]
         );
       } else if (role === "reference") {
         await pool.query(
-          "INSERT INTO `references` (id, doctorName, phone, domain, hospital, status) VALUES (?, ?, ?, 'General', '', 'Active')",
-          [`DOC-${userId || Math.floor(1000 + Math.random() * 9000)}`, name.trim(), cleanPhone]
+          "INSERT INTO `references` (doctorName, phone, status) VALUES (?, ?, 'Active')",
+          [name.trim(), cleanPhone]
         );
       } else if (role === "delivery_executive") {
         await pool.query(
-          "INSERT INTO delivery_executives (id, driverName, phone, status) VALUES (?, ?, ?, 'Active')",
-          [`DE-${userId || Math.floor(1000 + Math.random() * 9000)}`, name.trim(), cleanPhone]
+          "INSERT INTO delivery_executives (driverName, phone, status) VALUES (?, ?, 'Active')",
+          [name.trim(), cleanPhone]
         );
       }
-    } catch (tableErr) {
-      console.warn("Master Table Sync Warning (Ignored for registration):", tableErr.message);
+    } catch (syncErr) {
+      console.warn("Master Table Sync Warning:", syncErr.message);
     }
 
     // 5. Generate Auth Token
-    const token = generateToken(userId || customId, role);
+    const token = generateToken(userId, role);
 
     return res.status(201).json({
       message: "Registration successful!",
       token,
       user: {
-        id: userId || customId,
+        id: userId,
         name: name.trim(),
         phone: cleanPhone,
         role,
-        careCenterId: role === "care_center" ? customId : null,
+        careCenterId: role === "care_center" ? masterId : null,
         careCenterName: role === "care_center" ? name.trim() : null
       }
     });
 
   } catch (error) {
-    console.error("CRITICAL REGISTER ERROR:", error);
+    console.error("REGISTER ERROR:", error);
     return res.status(500).json({ 
-      message: "Registration Database Error: " + error.message,
-      sqlMessage: error.sqlMessage || error.message 
+      message: "Database Error: " + (error.sqlMessage || error.message)
     });
   }
 };
