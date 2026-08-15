@@ -36,7 +36,7 @@ router.delete("/references/:id", deleteReference);
 // Delivery Executives
 router.get("/delivery-executives", getDeliveryExecutives);
 router.post("/delivery-executives", addDeliveryExecutive);
-router.put("/delivery-executives/:id", updateDeliveryExecutive); // 👈 Yeh bhi missing tha!
+router.put("/delivery-executives/:id", updateDeliveryExecutive); !
 router.delete("/delivery-executives/:id", deleteDeliveryExecutive);
 
 module.exports = router;

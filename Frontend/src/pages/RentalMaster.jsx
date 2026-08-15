@@ -1193,7 +1193,7 @@ export default function RentalMaster({ permissions, careCenters, equipmentCatalo
       {/* 🏷️ Top Header with Log Requisition Button */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-800">Rental Master</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-800">Rental Master Sheet</h1>
           <p className="text-xs font-medium text-slate-400 mt-0.5">Live view &amp; allocation of equipment requisitions</p>
         </div>
 
