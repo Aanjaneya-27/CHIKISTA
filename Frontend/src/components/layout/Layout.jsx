@@ -650,7 +650,7 @@ export function Footer() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
             </span>
-            <span className="text-[11px] font-semibold text-teal-700">Chikitsa Live System</span>
+            <span className="text-[11px] font-semibold text-teal-700">Chikitsa</span>
           </div>
           <span className="hidden text-slate-300 sm:inline">|</span>
           <span className="hidden font-medium text-slate-400 sm:inline">Healthcare Logistics Platform</span>
