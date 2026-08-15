@@ -311,8 +311,8 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { HeartPulse, ClipboardList, Database, ChevronRight, Bell, Menu, User, SlidersHorizontal, LogOut, ChevronDown, X, CheckCircle2, AlertTriangle, Trash2, CheckCheck } from "lucide-react";
-import { ROLES, DEMO_USER_NAMES } from "../../data/MockData";
+import { HeartPulse, ClipboardList, Database, ChevronRight, Bell, Menu, User, LogOut, ChevronDown, X, CheckCircle2, AlertTriangle, Trash2, CheckCheck } from "lucide-react";
+import { ROLES } from "../../data/MockData";
 
 export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNotifications }) {
   const navigate = useNavigate();
@@ -402,7 +402,27 @@ export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, 
   const location = useLocation();
   const navigate = useNavigate(); 
   
-  const currentUser = { name: DEMO_USER_NAMES[role] || "User", role: ROLES[role]?.label || role };
+  // 🟢 Live user read from localStorage
+  const loggedUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const isCareCenter = (role === "care_center") || (loggedUser?.role === "care_center");
+  const isSuperAdmin = (role === "super_admin" || role === "admin") || (loggedUser?.role === "super_admin");
+
+  const displayName = isCareCenter 
+    ? (loggedUser?.careCenterName || loggedUser?.name || "Care Center")
+    : isSuperAdmin 
+    ? (loggedUser?.name || "Super Admin")
+    : (loggedUser?.name || "User");
+
+  const displayRole = isCareCenter ? "Care Center" : isSuperAdmin ? "Super Admin" : (ROLES[role]?.label || role || "User");
+
+  const avatarInitial = displayName.trim().charAt(0).toUpperCase();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -449,12 +469,12 @@ export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, 
             onClick={() => setProfileMenuOpen((v) => !v)} 
             className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 transition hover:bg-slate-50 cursor-pointer"
           >
-            <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-600 text-xs font-bold text-white">
-              {currentUser.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+            <div className="grid h-8 w-8 place-items-center rounded-full bg-teal-600 text-xs font-bold text-white uppercase shadow-sm">
+              {avatarInitial}
             </div>
-            <div className="hidden text-left sm:block">
-              <p className="text-xs font-semibold text-slate-700 leading-none">{currentUser.name}</p>
-              <p className="mt-1 text-xs text-slate-400 leading-none">{currentUser.role}</p>
+            <div className="hidden text-left sm:block max-w-[140px]">
+              <p className="text-xs font-semibold text-slate-700 leading-none truncate">{displayName}</p>
+              <p className="mt-1 text-[11px] text-slate-400 leading-none">{displayRole}</p>
             </div>
             <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${profileMenuOpen ? "rotate-180" : ""}`} />
           </button>
@@ -462,22 +482,15 @@ export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, 
           {profileMenuOpen && (
             <div className="fade-slide-up absolute right-0 top-full z-40 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5">
               <div className="border-b border-slate-100 px-3.5 py-3 bg-slate-50/50">
-                <p className="text-sm font-semibold text-slate-700">{currentUser.name}</p>
-                <p className="text-xs text-slate-400">{currentUser.role}</p>
+                <p className="text-sm font-semibold text-slate-700 truncate">{displayName}</p>
+                <p className="text-xs text-slate-400">{displayRole}</p>
               </div>
               
               <button 
                 onClick={() => { setProfileMenuOpen(false); navigate("/profile"); }} 
                 className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-600 transition hover:bg-slate-50 cursor-pointer"
               >
-                <User className="h-4 w-4 text-slate-400" /> My Profile
-              </button>
-              
-              <button 
-                onClick={() => { setProfileMenuOpen(false); navigate("/profile"); }} 
-                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-slate-600 transition hover:bg-slate-50 cursor-pointer"
-              >
-                <SlidersHorizontal className="h-4 w-4 text-slate-400" /> Account Settings
+                <User className="h-4 w-4 text-slate-400" /> Account Settings
               </button>
               
               <button 
@@ -650,7 +663,7 @@ export function Footer() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
             </span>
-            <span className="text-[11px] font-semibold text-teal-700">Chikitsa</span>
+            <span className="text-[11px] font-semibold text-teal-700">Chikitsa Live System</span>
           </div>
           <span className="hidden text-slate-300 sm:inline">|</span>
           <span className="hidden font-medium text-slate-400 sm:inline">Healthcare Logistics Platform</span>

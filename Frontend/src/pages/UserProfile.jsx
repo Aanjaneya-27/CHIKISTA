@@ -143,7 +143,6 @@ import API from "../utils/api";
 export default function UserProfile() {
   const [activeTab, setActiveTab] = useState("profile");
 
-  // 1. Read live logged-in user from localStorage
   const loggedUser = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}");
