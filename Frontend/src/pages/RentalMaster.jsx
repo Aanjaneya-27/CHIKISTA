@@ -2232,7 +2232,7 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
     <div className="fade-slide-up space-y-5">
       <GlobalPolish />
       <div className="flex items-center gap-2 text-sm">
-        <button onClick={onCancel} className="flex items-center gap-1.5 font-semibold text-slate-500 transition-colors hover:text-teal-600"><ArrowLeft className="h-4 w-4" /> Rental Master</button>
+        <button onClick={onCancel} className="flex items-center gap-1.5 font-semibold text-slate-500 transition-colors hover:text-teal-600 cursor-pointer"><ArrowLeft className="h-4 w-4" /> Rental Master</button>
         <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
         <span className="font-semibold text-slate-700">Log Asset Requisition</span>
       </div>
@@ -2422,12 +2422,20 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
   const matchedUserCenter = useMemo(() => {
     if (!isCareCenterUser) return null;
-    return careCenters.find((c) => 
-      c.id === loggedUser.careCenterId || 
-      c.id === loggedUser.id || 
-      (c.phone && loggedUser.phone && String(c.phone).replace(/\D/g, "").slice(-10) === String(loggedUser.phone).replace(/\D/g, "").slice(-10)) ||
-      (c.name && loggedUser.name && c.name.trim().toLowerCase() === loggedUser.name.trim().toLowerCase())
-    ) || {
+    const cleanUserPhone = (loggedUser?.phone || "").toString().replace(/\D/g, "").slice(-10);
+    const cleanUserName = (loggedUser?.careCenterName || loggedUser?.name || "").trim().toLowerCase();
+
+    return careCenters.find((c) => {
+      const cleanCcPhone = (c.phone || "").toString().replace(/\D/g, "").slice(-10);
+      const cleanCcName = (c.name || "").trim().toLowerCase();
+
+      return (
+        (c.id && loggedUser?.careCenterId && String(c.id) === String(loggedUser.careCenterId)) ||
+        (c.id && loggedUser?.id && String(c.id) === String(loggedUser.id)) ||
+        (cleanUserPhone && cleanCcPhone && cleanUserPhone === cleanCcPhone) ||
+        (cleanUserName && cleanCcName && (cleanCcName.includes(cleanUserName) || cleanUserName.includes(cleanCcName)))
+      );
+    }) || {
       id: loggedUser.careCenterId || loggedUser.id || "CC-ME",
       name: loggedUser.careCenterName || loggedUser.name || "My Care Center"
     };
@@ -2454,8 +2462,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const fetchLogs = useCallback(async () => {
     try {
       const response = await API.get(`/rental/requisitions?t=${Date.now()}`);
-      setLogs(response.data);
-      localStorage.setItem("cached_requisitions", JSON.stringify(response.data));
+      setLogs(response.data || []);
+      localStorage.setItem("cached_requisitions", JSON.stringify(response.data || []));
     } catch (error) {
       console.error("Failed to fetch logs:", error);
     } finally {
@@ -2470,8 +2478,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       try {
         const response = await API.get(`/rental/requisitions?t=${Date.now()}`);
         if (isMounted) {
-          setLogs(response.data);
-          localStorage.setItem("cached_requisitions", JSON.stringify(response.data));
+          setLogs(response.data || []);
+          localStorage.setItem("cached_requisitions", JSON.stringify(response.data || []));
         }
       } catch (error) {
         console.error("Failed to fetch logs:", error);
@@ -2495,10 +2503,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [unitFilter, setUnitFilter] = useState("All"); 
   const [modeFilter, setModeFilter] = useState("All");
   const [monthFilter, setMonthFilter] = useState(0); 
-  const [careCenterFilter, setCareCenterFilter] = useState(() => {
-    if (isCareCenterUser && matchedUserCenter?.id) return matchedUserCenter.id;
-    return "All";
-  }); 
+  const [careCenterFilter, setCareCenterFilter] = useState("All"); 
 
   const [modal, setModal] = useState(null); 
   const [calcModal, setCalcModal] = useState(null);
@@ -2507,14 +2512,20 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
   const scopedLogs = useMemo(() => {
     if (!isCareCenterUser) return logs;
-    const myCenterId = matchedUserCenter?.id || loggedUser.careCenterId || loggedUser.id;
-    const myCenterName = (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "").toLowerCase();
+
+    const myCenterId = (matchedUserCenter?.id || loggedUser.careCenterId || loggedUser.id || "").toString().trim().toLowerCase();
+    const myCenterName = (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "").toString().trim().toLowerCase();
+    const myCenterIdNumeric = myCenterId.replace(/\D/g, "");
 
     return logs.filter((l) => {
-      const ccId = l.careCenterId || l.care_center_id;
-      const ccName = (l.careCenterName || careCenters.find((c) => c.id === ccId)?.name || ccId || "").toLowerCase();
-      return (ccId && myCenterId && String(ccId) === String(myCenterId)) || 
-             (ccName && myCenterName && (ccName.includes(myCenterName) || myCenterName.includes(ccName)));
+      const ccId = (l.careCenterId || l.care_center_id || "").toString().trim().toLowerCase();
+      const ccIdNumeric = ccId.replace(/\D/g, "");
+      const ccName = (l.careCenterName || l.care_center_name || careCenters.find((c) => String(c.id) === String(ccId))?.name || ccId || "").toString().trim().toLowerCase();
+
+      const idMatch = (ccId && myCenterId && ccId === myCenterId) || (ccIdNumeric && myCenterIdNumeric && ccIdNumeric === myCenterIdNumeric);
+      const nameMatch = (ccName && myCenterName && (ccName.includes(myCenterName) || myCenterName.includes(ccName)));
+
+      return idMatch || nameMatch;
     });
   }, [logs, isCareCenterUser, matchedUserCenter, loggedUser, careCenters]);
 
@@ -2597,11 +2608,12 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       const matchesDealType = dealTypeFilter === "All" || (l.dealType || l.deal_type) === dealTypeFilter;
       const matchesUnit = unitFilter === "All" || currentUnit === unitFilter;
       const matchesMode = modeFilter === "All" || currentMode === modeFilter;
-      const matchesCareCenter = careCenterFilter === "All" || ccId === careCenterFilter;
+      
+      const matchesCareCenter = isCareCenterUser || careCenterFilter === "All" || ccId === careCenterFilter;
 
       return matchesSearch && matchesStatus && matchesDealType && matchesUnit && matchesMode && matchesCareCenter;
     });
-  }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, careCenters, equipmentCatalog]);
+  }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, careCenters, equipmentCatalog, isCareCenterUser]);
 
   const handleAdd = async (data) => {
     try {
@@ -2612,9 +2624,14 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         ? (matchedUserCenter?.id || loggedUser.careCenterId || loggedUser.id || "CC-ME")
         : (data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id));
 
+      const finalCareCenterName = isCareCenterUser
+        ? (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "")
+        : (data.careCenterName || "");
+
       const backendData = {
         id: data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
         care_center_id: finalCareCenterId,
+        care_center_name: finalCareCenterName,
         equipment_id: data.equipmentId || data.deviceModel,
         patient_name: data.patientName,
         quantity: data.quantity || 1,
@@ -2677,6 +2694,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       const backendData = {
         care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
+        care_center_name: data.careCenterName || data.care_center_name || "",
         equipment_id: data.equipmentId || data.equipment_id,
         patient_name: data.patientName || data.patient_name,
         quantity: data.quantity || 1,
@@ -2751,6 +2769,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <input 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
+              autoComplete="off"
               placeholder="Search by ID, patient, device, care center…" 
               className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" 
             />
@@ -2807,7 +2826,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               setDealTypeFilter("All");
               setUnitFilter("All");
               setModeFilter("All");
-              setCareCenterFilter(isCareCenterUser && matchedUserCenter?.id ? matchedUserCenter.id : "All");
+              setCareCenterFilter("All");
               setMonthFilter(0);
               toast.success("Filters reset");
             }}
