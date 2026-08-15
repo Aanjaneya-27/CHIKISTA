@@ -49,43 +49,121 @@ const generateToken = (id, role) => {
   });
 };
 
-// ====================================================
-// 📝 1. REGISTER (Care Center / Doctor / Delivery)
-// ====================================================
+
+// const register = async (req, res) => {
+//   const { name, phone, role = "care_center" } = req.body;
+
+//   try {
+//     const cleanPhone = (phone || "").toString().replace(/\D/g, "");
+
+//     if (!name || cleanPhone.length < 10) {
+//       return res.status(400).json({ message: "Name and a valid 10-digit Phone number are required." });
+//     }
+
+//     // Check duplicate phone
+//     const existing = await User.findByPhone(cleanPhone);
+//     if (existing) {
+//       return res.status(400).json({ message: "This phone number is already registered." });
+//     }
+
+//     // Password = Phone ke aakhri 4 digits (Bcrypt Hashed)
+//     const autoPassword = cleanPhone.slice(-4);
+//     const salt = await bcrypt.genSalt(10);
+//     const hashedPassword = await bcrypt.hash(autoPassword, salt);
+
+//     // Save in Database
+//     const userId = await User.create(name.trim(), cleanPhone, hashedPassword, role);
+
+//     const token = generateToken(userId, role);
+//     return res.status(201).json({
+//       message: "Registration successful!",
+//       token,
+//       user: {
+//         id: userId,
+//         name: name.trim(),
+//         phone: cleanPhone,
+//         role,
+//         careCenterId: role === "care_center" ? userId : null,
+//         careCenterName: role === "care_center" ? name.trim() : null
+//       }
+//     });
+//   } catch (error) {
+//     console.error("Register Error:", error);
+//     res.status(500).json({ message: "Server Error", error: error.message });
+//   }
+// };
+
+
+
 const register = async (req, res) => {
-  const { name, phone, role = "care_center" } = req.body;
+  const { name, phone, email, role = "care_center" } = req.body;
 
   try {
     const cleanPhone = (phone || "").toString().replace(/\D/g, "");
 
     if (!name || cleanPhone.length < 10) {
-      return res.status(400).json({ message: "Name and a valid 10-digit Phone number are required." });
+      return res.status(400).json({ message: "Valid Name and 10-digit Phone number are required." });
     }
 
-    // Check duplicate phone
-    const existing = await User.findByPhone(cleanPhone);
-    if (existing) {
+    // 1. Check duplicate phone
+    const [existing] = await pool.query("SELECT id FROM users WHERE phone = ?", [cleanPhone]);
+    if (existing.length > 0) {
       return res.status(400).json({ message: "This phone number is already registered." });
     }
 
-    // Password = Phone ke aakhri 4 digits (Bcrypt Hashed)
+    // 2. Passcode = Last 4 digits (Bcrypt Hashed)
     const autoPassword = cleanPhone.slice(-4);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(autoPassword, salt);
 
-    // Save in Database
-    const userId = await User.create(name.trim(), cleanPhone, hashedPassword, role);
+    // 3. Insert into USERS table
+    const [userResult] = await pool.query(
+      "INSERT INTO users (name, phone, password, role, email) VALUES (?, ?, ?, ?, ?)",
+      [name.trim(), cleanPhone, hashedPassword, role, email || null]
+    );
 
+    const userId = userResult.insertId;
+    let masterId = `CC-${userId}`;
+
+    // 4. 🔥 AUTO-INSERT into Master Table (Address & GST blank for now)
+    if (role === "care_center") {
+      masterId = `CC-${userId}`;
+      await pool.query(
+        `INSERT INTO care_centers (id, name, phone, contact_person, address, gst, status) 
+         VALUES (?, ?, ?, '', '', '', 'Active')
+         ON DUPLICATE KEY UPDATE name = VALUES(name)`,
+        [masterId, name.trim(), cleanPhone]
+      );
+    } else if (role === "reference") {
+      masterId = `DOC-${userId}`;
+      await pool.query(
+        `INSERT INTO \`references\` (id, doctorName, phone, domain, status) 
+         VALUES (?, ?, ?, 'General', 'Active')
+         ON DUPLICATE KEY UPDATE doctorName = VALUES(doctorName)`,
+        [masterId, name.trim(), cleanPhone]
+      );
+    } else if (role === "delivery_executive") {
+      masterId = `DE-${userId}`;
+      await pool.query(
+        `INSERT INTO delivery_executives (id, name, phone, vehicle_number, status) 
+         VALUES (?, ?, ?, '', 'Active')
+         ON DUPLICATE KEY UPDATE name = VALUES(name)`,
+        [masterId, name.trim(), cleanPhone]
+      );
+    }
+
+    // 5. Generate Auth Token
     const token = generateToken(userId, role);
+
     return res.status(201).json({
-      message: "Registration successful!",
+      message: "Registration successful! You can update address & GST in Master Info.",
       token,
       user: {
         id: userId,
         name: name.trim(),
         phone: cleanPhone,
         role,
-        careCenterId: role === "care_center" ? userId : null,
+        careCenterId: role === "care_center" ? masterId : null,
         careCenterName: role === "care_center" ? name.trim() : null
       }
     });
@@ -95,9 +173,7 @@ const register = async (req, res) => {
   }
 };
 
-// ====================================================
-// 🔑 2. LOGIN (Email for Admin, Phone for Others)
-// ====================================================
+
 const login = async (req, res) => {
   const { identifier, email, phone, password } = req.body;
 

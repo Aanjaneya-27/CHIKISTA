@@ -3,66 +3,126 @@ const Equipment = require("../models/Equipment");
 const pool = require("../config/database");
 
 
+// const getCareCenters = async (req, res) => {
+//   try {
+//     const rows = await CareCenter.getAll();
+//     res.json(rows);
+//   } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
+// };
 const getCareCenters = async (req, res) => {
   try {
-    const rows = await CareCenter.getAll();
-    res.json(rows);
-  } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
-};
-
-const addCareCenter = async (req, res) => {
-  const { id, name, address, contact_person, phone, gst, status } = req.body;
-  try {
-    await CareCenter.create(id, name, address, contact_person, phone, gst);
-    res.status(201).json({ message: "Care Center Added!" });
-  } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
-};
-
-const updateCareCenter = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { 
-      name, 
-      address, 
-      contact_person, 
-      contactPerson, 
-      phone, 
-      gst, 
-      status 
-    } = req.body;
-    
-    const finalContactPerson = contact_person !== undefined ? contact_person : (contactPerson || '');
-    const finalPhone = phone || '';
-    const finalGst = gst || '';
-
-    await pool.query(
-      "UPDATE care_centers SET name = ?, address = ?, contact_person = ?, phone = ?, gst = ?, status = ? WHERE id = ?",
-      [
-        name || '', 
-        address || '', 
-        finalContactPerson, 
-        finalPhone, 
-        finalGst, 
-        status || 'Active', 
-        id
-      ]
-    );
-    
-    res.status(200).json({ message: "Care Center updated successfully" });
+    const [rows] = await pool.query("SELECT * FROM care_centers ORDER BY created_at DESC");
+    res.status(200).json(rows);
   } catch (error) {
-    console.error("Update CareCenter Error:", error);
-    res.status(400).json({ message: error.sqlMessage || error.message });
+    res.status(500).json({ message: "Failed to fetch care centers: " + error.message });
   }
 };
 
+// const addCareCenter = async (req, res) => {
+//   const { id, name, address, contact_person, phone, gst, status } = req.body;
+//   try {
+//     await CareCenter.create(id, name, address, contact_person, phone, gst);
+//     res.status(201).json({ message: "Care Center Added!" });
+//   } catch (error) { res.status(500).json({ message: "Server error", error: error.message }); }
+// };
+const addCareCenter = async (req, res) => {
+  try {
+    const { name, contact_person, phone, address, gst, status = "Active" } = req.body;
+    const cleanPhone = (phone || "").toString().replace(/\D/g, "");
+
+    if (!name || !cleanPhone) {
+      return res.status(400).json({ message: "Name and Phone number are required." });
+    }
+
+    const id = `CC-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    await pool.query(
+      `INSERT INTO care_centers (id, name, contact_person, phone, address, gst, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, name.trim(), contact_person || "", cleanPhone, address || "", gst || "", status]
+    );
+
+    res.status(201).json({ id, name, contact_person, phone: cleanPhone, address, gst, status });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to add care center: " + error.message });
+  }
+};
+
+// const updateCareCenter = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { 
+//       name, 
+//       address, 
+//       contact_person, 
+//       contactPerson, 
+//       phone, 
+//       gst, 
+//       status 
+//     } = req.body;
+    
+//     const finalContactPerson = contact_person !== undefined ? contact_person : (contactPerson || '');
+//     const finalPhone = phone || '';
+//     const finalGst = gst || '';
+
+//     await pool.query(
+//       "UPDATE care_centers SET name = ?, address = ?, contact_person = ?, phone = ?, gst = ?, status = ? WHERE id = ?",
+//       [
+//         name || '', 
+//         address || '', 
+//         finalContactPerson, 
+//         finalPhone, 
+//         finalGst, 
+//         status || 'Active', 
+//         id
+//       ]
+//     );
+    
+//     res.status(200).json({ message: "Care Center updated successfully" });
+//   } catch (error) {
+//     console.error("Update CareCenter Error:", error);
+//     res.status(400).json({ message: error.sqlMessage || error.message });
+//   }
+// };
+const updateCareCenter = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, contact_person, phone, address, gst, status } = req.body;
+
+    await pool.query(
+      `UPDATE care_centers 
+       SET name = COALESCE(?, name),
+           contact_person = COALESCE(?, contact_person),
+           phone = COALESCE(?, phone),
+           address = COALESCE(?, address),
+           gst = COALESCE(?, gst),
+           status = COALESCE(?, status)
+       WHERE id = ?`,
+      [name, contact_person, phone, address, gst, status, id]
+    );
+
+    res.status(200).json({ message: "Care Center details updated successfully!" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update care center: " + error.message });
+  }
+};
+
+// const deleteCareCenter = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     await pool.query("DELETE FROM care_centers WHERE id = ?", [id]);
+//     res.status(200).json({ message: "Care center deleted successfully" });
+//   } catch (error) { res.status(500).json({ message: error.message, sqlError: error.sqlMessage }); }
+// };
 const deleteCareCenter = async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query("DELETE FROM care_centers WHERE id = ?", [id]);
-    res.status(200).json({ message: "Care center deleted successfully" });
-  } catch (error) { res.status(500).json({ message: error.message, sqlError: error.sqlMessage }); }
+    res.status(200).json({ message: "Care Center deleted successfully." });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete care center: " + error.message });
+  }
 };
-
 
 const getEquipment = async (req, res) => {
   try {
