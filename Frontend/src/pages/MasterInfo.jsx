@@ -1851,11 +1851,45 @@ export default function MasterInfo({
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      const id = confirmDelete?.item?.id;
-      const type = confirmDelete?.type;
+  // const handleDelete = async () => {
+  //   try {
+  //     const id = confirmDelete?.item?.id;
+  //     const type = confirmDelete?.type;
       
+  //     if (type === "center") {
+  //       await API.delete(`/master/carecenters/${id}`);
+  //       setCareCenters && setCareCenters((prev) => prev.filter((c) => c.id !== id));
+  //     } else if (type === "equipment") {
+  //       await API.delete(`/master/equipment/${id}`);
+  //       setEquipmentCatalog && setEquipmentCatalog((prev) => prev.filter((e) => e.id !== id));
+  //     } else if (type === "category") {
+  //       await API.delete(`/master/categories/${id}`);
+  //       setCategories && setCategories((prev) => prev.filter((c) => c.id !== id));
+  //     } else if (type === "reference") {
+  //       await API.delete(`/master/references/${id}`);
+  //       setReferences && setReferences((prev) => prev.filter((r) => r.id !== id));
+  //     } else if (type === "deliveryExecutive") {
+  //       await API.delete(`/master/delivery-executives/${id}`);
+  //       setDeliveryExecutives && setDeliveryExecutives((prev) => prev.filter((d) => d.id !== id));
+  //     }
+      
+  //     setConfirmDelete(null);
+  //     toast.success("Record Deleted Successfully");
+  //   } catch (error) {
+  //     console.error("Delete Error:", error);
+  //     toast.error("Error: " + (error.response?.data?.message || "Could not delete from backend"));
+  //   }
+  // };
+const handleDelete = async () => {
+    const id = confirmDelete?.item?.id;
+    const type = confirmDelete?.type;
+
+    if (!id) {
+      setConfirmDelete(null);
+      return;
+    }
+
+    try {
       if (type === "center") {
         await API.delete(`/master/carecenters/${id}`);
         setCareCenters && setCareCenters((prev) => prev.filter((c) => c.id !== id));
@@ -1872,15 +1906,16 @@ export default function MasterInfo({
         await API.delete(`/master/delivery-executives/${id}`);
         setDeliveryExecutives && setDeliveryExecutives((prev) => prev.filter((d) => d.id !== id));
       }
-      
+
       setConfirmDelete(null);
       toast.success("Record Deleted Successfully");
     } catch (error) {
       console.error("Delete Error:", error);
-      toast.error("Error: " + (error.response?.data?.message || "Could not delete from backend"));
+      const serverMsg = error.response?.data?.message;
+      toast.error(serverMsg || "Could not delete. Related requisitions exist for this record.");
+      setConfirmDelete(null);
     }
   };
-
   const deleteLabels = { 
     center: "care center", 
     equipment: "device", 
