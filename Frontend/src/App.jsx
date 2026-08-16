@@ -58,10 +58,23 @@
 //   const [deliveryExecutives, setDeliveryExecutives] = useState([]);
 //   const [logs, setLogs] = useState([]);
 //   const [notifications, setNotifications] = useState([]);
+
 //   const unreadCount = notifications.filter((n) => !n.read).length;
+
+//   // Notification Handlers
 //   const markNotifRead = (id) => setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
 //   const markAllNotifRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-//   const deleteNotif = (id) => setNotifications((prev) => prev.filter((n) => n.id !== id));
+  
+//   const deleteNotif = async (id) => {
+//     setNotifications((prev) => prev.filter((n) => n.id !== id));
+
+//     try {
+//       await API.delete(`/rental/notifications/${id}`);
+//     } catch (err) {
+//       console.error("Failed to delete notification from DB:", err);
+//       toast.error("Failed to delete notification from server");
+//     }
+//   };
 
 //   const permissions = {
 //     canViewMaster: role === "super_admin",
@@ -230,7 +243,7 @@
 //   );
 // }
 
-import { useState, useEffect } from "react"; 
+import { useState, useEffect, useCallback, useMemo } from "react"; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { Toaster, toast } from "./components/UiComponents"; 
@@ -291,19 +304,74 @@ function MainAppLayout({ role, handleLogout }) {
   const [logs, setLogs] = useState([]);
   const [notifications, setNotifications] = useState([]);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const loggedUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
 
-  // Notification Handlers
+  const isCareCenter = role === "care_center" || loggedUser?.role === "care_center";
+  const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
+  const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const ccId = user.careCenterId || user.id || "";
+      const currentRole = role || user.role || "";
+
+      const res = await API.get(`/rental/notifications?careCenterId=${ccId}&role=${currentRole}&t=${Date.now()}`);
+      if (res.data && Array.isArray(res.data)) {
+        setNotifications(
+          res.data.map((n) => ({
+            id: n.id,
+            title: n.title,
+            message: n.message,
+            type: n.type || "info",
+            care_center_id: n.care_center_id || n.careCenterId || "",
+            careCenterName: n.care_center_name || n.careCenterName || "",
+            time: n.created_at || n.time,
+            read: false,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  }, [role]);
+
+  const unreadCount = useMemo(() => {
+    if (!notifications || notifications.length === 0) return 0;
+    if (!isCareCenter) return notifications.filter((n) => !n.read).length;
+
+    return notifications.filter((n) => {
+      if (n.read) return false;
+      const nCcId = (n.care_center_id || n.careCenterId || "").toString().trim().toLowerCase();
+      const nCcName = (n.careCenterName || "").toLowerCase().trim();
+      const nText = `${n.title || ""} ${n.message || ""}`.toLowerCase();
+
+      return (
+        (nCcId && myCenterId && (nCcId === myCenterId || nCcId.replace(/\D/g, "") === myCenterId.replace(/\D/g, ""))) ||
+        (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) ||
+        (myCenterName && nText.includes(myCenterName)) ||
+        (!nCcId && !nCcName)
+      );
+    }).length;
+  }, [notifications, isCareCenter, myCenterId, myCenterName]);
+
+  const handleOpenNotifications = () => {
+    fetchNotifications();
+    setNotifOpen(true);
+  };
+
   const markNotifRead = (id) => setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   const markAllNotifRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   
-  // 👈 Permanent Delete with Backend DB Sync
   const deleteNotif = async (id) => {
-    // 1. UI se turant hatao
     setNotifications((prev) => prev.filter((n) => n.id !== id));
-
     try {
-      // 2. Database se permanently delete karo
       await API.delete(`/rental/notifications/${id}`);
     } catch (err) {
       console.error("Failed to delete notification from DB:", err);
@@ -377,17 +445,7 @@ function MainAppLayout({ role, handleLogout }) {
           })));
         }
 
-        const notifRes = await API.get("/rental/notifications").catch(() => ({ data: [] }));
-        if (notifRes.data) {
-          setNotifications(notifRes.data.map(n => ({
-            id: n.id,
-            title: n.title,
-            message: n.message,
-            type: n.type,
-            time: n.created_at || n.time,
-            read: false
-          })));
-        }
+        await fetchNotifications();
 
       } catch (err) {
         console.error("Failed to fetch Live Data:", err);
@@ -395,14 +453,26 @@ function MainAppLayout({ role, handleLogout }) {
     };
 
     fetchAllData();
-  }, []);
+  }, [fetchNotifications]);
 
   return (
     <div className="font-body flex h-screen w-full overflow-hidden bg-slate-50">
-      <Sidebar role={role} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} unreadCount={unreadCount} onOpenNotifications={() => setNotifOpen(true)} />
+      <Sidebar 
+        role={role} 
+        mobileOpen={mobileOpen} 
+        setMobileOpen={setMobileOpen} 
+        unreadCount={unreadCount} 
+        onOpenNotifications={handleOpenNotifications} 
+      />
       
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <Topbar role={role} setMobileOpen={setMobileOpen} unreadCount={unreadCount} onOpenNotifications={() => setNotifOpen(true)} onLogout={handleLogout} />
+        <Topbar 
+          role={role} 
+          setMobileOpen={setMobileOpen} 
+          unreadCount={unreadCount} 
+          onOpenNotifications={handleOpenNotifications} 
+          onLogout={handleLogout} 
+        />
         
         <div className="smooth-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
           <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6">

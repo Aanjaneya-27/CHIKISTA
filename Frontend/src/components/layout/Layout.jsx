@@ -1,7 +1,7 @@
 // import { useState, useRef, useEffect, useMemo } from "react";
 // import { useNavigate, useLocation } from "react-router-dom";
 // import { HeartPulse, ClipboardList, Database, ChevronRight, Bell, Menu, User, LogOut, ChevronDown, X, CheckCircle2, AlertTriangle, Trash2, CheckCheck } from "lucide-react";
-// import { ROLES } from "../../data/MockData";
+// import { ROLES, DEMO_USER_NAMES } from "../../data/MockData";
 
 // export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNotifications }) {
 //   const navigate = useNavigate();
@@ -15,39 +15,15 @@
 //   return (
 //     <>
 //       <style>{`
-//         @keyframes heartbeat {
-//           0%, 100% { transform: scale(1); }
-//           15% { transform: scale(1.3); }
-//           30% { transform: scale(1); }
-//           45% { transform: scale(1.2); }
-//           60% { transform: scale(1); }
-//         }
-//         @keyframes heartbeat-glow {
-//           0%, 100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.5); }
-//           15% { box-shadow: 0 0 0 6px rgba(20, 184, 166, 0.15); }
-//           30% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.4); }
-//           45% { box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1); }
-//           60% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
-//         }
-//         @keyframes heartbeat-color {
-//           0%, 100% { background-color: #14b8a6; }
-//           15% { background-color: #2dd4bf; }
-//           30% { background-color: #14b8a6; }
-//           45% { background-color: #5eead4; }
-//           60% { background-color: #14b8a6; }
-//         }
-//         .animate-heartbeat {
-//           animation: heartbeat 1.4s ease-in-out infinite;
-//           transform-origin: center;
-//         }
-//         .heartbeat-wrapper {
-//           animation: heartbeat-glow 1.4s ease-in-out infinite, heartbeat-color 1.4s ease-in-out infinite;
-//         }
+//         @keyframes heartbeat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.2); } 60% { transform: scale(1); } }
+//         @keyframes heartbeat-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.5); } 15% { box-shadow: 0 0 0 6px rgba(20, 184, 166, 0.15); } 30% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.4); } 45% { box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1); } 60% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); } }
+//         @keyframes heartbeat-color { 0%, 100% { background-color: #14b8a6; } 15% { background-color: #2dd4bf; } 30% { background-color: #14b8a6; } 45% { background-color: #5eead4; } 60% { background-color: #14b8a6; } }
+//         .animate-heartbeat { animation: heartbeat 1.4s ease-in-out infinite; transform-origin: center; }
+//         .heartbeat-wrapper { animation: heartbeat-glow 1.4s ease-in-out infinite, heartbeat-color 1.4s ease-in-out infinite; }
 //       `}</style>
 
 //       {mobileOpen && <div className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden" onClick={() => setMobileOpen(false)} />}
 //       <aside className={`fixed z-50 flex h-full w-64 flex-col bg-slate-950 text-slate-300 transition-transform duration-200 will-change-transform lg:static lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        
 //         <button onClick={() => { navigate("/dashboard"); setMobileOpen(false); }} className={`flex w-full items-center gap-2.5 border-b px-5 py-5 text-left transition ${location.pathname === "/dashboard" ? "border-teal-500/30 bg-teal-500/10" : "border-white/10 hover:bg-white/5"}`}>
 //           <div className="heartbeat-wrapper grid h-9 w-9 shrink-0 place-items-center rounded-xl shadow-lg shadow-teal-500/30">
 //             <HeartPulse className="h-5 w-5 text-white animate-heartbeat" />
@@ -91,7 +67,6 @@
 //   const location = useLocation();
 //   const navigate = useNavigate(); 
   
-//   // 🟢 Live user read from localStorage
 //   const loggedUser = useMemo(() => {
 //     try {
 //       return JSON.parse(localStorage.getItem("user") || "{}");
@@ -107,10 +82,9 @@
 //     ? (loggedUser?.careCenterName || loggedUser?.name || "Care Center")
 //     : isSuperAdmin 
 //     ? (loggedUser?.name || "Super Admin")
-//     : (loggedUser?.name || "User");
+//     : (loggedUser?.name || DEMO_USER_NAMES[role] || "User");
 
 //   const displayRole = isCareCenter ? "Care Center" : isSuperAdmin ? "Super Admin" : (ROLES[role]?.label || role || "User");
-
 //   const avatarInitial = displayName.trim().charAt(0).toUpperCase();
 
 //   useEffect(() => {
@@ -119,13 +93,8 @@
 //         setProfileMenuOpen(false);
 //       }
 //     };
-
-//     if (profileMenuOpen) {
-//       document.addEventListener("mousedown", handleClickOutside);
-//     }
-//     return () => {
-//       document.removeEventListener("mousedown", handleClickOutside);
-//     };
+//     if (profileMenuOpen) document.addEventListener("mousedown", handleClickOutside);
+//     return () => document.removeEventListener("mousedown", handleClickOutside);
 //   }, [profileMenuOpen]);
 
 //   const getTitle = () => {
@@ -200,7 +169,7 @@
 //   switch (type) {
 //     case "warning": return { bg: "bg-amber-50", text: "text-amber-600", icon: AlertTriangle };
 //     case "success": return { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2 };
-//     default: return { bg: "bg-indigo-50", text: "text-indigo-600", icon: Bell };
+//     default: return { bg: "bg-teal-50", text: "text-teal-600", icon: Bell };
 //   }
 // }
 
@@ -214,24 +183,25 @@
 //   }, []);
 
 //   const isCareCenterUser = loggedUser?.role === "care_center";
-//   const myCenterId = loggedUser?.careCenterId || loggedUser?.id;
+//   const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
 //   const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
 
+//   // 🔔 Reliable Filter: Super Admin gets all; Care Center gets center-relevant notifications
 //   const scopedNotifications = useMemo(() => {
+//     if (!Array.isArray(notifications)) return [];
 //     if (!isCareCenterUser) return notifications;
 
 //     return notifications.filter((n) => {
-//       const nCcId = n.careCenterId || n.care_center_id || n.centerId;
+//       const nCcId = (n.care_center_id || n.careCenterId || n.centerId || "").toString().trim().toLowerCase();
 //       const nCcName = (n.careCenterName || n.careCenter || n.centerName || "").toLowerCase().trim();
-//       const nTitle = (n.title || "").toLowerCase();
-//       const nMessage = (n.message || "").toLowerCase();
+//       const nText = `${n.title || ""} ${n.message || ""}`.toLowerCase();
 
-//       if (nCcId && myCenterId && String(nCcId) === String(myCenterId)) return true;
-//       if (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) return true;
-//       if (myCenterName && (nTitle.includes(myCenterName) || nMessage.includes(myCenterName))) return true;
-//       if (!nCcId && !nCcName && n.role === "care_center") return true;
+//       const idMatch = nCcId && myCenterId && (nCcId === myCenterId || nCcId.replace(/\D/g, "") === myCenterId.replace(/\D/g, ""));
+//       const nameMatch = nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName));
+//       const textMatch = myCenterName && nText.includes(myCenterName);
 
-//       return false;
+//       // Agar koi specific center tag na ho toh bhi user ko alert allow karein
+//       return idMatch || nameMatch || textMatch || (!nCcId && !nCcName);
 //     });
 //   }, [notifications, isCareCenterUser, myCenterId, myCenterName]);
 
@@ -243,7 +213,6 @@
 //       <div className="fade-in absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
 //       <div className="slide-in-right absolute right-0 top-0 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl">
         
-//         {/* Panel Header */}
 //         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
 //           <div>
 //             <h2 className="font-display text-base font-bold text-slate-800">Notifications</h2>
@@ -268,13 +237,13 @@
 
 //         <div className="smooth-scroll min-h-0 flex-1 overflow-y-auto">
 //           {scopedNotifications.length === 0 ? (
-//             <div className="grid h-full place-items-center px-6 text-center">
+//             <div className="grid h-full place-items-center px-6 text-center py-16">
 //               <div>
 //                 <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100">
 //                   <Bell className="h-5 w-5 text-slate-400" />
 //                 </div>
 //                 <p className="mt-3 text-sm font-semibold text-slate-500">No notifications</p>
-//                 <p className="text-xs text-slate-400 mt-1">New updates will appear here</p>
+//                 <p className="text-xs text-slate-400 mt-1">Updates will appear here</p>
 //               </div>
 //             </div>
 //           ) : (
@@ -300,7 +269,7 @@
 //                           {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />}
 //                         </div>
 //                         <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.message}</p>
-//                         <p className="mt-1 text-[11px] font-medium text-slate-400">{n.time}</p>
+//                         <p className="mt-1 text-[11px] font-medium text-slate-400">{n.time || n.created_at || "Just now"}</p>
 //                       </div>
 //                     </div>
 
@@ -367,7 +336,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { HeartPulse, ClipboardList, Database, ChevronRight, Bell, Menu, User, LogOut, ChevronDown, X, CheckCircle2, AlertTriangle, Trash2, CheckCheck } from "lucide-react";
 import { ROLES, DEMO_USER_NAMES } from "../../data/MockData";
 
-export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNotifications }) {
+export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount = 0, onOpenNotifications }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -425,7 +394,7 @@ export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount, onOpenNo
   );
 }
 
-export function Topbar({ role, setMobileOpen, unreadCount, onOpenNotifications, onLogout }) {
+export function Topbar({ role, setMobileOpen, unreadCount = 0, onOpenNotifications, onLogout }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
   const location = useLocation();
@@ -538,45 +507,16 @@ function notifStyle(type) {
 }
 
 export function NotificationsPanel({ open, onClose, notifications = [], onMarkRead, onMarkAllRead, onDeleteNotif }) {
-  const loggedUser = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user") || "{}");
-    } catch {
-      return {};
-    }
-  }, []);
-
-  const isCareCenterUser = loggedUser?.role === "care_center";
-  const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
-  const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
-
-  // 🔔 Reliable Filter: Super Admin gets all; Care Center gets center-relevant notifications
-  const scopedNotifications = useMemo(() => {
-    if (!Array.isArray(notifications)) return [];
-    if (!isCareCenterUser) return notifications;
-
-    return notifications.filter((n) => {
-      const nCcId = (n.care_center_id || n.careCenterId || n.centerId || "").toString().trim().toLowerCase();
-      const nCcName = (n.careCenterName || n.careCenter || n.centerName || "").toLowerCase().trim();
-      const nText = `${n.title || ""} ${n.message || ""}`.toLowerCase();
-
-      const idMatch = nCcId && myCenterId && (nCcId === myCenterId || nCcId.replace(/\D/g, "") === myCenterId.replace(/\D/g, ""));
-      const nameMatch = nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName));
-      const textMatch = myCenterName && nText.includes(myCenterName);
-
-      // Agar koi specific center tag na ho toh bhi user ko alert allow karein
-      return idMatch || nameMatch || textMatch || (!nCcId && !nCcName);
-    });
-  }, [notifications, isCareCenterUser, myCenterId, myCenterName]);
-
   if (!open) return null;
-  const unreadCount = scopedNotifications.filter((n) => !n.read).length;
+  const list = Array.isArray(notifications) ? notifications : [];
+  const unreadCount = list.filter((n) => !n.read).length;
 
   return (
     <div className="fixed inset-0 z-50">
       <div className="fade-in absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
       <div className="slide-in-right absolute right-0 top-0 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl">
         
+        {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
             <h2 className="font-display text-base font-bold text-slate-800">Notifications</h2>
@@ -599,8 +539,9 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
           </div>
         )}
 
+        {/* Notification List */}
         <div className="smooth-scroll min-h-0 flex-1 overflow-y-auto">
-          {scopedNotifications.length === 0 ? (
+          {list.length === 0 ? (
             <div className="grid h-full place-items-center px-6 text-center py-16">
               <div>
                 <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100">
@@ -612,7 +553,7 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {scopedNotifications.map((n) => {
+              {list.map((n) => {
                 const s = notifStyle(n.type);
                 const Icon = s.icon;
                 return (
@@ -633,7 +574,9 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
                           {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />}
                         </div>
                         <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.message}</p>
-                        <p className="mt-1 text-[11px] font-medium text-slate-400">{n.time || n.created_at || "Just now"}</p>
+                        <p className="mt-1 text-[11px] font-medium text-slate-400">
+                          {n.created_at ? new Date(n.created_at).toLocaleDateString() : (n.time || "Just now")}
+                        </p>
                       </div>
                     </div>
 
