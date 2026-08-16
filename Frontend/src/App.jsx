@@ -361,11 +361,25 @@ function MainAppLayout({ role, handleLogout }) {
     }).length;
   }, [notifications, isCareCenter, myCenterId, myCenterName]);
 
-  const handleOpenNotifications = () => {
-    fetchNotifications();
-    setNotifOpen(true);
-  };
+  // const handleOpenNotifications = () => {
+  //   fetchNotifications();
+  //   setNotifOpen(true);
+  // };
+  const handleOpenNotifications = async () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const ccId = user.careCenterId || user.id || "";
+    const currentRole = role || user.role || "";
 
+    const res = await API.get(`/rental/notifications?careCenterId=${ccId}&role=${currentRole}&t=${Date.now()}`);
+    if (res.data) {
+      setNotifications(res.data);
+    }
+  } catch (err) {
+    console.error("Notif Fetch Error:", err);
+  }
+  setNotifOpen(true);
+};
   const markNotifRead = (id) => setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   const markAllNotifRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   

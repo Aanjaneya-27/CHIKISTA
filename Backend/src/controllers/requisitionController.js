@@ -86,6 +86,35 @@ const getRequisitions = async (req, res) => {
 };
 
 //  CREATE REQUISITION ()
+// const createRequisition = async (req, res) => {
+//   try {
+//     const data = req.body;
+//     await Requisition.create(data);
+
+//     const patientName = data.patient_name || data.patientName || "Patient";
+//     const equipName = data.equipmentName || data.equipment_id || "Medical Equipment";
+//     const careCenterId = data.care_center_id || data.careCenterId || null;
+//     const careCenterName = data.care_center_name || data.careCenterName || "Care Center";
+
+//     //  Live notification generate 
+//     try {
+//       await Notification.create(
+//         "success",
+//         `New Requisition: ${patientName}`,
+//         `Allocation created for ${equipName} (Patient: ${patientName}) by ${careCenterName}.`,
+//         careCenterId
+//       );
+//     } catch (notifErr) {
+//       console.warn("Notification insert warning:", notifErr.message);
+//     }
+
+//     res.status(201).json({ message: "Requisition created successfully!" });
+//   } catch (error) {
+//     console.error("Create Requisition Error:", error);
+//     const exactError = error.sqlMessage || error.message || "Unknown Database Error";
+//     res.status(400).json({ message: exactError });
+//   }
+// };
 const createRequisition = async (req, res) => {
   try {
     const data = req.body;
@@ -96,23 +125,19 @@ const createRequisition = async (req, res) => {
     const careCenterId = data.care_center_id || data.careCenterId || null;
     const careCenterName = data.care_center_name || data.careCenterName || "Care Center";
 
-    //  Live notification generate 
-    try {
-      await Notification.create(
-        "success",
-        `New Requisition: ${patientName}`,
-        `Allocation created for ${equipName} (Patient: ${patientName}) by ${careCenterName}.`,
-        careCenterId
-      );
-    } catch (notifErr) {
-      console.warn("Notification insert warning:", notifErr.message);
-    }
+    console.log("Creating Notification for CC ID:", careCenterId);
+
+    await Notification.create(
+      "success",
+      `New Requisition: ${patientName}`,
+      `Allocation created for ${equipName} (Patient: ${patientName}) by ${careCenterName}.`,
+      careCenterId
+    );
 
     res.status(201).json({ message: "Requisition created successfully!" });
   } catch (error) {
-    console.error("Create Requisition Error:", error);
-    const exactError = error.sqlMessage || error.message || "Unknown Database Error";
-    res.status(400).json({ message: exactError });
+    console.error("CRASH ERROR:", error);
+    res.status(400).json({ message: error.sqlMessage || error.message });
   }
 };
 
