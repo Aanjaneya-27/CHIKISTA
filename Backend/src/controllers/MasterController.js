@@ -181,29 +181,74 @@ const updateCareCenter = async (req, res) => {
 //   }
 // };
 const deleteCareCenter = async (req, res) => {
+  const { id } = req.params;
+  const rawId = id.toString().trim();
+  const numericId = rawId.replace(/\D/g, ""); // "CC006" -> "006"
+  const intId = parseInt(numericId, 10);      // 6
+
+  let connection;
   try {
-    const { id } = req.params;
-    const cleanId = id.toString().replace("CC-", "").trim();
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
 
-    const [existing] = await pool.query(
-      "SELECT phone FROM care_centers WHERE id = ? OR id = ?",
-      [id, cleanId]
+    const [existing] = await connection.query(
+      `SELECT * FROM care_centers 
+       WHERE id = ? 
+          OR id = ? 
+          OR id = ?`,
+      [rawId, numericId, isNaN(intId) ? -1 : intId]
     );
-    const phone = existing[0]?.phone;
 
-    await pool.query("DELETE FROM care_centers WHERE id = ? OR id = ?", [id, cleanId]);
+    const center = existing[0];
+    const phone = center?.phone;
+
+    await connection.query(
+      `DELETE FROM notifications 
+       WHERE care_center_id = ? 
+          OR care_center_id = ? 
+          OR care_center_id = ?`,
+      [rawId, numericId, isNaN(intId) ? -1 : intId]
+    ).catch(() => {});
+
+    await connection.query(
+      `DELETE FROM requisitions 
+       WHERE care_center_id = ? 
+          OR care_center_id = ? 
+          OR care_center_id = ?`,
+      [rawId, numericId, isNaN(intId) ? -1 : intId]
+    ).catch(() => {});
+
+    await connection.query(
+      `DELETE FROM care_centers 
+       WHERE id = ? 
+          OR id = ? 
+          OR id = ?`,
+      [rawId, numericId, isNaN(intId) ? -1 : intId]
+    );
 
     if (phone) {
-      await pool.query("DELETE FROM users WHERE phone = ? AND role = 'care_center'", [phone]);
+      await connection.query("DELETE FROM users WHERE phone = ?", [phone]).catch(() => {});
     }
-    await pool.query("DELETE FROM users WHERE id = ? AND role = 'care_center'", [cleanId]);
+    await connection.query(
+      "DELETE FROM users WHERE id = ? OR id = ?",
+      [rawId, numericId]
+    ).catch(() => {});
 
-    res.status(200).json({ message: "Care Center deleted permanently from all records." });
+    await connection.commit();
+    res.status(200).json({ message: "Care Center and linked records deleted permanently." });
+
   } catch (error) {
-    console.error("Delete Care Center Error:", error);
-    res.status(500).json({ message: "Failed to delete: " + error.message });
+    if (connection) await connection.rollback();
+    console.error("Delete Care Center Crash:", error);
+    res.status(500).json({ 
+      message: "Database Delete Error: " + (error.sqlMessage || error.message) 
+    });
+  } finally {
+    if (connection) connection.release();
   }
 };
+
+
 const getEquipment = async (req, res) => {
   try {
     const [rows] = await pool.query(`
