@@ -1686,7 +1686,7 @@ import {
   CreditCard, 
   Save, 
   X, 
-  
+ 
   ArrowLeft, 
   ChevronRight, 
   ImagePlus, 
@@ -2141,20 +2141,20 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             <div>
               <p className="text-xs font-medium text-slate-400">Rental Charge</p>
               <p className="font-extrabold text-slate-800 mt-0.5">
-                ₹{log?.rentalCharge !== undefined && log?.rentalCharge !== "" ? log?.rentalCharge : (log?.rental_charge || "0")}
+                ₹{log?.rentalCharge !== undefined && log?.rentalCharge !== "" ? log?.rentalCharge : (log?.rental_charge !== undefined ? log?.rental_charge : "0")}
               </p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Deposit / Advance</p>
               <p className="font-extrabold text-slate-800 mt-0.5">
-                ₹{log?.depositAdvance !== undefined && log?.depositAdvance !== "" ? log?.depositAdvance : (log?.deposit_advance || "0")}
+                ₹{log?.depositAdvance !== undefined && log?.depositAdvance !== "" ? log?.depositAdvance : (log?.deposit_advance !== undefined ? log?.deposit_advance : "0")}
               </p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Installation Charge</p>
               <p className="font-extrabold text-slate-800 mt-0.5">
-                ₹{log?.installationCharge !== undefined && log?.installationCharge !== "" ? log?.installationCharge : (log?.installation_charge || "0")}
+                ₹{log?.installationCharge !== undefined && log?.installationCharge !== "" ? log?.installationCharge : (log?.installation_charge !== undefined ? log?.installation_charge : "0")}
               </p>
             </div>
           </div>
@@ -2256,7 +2256,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             <div className="col-span-2 pt-2">
               <p className="text-xs font-medium text-slate-400 mb-1.5">Care Address:</p>
               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
-                {log?.careAddress || log?.address || "—"}
+                {log?.careAddress || log?.care_address || log?.address || "—"}
               </div>
             </div>
           </div>
@@ -2334,9 +2334,9 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         installationCharge: initial.installationCharge !== undefined ? initial.installationCharge : (initial.installation_charge !== undefined ? initial.installation_charge : ""),
         careCenterId: ccId || matchedUserCenter?.id || "",
         inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || initial.pocMobile || cc?.phone || "",
-        altMobile: initial.altMobile || initial.alt_mobile || initial.altPocMobile || initial.altMobileNumber || "",
-        careAddress: initial.careAddress || initial.address || cc?.address || "",
-        bedNo: initial.bedNo || initial.bed_no || initial.bed_number || "",
+        altMobile: initial.altMobile || initial.alt_mobile || initial.altPocMobile || "",
+        careAddress: initial.careAddress || initial.care_address || initial.address || cc?.address || "",
+        bedNo: initial.bedNo || initial.bed_number || initial.bed_no || "",
         referral: initial.referral || initial.referral_doctor || initial.referralDoctor || "",
         patientName: initial.patientName || initial.patient_name || "",
         age: initial.age || "",
@@ -2886,7 +2886,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     const endUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
 
     const X = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
-    const Y = now.getDate(); // 👈 FIXED: now.getDate() is safe and valid
+    const Y = now.getDate();
 
     return `${X}/${Y}`;
   };
@@ -2909,7 +2909,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
         const patient = String(l.patientName || l.patient_name || "");
         const inchargeMobile = String(l.inchargeMobile || l.incharge_mobile || l.phone || l.pocMobile || "");
-        const altMobile = String(l.altMobile || l.alt_mobile || l.altPocMobile || l.altMobileNumber || "");
+        const altMobile = String(l.altMobile || l.alt_mobile || l.altPocMobile || "");
         const logId = String(l.id || "");
 
         const matchesSearch = !q || 
@@ -2948,6 +2948,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
+  // 🔄 100% COMPLETE PARAMETERS SUBMIT HANDLER
   const handleFormSubmit = async (data) => {
     try {
       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
@@ -2985,7 +2986,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         delivery_address: data.deliveryAddress || "",
 
         incharge_mobile: data.inchargeMobile || data.phone || data.pocMobile || "",
-        alt_mobile: data.altMobile || data.altMobileNumber || "",
+        alt_mobile: data.altMobile || "",
         care_address: data.careAddress || "",
         bed_number: data.bedNo || data.bed_number || "", 
         referral_doctor: data.referral || data.referralDoctor || data.referral_doctor || "",         
@@ -3273,7 +3274,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                   if (catMatch) actualDevice = catMatch.name;
 
                   const inchargePhone = log?.inchargeMobile || log?.incharge_mobile || log?.phone || log?.pocMobile || "";
-                  const altPhone = log?.altMobile || log?.alt_mobile || log?.altPocMobile || log?.altMobileNumber || "";
+                  const altPhone = log?.altMobile || log?.alt_mobile || log?.altPocMobile || "";
                   
                   const s = String(log?.status || "").toLowerCase();
                   const isClosed = s === "closed" || s === "returned";
