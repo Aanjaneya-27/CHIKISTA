@@ -1549,6 +1549,7 @@
 //       <ConfirmDialog open={!!confirmDelete} title="Delete this requisition?" message={confirmDelete ? `${confirmDelete.id} will be permanently removed. This cannot be undone.` : ""} onCancel={() => setConfirmDelete(null)} onConfirm={handleDelete} />
 //     </div>
 //   );
+
 // }
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -1575,13 +1576,12 @@ import {
   ImagePlus, 
   Truck, 
   FileText, 
-  Calendar, 
   ChevronDown, 
   Calculator,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  
+  Phone
 } from "lucide-react";
 import { 
   PrimaryButton, 
@@ -1596,7 +1596,8 @@ import {
 import { 
   DEAL_TYPE_OPTIONS, 
   MODE_OPTIONS, 
-  UNIT_OPTIONS 
+  UNIT_OPTIONS,
+  PAYMENT_TYPES 
 } from "../data/MockData";
 import { formatDateShort, todayISO } from "../utils/Helper";
 import API from "../utils/api";
@@ -1792,13 +1793,15 @@ function KpiCards({ logs = [] }) {
   );
 }
 
+// 🧮 CALCULATE TOTAL DAYS MODAL
 function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
+  const isQuick = !log || log?.isQuickCalc;
   const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date) || todayISO());
   const [tempLogoutDate, setTempLogoutDate] = useState(() => formatForDateInput(log?.logoutDate || log?.logout_date) || "");
 
   const eqId = log?.equipmentId || log?.equipment_id;
-  const eqName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || "Device";
-  const patientName = log?.patientName || log?.patient_name || "Patient";
+  const eqName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || (isQuick ? "Quick Calculator" : "Device");
+  const patientName = log?.patientName || log?.patient_name || (isQuick ? "Instant Estimation" : "Patient");
 
   const calculatedDisplay = useMemo(() => {
     if (!tempLoginDate) return "—";
@@ -1831,7 +1834,9 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div>
-            <h3 className="font-display text-base font-bold text-slate-800">Calculate Total Days</h3>
+            <h3 className="font-display text-base font-bold text-slate-800">
+              {isQuick ? "Total Days Calculator" : "Calculate Requisition Days"}
+            </h3>
             <p className="text-xs text-slate-400 mt-0.5">{patientName} • {eqName}</p>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
@@ -1842,7 +1847,7 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Log In Date
+              Log In Date (Start)
             </label>
             <input 
               type="date" 
@@ -1854,7 +1859,7 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
 
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Log Out Date (Optional)
+              Log Out Date (Return / Optional)
             </label>
             <input 
               type="date" 
@@ -1866,7 +1871,7 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5 text-center my-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Days</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Calculated Total Days</span>
             <p className="mt-1 font-display text-3xl font-extrabold text-teal-700">
               {calculatedDisplay}
             </p>
@@ -1890,9 +1895,8 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
 const emptyForm = { 
   careCenterId: "", 
   address: "", 
-  inchargeName: "", 
   inchargeMobile: "", 
-  contactPerson: "", 
+  altMobile: "", 
   phone: "", 
   gst: "", 
   equipmentId: "", 
@@ -1915,6 +1919,7 @@ const emptyForm = {
   accessory: [] 
 };
 
+// 📝 ORIGINAL REQUISITION MODAL (RESTORED TO FULL RICH LAYOUT)
 function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmentCatalog = [], references = [], categories = [], onClose, onSubmit }) {
   const readOnly = modalMode === "view";
 
@@ -1990,9 +1995,8 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
         notifyDate: mappedNotify,
         deliveryAddress: initial.deliveryAddress || initial.delivery_address || "",
         notes: initial.notes || "",
-        inchargeName: initial.inchargeName || initial.incharge_name || initial.contactPerson || initial.contact_person || cc?.contactPerson || cc?.contact_person || "",
         inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || initial.pocMobile || cc?.phone || "",
-        contactPerson: initial.contactPerson || initial.contact_person || cc?.contactPerson || cc?.contact_person || "",
+        altMobile: initial.altMobile || initial.alt_mobile || initial.altPocMobile || initial.altMobileNumber || "",
         phone: initial.phone || cc?.phone || "",
         gst: initial.gst || initial.gst_number || initial.gstNumber || cc?.gst || "",
         address: initial.address || cc?.address || "",
@@ -2007,8 +2011,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
       address: matchedUserCenter?.address || "",
       phone: matchedUserCenter?.phone || loggedUser?.phone || "",
       inchargeMobile: matchedUserCenter?.phone || loggedUser?.phone || "",
-      contactPerson: matchedUserCenter?.contact_person || matchedUserCenter?.contactPerson || "",
-      inchargeName: matchedUserCenter?.contact_person || matchedUserCenter?.contactPerson || "",
+      altMobile: "",
       gst: matchedUserCenter?.gst || ""
     };
   });
@@ -2018,16 +2021,15 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
 
   const handleCareCenterChange = (id) => {
     if (id === "other") {
-      set({ careCenterId: "other", address: "", contactPerson: "", inchargeName: "", inchargeMobile: "", phone: "", gst: "" });
+      set({ careCenterId: "other", address: "", inchargeMobile: "", altMobile: "", phone: "", gst: "" });
     } else {
       const cc = careCenters.find((c) => c?.id === id);
       set({ 
         careCenterId: id, 
         address: cc?.address || "", 
-        contactPerson: cc?.contactPerson || cc?.contact_person || "", 
-        inchargeName: cc?.contactPerson || cc?.contact_person || "",
         phone: cc?.phone || "", 
         inchargeMobile: cc?.phone || "",
+        altMobile: "",
         gst: cc?.gst || "" 
       });
     }
@@ -2066,7 +2068,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
       equipmentName: equipment?.name || form.equipmentId, 
       category: equipment?.category || "General", 
       careCenterName, 
-      status: form.status || "Active", 
+      status: form.status || (form.logoutDate ? "Closed" : "Active"), 
       deliveryStatus: form.deliveryStatus || "Pending Dispatch" 
     });
   };
@@ -2077,9 +2079,13 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
   const activeReferrals = useMemo(() => filterActive(references), [references]);
   const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
 
+  const isClosed = String(form.status || "").toLowerCase() === "closed" || String(form.status || "").toLowerCase() === "returned";
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:items-center sm:p-4">
       <div className="fade-slide-up flex w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/20 ring-1 ring-black/5 sm:rounded-2xl" style={{ maxHeight: "92vh" }}>
+        
+        {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-teal-50/70 via-white to-white px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-md shadow-teal-500/30">
@@ -2095,10 +2101,13 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
           </button>
         </div>
 
+        {/* Modal Body */}
         <div className="smooth-scroll min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
+          
+          {/* Section 1: Care Center */}
           <div>
             <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
-              <Building2 className="h-3.5 w-3.5" /> Care Center &amp; Incharge
+              <Building2 className="h-3.5 w-3.5" /> Care Center
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
@@ -2111,18 +2120,19 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
                 </Field>
               </div>
               
-              <Field label="Incharge Name / Doctor">
-                <TextInput disabled={readOnly} value={form.inchargeName} onChange={(e) => set({ inchargeName: e.target.value, contactPerson: e.target.value })} placeholder="Enter Incharge name" />
-              </Field>
-              
+              {/* 🔄 Incharge Mobile & Alt Mobile */}
               <Field label="Incharge Mobile" error={errors.inchargeMobile}>
                 <TextInput disabled={readOnly} maxLength={10} value={form.inchargeMobile} error={errors.inchargeMobile} onChange={(e) => set({ inchargeMobile: e.target.value, phone: e.target.value })} placeholder="10-digit mobile" />
+              </Field>
+
+              <Field label="Alt Mobile">
+                <TextInput disabled={readOnly} maxLength={10} value={form.altMobile} onChange={(e) => set({ altMobile: e.target.value })} placeholder="Alternative mobile" />
               </Field>
 
               <Field label="GST / ID Number">
                 <TextInput disabled={readOnly} value={form.gst || form.gst_number || form.gstNumber || ""} onChange={(e) => set({ gst: e.target.value })} placeholder="Enter GST/ID" />
               </Field>
-              <Field label="Facility Address">
+              <Field label="Address">
                 <TextInput disabled={readOnly} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder="Enter full address" />
               </Field>
               
@@ -2146,9 +2156,10 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
 
           <div className="border-t border-slate-100" />
           
+          {/* Section 2: Record Types */}
           <div>
             <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
-              <Tag className="h-3.5 w-3.5" /> Record Types &amp; Status
+              <Tag className="h-3.5 w-3.5" /> Record Types
             </p>
             <div className="grid gap-4 sm:grid-cols-4">
               <Field label="Deal Type">
@@ -2170,7 +2181,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
                 <Select disabled={readOnly} value={form.status} onChange={(e) => set({ status: e.target.value })}>
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
-                  <option value="Closed">Closed (Returned)</option>
+                  <option value="Closed">Closed</option>
                 </Select>
               </Field>
             </div>
@@ -2178,9 +2189,10 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
 
           <div className="border-t border-slate-100" />
 
+          {/* Section 3: Patient */}
           <div>
             <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
-              <User className="h-3.5 w-3.5" /> Patient Details
+              <User className="h-3.5 w-3.5" /> Patient
             </p>
             <Field label="Patient Name" required error={errors.patientName}>
               <TextInput disabled={readOnly} value={form.patientName} error={errors.patientName} placeholder="Full name of the patient" onChange={(e) => set({ patientName: e.target.value })} />
@@ -2189,9 +2201,10 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
 
           <div className="border-t border-slate-100" />
 
+          {/* Section 4: Equipment Details */}
           <div>
             <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
-              <ClipboardList className="h-3.5 w-3.5" /> Equipment &amp; Dates
+              <ClipboardList className="h-3.5 w-3.5" /> Equipment Details
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
@@ -2219,12 +2232,12 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
               <Field label="Quantity" required error={errors.quantity}>
                 <TextInput disabled={readOnly} type="number" min={1} value={form.quantity} error={errors.quantity} onChange={(e) => set({ quantity: e.target.value })} />
               </Field>
-              <Field label="Login Date (Start Date)" required error={errors.startDate}>
+              <Field label="Login Date (Rental Start)" required error={errors.startDate}>
                 <TextInput disabled={readOnly} type="date" value={form.startDate} error={errors.startDate} onChange={(e) => set({ startDate: e.target.value, loginDate: e.target.value })} />
               </Field>
               
               {/* Logout date optional */}
-              <Field label="Logout Date (Optional)">
+              <Field label="Logout Date (Optional Return)">
                 <TextInput 
                   disabled={readOnly} 
                   type="date" 
@@ -2237,10 +2250,6 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
                 />
               </Field>
 
-              <Field label="Notify Date" required={form.paymentType === "Prepaid"} error={errors.notifyDate}>
-                <TextInput disabled={readOnly} type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
-              </Field>
-
               <div className="sm:col-span-2">
                 <Field label="Delivery Address" required error={errors.deliveryAddress}>
                   <TextInput disabled={readOnly} value={form.deliveryAddress} error={errors.deliveryAddress} placeholder="Where should the equipment be delivered?" onChange={(e) => set({ deliveryAddress: e.target.value })} />
@@ -2249,11 +2258,76 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
             </div>
           </div>
 
+          <div className="border-t border-slate-100" />
+
+          {/* Section 5: Payment */}
+          <div>
+            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
+              <CreditCard className="h-3.5 w-3.5" /> Payment
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Payment Type</label>
+                <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
+                  {PAYMENT_TYPES.map((pt) => (
+                    <button 
+                      key={pt} 
+                      type="button" 
+                      disabled={readOnly} 
+                      onClick={() => set({ paymentType: pt, mode: pt })} 
+                      className={`flex-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-all duration-200 ${
+                        form.paymentType === pt ? "bg-white text-teal-700 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      {pt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <Field label="Notify Date" required={form.paymentType === "Prepaid"} error={errors.notifyDate} hint={form.paymentType === "Postpaid" ? "Optional for postpaid requisitions" : "Required — customer will be notified on this date"}>
+                <TextInput disabled={readOnly} type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
+              </Field>
+            </div>
+          </div>
+
+          {/* Section 6: Current Status Overview Box */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500">Current Status</p>
+                <p className="text-sm font-bold text-slate-800">{form.status || "Active"}</p>
+              </div>
+
+              {isClosed ? (
+                <span className="rounded-md bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+                  ✓ Unit Closed / Returned
+                </span>
+              ) : (
+                !readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => set({ 
+                      status: "Closed", 
+                      requisition_status: "Closed", 
+                      return_status: "Closed",
+                      logoutDate: form.logoutDate || todayISO() 
+                    })}
+                    className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95 cursor-pointer"
+                  >
+                    <PackageCheck className="h-4 w-4" /> Mark as Closed
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+
+          {/* Section 7: Notes */}
           <Field label="Notes">
             <textarea disabled={readOnly} rows={2} value={form.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="Any additional instructions…" className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" />
           </Field>
         </div>
 
+        {/* Modal Footer */}
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
           <GhostButton onClick={onClose}>{readOnly ? "Close" : "Cancel"}</GhostButton>
           {!readOnly && (
@@ -2276,7 +2350,7 @@ function SectionHeading({ icon: Icon, children }) {
   );
 }
 
-// 📄 FULL NEW REQUISITION PAGE (RESTORED COMPLETELY)
+// 📄 FULL LOG REQUISITION PAGE (NEW REQUISITION PAGE)
 function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
   const loggedUser = useMemo(() => {
     try {
@@ -2314,7 +2388,7 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
       careCenterId: defaultCcId,
       careAddress: matchedUserCenter?.address || "",
       inchargeMobile: matchedUserCenter?.phone || loggedUser?.phone || "",
-      inchargeName: matchedUserCenter?.contact_person || matchedUserCenter?.contactPerson || "",
+      altMobile: "",
       recordDate: todayISO(),
       loginDate: todayISO(),
       status: "Active"
@@ -2331,14 +2405,14 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
 
   const handleCareCenterChange = (id) => {
     if (id === "other") {
-      set({ careCenterId: "other", careAddress: "", inchargeMobile: "", inchargeName: "" });
+      set({ careCenterId: "other", careAddress: "", inchargeMobile: "", altMobile: "" });
     } else {
       const cc = careCenters.find((c) => c?.id === id);
       set({ 
         careCenterId: id, 
         careAddress: cc?.address || "", 
         inchargeMobile: cc?.phone || "",
-        inchargeName: cc?.contact_person || cc?.contactPerson || ""
+        altMobile: ""
       });
     }
   };
@@ -2363,7 +2437,6 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
     if (!form.mode) e.mode = "Please select a mode.";
     if (!form.deviceModel) e.deviceModel = "Please choose an equipment model.";
     if (!form.loginDate) e.loginDate = "Log in date is required.";
-    // Logout Date is intentionally NOT mandatory
     if (!form.billingType) e.billingType = "Please select a billing type.";
     if (!form.patientName) e.patientName = "Patient name is required.";
     if (form.mode === "Prepaid" && !form.notifyDate) {
@@ -2485,7 +2558,6 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
             <TextInput type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
           </Field>
           
-          {/* Logout date optional */}
           <Field label="Log Out Date (Optional)">
             <TextInput type="date" value={form.logoutDate} onChange={(e) => set({ logoutDate: e.target.value })} />
           </Field>
@@ -2515,7 +2587,7 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
       <div style={{ animationDelay: "160ms" }} className="relative z-10 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <div className="grid gap-8 lg:grid-cols-2">
           <div>
-            <SectionHeading icon={Building2}>Care Center &amp; Incharge</SectionHeading>
+            <SectionHeading icon={Building2}>Care Center Contact Info</SectionHeading>
             <div className="space-y-4">
               <Field label="Care Center Name">
                 <Select value={form.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
@@ -2524,14 +2596,17 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
                   {!isCareCenterUser && <option value="other">Other (Add New)</option>}
                 </Select>
               </Field>
+
+              {/* 🔄 Incharge Mobile & Alt Mobile */}
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Incharge Name">
-                  <TextInput value={form.inchargeName} onChange={(e) => set({ inchargeName: e.target.value })} placeholder="Incharge Name" />
-                </Field>
                 <Field label="Incharge Mobile" error={errors.inchargeMobile}>
                   <TextInput maxLength={10} value={form.inchargeMobile} error={errors.inchargeMobile} onChange={(e) => set({ inchargeMobile: e.target.value })} placeholder="10-digit number" />
                 </Field>
+                <Field label="Alt Mobile">
+                  <TextInput maxLength={10} value={form.altMobile} onChange={(e) => set({ altMobile: e.target.value })} placeholder="Alternative mobile" />
+                </Field>
               </div>
+
               <Field label="Care Address"><textarea rows={2} value={form.careAddress} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none resize-none border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30" onChange={(e) => set({ careAddress: e.target.value })} /></Field>
               
               <div className="grid grid-cols-2 gap-4">
@@ -2554,7 +2629,9 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
             <SectionHeading icon={User}>Patient Identity Details</SectionHeading>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Patient Name" required error={errors.patientName}><TextInput value={form.patientName} error={errors.patientName} onChange={(e) => set({ patientName: e.target.value })} /></Field>
+                <Field label="Patient Name" required error={errors.patientName}>
+                  <TextInput value={form.patientName} error={errors.patientName} onChange={(e) => set({ patientName: e.target.value })} />
+                </Field>
                 <Field label="Age"><TextInput type="number" min={0} value={form.age} onChange={(e) => set({ age: e.target.value })} /></Field>
               </div>
               <Field label="Attendant Name"><TextInput value={form.attendantName} onChange={(e) => set({ attendantName: e.target.value })} /></Field>
@@ -2618,7 +2695,7 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
   );
 }
 
-// 🏢 MAIN RENTAL MASTER COMPONENT
+// 🏢 MAIN EXPORTED PAGE
 export default function RentalMaster({ permissions = { canAdd: true, canEdit: true, canDelete: true }, careCenters = [], equipmentCatalog = [], references = [], categories = [] }) {
   const loggedUser = useMemo(() => {
     try {
@@ -2711,7 +2788,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [dealTypeFilter, setDealTypeFilter] = useState("All");
   const [unitFilter, setUnitFilter] = useState("All"); 
   const [modeFilter, setModeFilter] = useState("All");
-  const [monthFilter, setMonthFilter] = useState(0); 
   const [careCenterFilter, setCareCenterFilter] = useState("All"); 
   
   const [sortField, setSortField] = useState("startDate");
@@ -2751,18 +2827,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     });
   }, [logs, isCareCenterUser, matchedUserCenter, loggedUser, careCenters]);
 
-  const monthOptions = useMemo(() => {
-    const opts = [];
-    const now = new Date();
-    for (let i = 0; i < 4; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const label = d.toLocaleString("default", { month: "long", year: "numeric" });
-      opts.push({ value: i, label: i === 0 ? `Current Month (${label})` : label });
-    }
-    return opts;
-  }, []);
-
-  const getDynamicTotalDays = (loginStr, logoutStr, monthOffset) => {
+  const getDynamicTotalDays = (loginStr, logoutStr) => {
     if (!loginStr) return "—";
 
     const login = new Date(loginStr);
@@ -2785,24 +2850,13 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     const now = new Date();
     now.setHours(0, 0, 0, 0);
 
-    const targetDate = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1);
-    const targetYear = targetDate.getFullYear();
-    const targetMonth = targetDate.getMonth();
-
-    let end;
-    if (monthOffset === 0) {
-       end = now; 
-    } else {
-       end = new Date(targetYear, targetMonth + 1, 0); 
-    }
-
-    if (login > end) return "—"; 
+    if (login > now) return "—"; 
 
     const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
-    const endUtc = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+    const endUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
 
     const X = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
-    const Y = end.getDate();
+    const Y = now.getDate();
 
     return `${X}/${Y}`;
   };
@@ -2824,8 +2878,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         const eqName = String(l.equipmentName || eqObj?.name || eqId || "");
 
         const patient = String(l.patientName || l.patient_name || "");
-        const incharge = String(l.inchargeName || l.incharge_name || l.contactPerson || l.contact_person || "");
         const inchargeMobile = String(l.inchargeMobile || l.incharge_mobile || l.phone || l.pocMobile || "");
+        const altMobile = String(l.altMobile || l.alt_mobile || l.altPocMobile || l.altMobileNumber || "");
         const logId = String(l.id || "");
 
         const matchesSearch = !q || 
@@ -2833,8 +2887,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
           eqName.toLowerCase().includes(q) || 
           patient.toLowerCase().includes(q) || 
           ccName.toLowerCase().includes(q) ||
-          incharge.toLowerCase().includes(q) ||
-          inchargeMobile.includes(q);
+          inchargeMobile.includes(q) ||
+          altMobile.includes(q);
           
         const rawStatus = String(l.status || l.requisition_status || "Active").trim().toLowerCase();
         
@@ -2889,8 +2943,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         quantity: data.quantity || 1,
         start_date: data.startDate || data.loginDate, 
         logout_date: data.logoutDate || data.logout_date || null,
-        incharge_name: data.inchargeName || data.contactPerson || "",
         incharge_mobile: data.inchargeMobile || data.phone || data.pocMobile || "",
+        alt_mobile: data.altMobile || data.altMobileNumber || "",
         bed_number: data.bedNo || data.bed_number || "", 
         referral_doctor: data.referral || data.referralDoctor || data.referral_doctor || "",         
         gst_number: data.gstNo || data.gstNumber || data.gst_number || "",
@@ -2957,8 +3011,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         quantity: data.quantity || 1,
         start_date: newStartDate,
         logout_date: newLogoutDate,
-        incharge_name: data.inchargeName || data.contactPerson || "",
         incharge_mobile: data.inchargeMobile || data.phone || data.pocMobile || "",
+        alt_mobile: data.altMobile || data.altMobileNumber || "",
         bed_number: data.bedNo || data.bed_number || data.bedNumber || "", 
         referral_doctor: data.referral || data.referral_doctor || data.referralDoctor || "",         
         gst_number: data.gst || data.gst_number || data.gstNumber || "",
@@ -3039,22 +3093,12 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
               autoComplete="off"
-              placeholder="Search by ID, patient, device, incharge…" 
+              placeholder="Search by ID, patient, device, mobile…" 
               className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" 
             />
           </div>
 
           <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400 hidden sm:block" />
-          
-          {/* Month Filter */}
-          <div className="relative group flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-slate-200 bg-slate-50/70 hover:bg-teal-50 transition cursor-pointer shrink-0 shadow-2xs" title="Filter by Month">
-            <Calendar className="h-4 w-4 text-slate-500 group-hover:text-teal-600" />
-            <select value={monthFilter} onChange={(e) => setMonthFilter(Number(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-              {monthOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
 
           {/* Care Center Dropdown */}
           <select 
@@ -3095,6 +3139,17 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
 
+          {/* 🧮 Quick Total Days Calculator Button */}
+          <button 
+            type="button"
+            onClick={() => setCalcModal({ isQuickCalc: true })}
+            title="Open Quick Total Days Calculator"
+            className="flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 hover:border-amber-300 transition cursor-pointer shrink-0 shadow-2xs"
+          >
+            <Calculator className="h-4 w-4" />
+          </button>
+
+          {/* Reset Filters Cross Button */}
           <button 
             type="button"
             onClick={() => {
@@ -3104,7 +3159,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               setUnitFilter("All");
               setModeFilter("All");
               setCareCenterFilter("All");
-              setMonthFilter(0);
               setSortField("startDate");
               setSortOrder("desc");
               toast.success("Filters reset");
@@ -3124,7 +3178,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <thead>
               <tr className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 text-xs font-bold uppercase tracking-wide text-slate-400 backdrop-blur">
                 <th className="px-5 py-3">Device</th>
-                <th className="px-5 py-3">Patient &amp; Incharge</th>
+                <th className="px-5 py-3">Patient &amp; Contact</th>
                 
                 {/* Clickable Header Sort: Login Date */}
                 <th 
@@ -3185,7 +3239,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               ) : (
                 filtered.map((log, i) => {
                   const actualLogoutDate = log?.logoutDate || log?.logout_date;
-                  const dynamicDays = getDynamicTotalDays(log?.startDate || log?.start_date, actualLogoutDate, monthFilter);
+                  const dynamicDays = getDynamicTotalDays(log?.startDate || log?.start_date, actualLogoutDate);
                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
 
                   const rowColor = currentMode === "Prepaid" 
@@ -3200,8 +3254,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                   const catMatch = equipmentCatalog.find(e => e?.id === eqId);
                   if (catMatch) actualDevice = catMatch.name;
 
-                  const inchargeName = log?.inchargeName || log?.incharge_name || log?.contactPerson || log?.contact_person || "";
                   const inchargePhone = log?.inchargeMobile || log?.incharge_mobile || log?.phone || log?.pocMobile || "";
+                  const altPhone = log?.altMobile || log?.alt_mobile || log?.altPocMobile || log?.altMobileNumber || "";
                   
                   const s = String(log?.status || "").toLowerCase();
                   const isClosed = s === "closed" || s === "returned";
@@ -3217,10 +3271,10 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                       </td>
                       <td className="px-5 py-3.5">
                         <p className="font-semibold text-slate-800">{log?.patientName || log?.patient_name || "—"}</p>
-                        {inchargeName && (
+                        {inchargePhone && (
                           <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                            <User className="h-3 w-3 text-slate-400 shrink-0" /> {inchargeName}
-                            {inchargePhone && <span className="text-slate-400">({inchargePhone})</span>}
+                            <Phone className="h-3 w-3 text-slate-400 shrink-0" /> {inchargePhone}
+                            {altPhone && <span className="text-slate-400">/ {altPhone}</span>}
                           </p>
                         )}
                       </td>
@@ -3301,3 +3355,5 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     </div>
   );
 }
+
+
