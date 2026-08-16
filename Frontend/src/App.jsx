@@ -1,4 +1,4 @@
-// import { useState, useEffect } from "react"; 
+// import { useState, useEffect, useCallback, useMemo } from "react"; 
 // import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 // import { ShieldCheck } from "lucide-react";
 // import { Toaster, toast } from "./components/UiComponents"; 
@@ -59,15 +59,87 @@
 //   const [logs, setLogs] = useState([]);
 //   const [notifications, setNotifications] = useState([]);
 
-//   const unreadCount = notifications.filter((n) => !n.read).length;
+//   const loggedUser = useMemo(() => {
+//     try {
+//       return JSON.parse(localStorage.getItem("user") || "{}");
+//     } catch {
+//       return {};
+//     }
+//   }, []);
 
-//   // Notification Handlers
+//   const isCareCenter = role === "care_center" || loggedUser?.role === "care_center";
+//   const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
+//   const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
+
+//   const fetchNotifications = useCallback(async () => {
+//     try {
+//       const user = JSON.parse(localStorage.getItem("user") || "{}");
+//       const ccId = user.careCenterId || user.id || "";
+//       const currentRole = role || user.role || "";
+
+//       const res = await API.get(`/rental/notifications?careCenterId=${ccId}&role=${currentRole}&t=${Date.now()}`);
+//       if (res.data && Array.isArray(res.data)) {
+//         setNotifications(
+//           res.data.map((n) => ({
+//             id: n.id,
+//             title: n.title,
+//             message: n.message,
+//             type: n.type || "info",
+//             care_center_id: n.care_center_id || n.careCenterId || "",
+//             careCenterName: n.care_center_name || n.careCenterName || "",
+//             time: n.created_at || n.time,
+//             read: false,
+//           }))
+//         );
+//       }
+//     } catch (err) {
+//       console.error("Failed to fetch notifications:", err);
+//     }
+//   }, [role]);
+
+//   const unreadCount = useMemo(() => {
+//     if (!notifications || notifications.length === 0) return 0;
+//     if (!isCareCenter) return notifications.filter((n) => !n.read).length;
+
+//     return notifications.filter((n) => {
+//       if (n.read) return false;
+//       const nCcId = (n.care_center_id || n.careCenterId || "").toString().trim().toLowerCase();
+//       const nCcName = (n.careCenterName || "").toLowerCase().trim();
+//       const nText = `${n.title || ""} ${n.message || ""}`.toLowerCase();
+
+//       return (
+//         (nCcId && myCenterId && (nCcId === myCenterId || nCcId.replace(/\D/g, "") === myCenterId.replace(/\D/g, ""))) ||
+//         (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) ||
+//         (myCenterName && nText.includes(myCenterName)) ||
+//         (!nCcId && !nCcName)
+//       );
+//     }).length;
+//   }, [notifications, isCareCenter, myCenterId, myCenterName]);
+
+//   // const handleOpenNotifications = () => {
+//   //   fetchNotifications();
+//   //   setNotifOpen(true);
+//   // };
+//   const handleOpenNotifications = async () => {
+//   try {
+//     const user = JSON.parse(localStorage.getItem("user") || "{}");
+//     const ccId = user.careCenterId || user.id || "";
+//     const currentRole = role || user.role || "";
+
+//     const res = await API.get(`/rental/notifications?careCenterId=${ccId}&role=${currentRole}&t=${Date.now()}`);
+//     if (res.data) {
+//       setNotifications(res.data);
+//     }
+//   } catch (err) {
+//     console.error("Notif Fetch Error:", err);
+//   }
+//   setNotifOpen(true);
+// };
 //   const markNotifRead = (id) => setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
 //   const markAllNotifRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   
 //   const deleteNotif = async (id) => {
 //     setNotifications((prev) => prev.filter((n) => n.id !== id));
-
 //     try {
 //       await API.delete(`/rental/notifications/${id}`);
 //     } catch (err) {
@@ -142,17 +214,7 @@
 //           })));
 //         }
 
-//         const notifRes = await API.get("/rental/notifications").catch(() => ({ data: [] }));
-//         if (notifRes.data) {
-//           setNotifications(notifRes.data.map(n => ({
-//             id: n.id,
-//             title: n.title,
-//             message: n.message,
-//             type: n.type,
-//             time: n.created_at || n.time,
-//             read: false
-//           })));
-//         }
+//         await fetchNotifications();
 
 //       } catch (err) {
 //         console.error("Failed to fetch Live Data:", err);
@@ -160,14 +222,26 @@
 //     };
 
 //     fetchAllData();
-//   }, []);
+//   }, [fetchNotifications]);
 
 //   return (
 //     <div className="font-body flex h-screen w-full overflow-hidden bg-slate-50">
-//       <Sidebar role={role} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} unreadCount={unreadCount} onOpenNotifications={() => setNotifOpen(true)} />
+//       <Sidebar 
+//         role={role} 
+//         mobileOpen={mobileOpen} 
+//         setMobileOpen={setMobileOpen} 
+//         unreadCount={unreadCount} 
+//         onOpenNotifications={handleOpenNotifications} 
+//       />
       
 //       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-//         <Topbar role={role} setMobileOpen={setMobileOpen} unreadCount={unreadCount} onOpenNotifications={() => setNotifOpen(true)} onLogout={handleLogout} />
+//         <Topbar 
+//           role={role} 
+//           setMobileOpen={setMobileOpen} 
+//           unreadCount={unreadCount} 
+//           onOpenNotifications={handleOpenNotifications} 
+//           onLogout={handleLogout} 
+//         />
         
 //         <div className="smooth-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
 //           <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6">
@@ -243,7 +317,7 @@
 //   );
 // }
 
-import { useState, useEffect, useCallback, useMemo } from "react"; 
+import { useState, useEffect } from "react"; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { Toaster, toast } from "./components/UiComponents"; 
@@ -255,6 +329,25 @@ import RentalMaster from "./pages/RentalMaster";
 import MasterInfo from "./pages/MasterInfo";
 import UserProfile from "./pages/UserProfile"; 
 import API from "./utils/api"; 
+
+// 🛡️ Fail-Safe Auth Loader (Kabhi crash nahi hoga)
+const getInitialAuth = () => {
+  try {
+    const rawUser = localStorage.getItem("user");
+    if (!rawUser || rawUser === "undefined" || rawUser === "null") {
+      return { isAuth: false, role: null };
+    }
+    const parsed = JSON.parse(rawUser);
+    if (parsed && typeof parsed === "object" && parsed.role) {
+      return { isAuth: true, role: parsed.role };
+    }
+    return { isAuth: false, role: null };
+  } catch {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    return { isAuth: false, role: null };
+  }
+};
 
 const FontImport = () => (
   <style>{`
@@ -287,7 +380,7 @@ function AccessDenied({ role }) {
       </div>
       <h3 className="mt-4 font-display text-lg font-bold text-slate-700">Access Restricted</h3>
       <p className="mt-1.5 max-w-sm text-sm text-slate-400">
-        The <span className="font-semibold text-slate-600">{ROLES[role]?.label || role}</span> role does not have permission to view Master Info. Switch to Super Admin to manage care centers and equipment.
+        The <span className="font-semibold text-slate-600">{ROLES[role]?.label || role}</span> role does not have permission to view Master Info.
       </p>
     </div>
   );
@@ -304,82 +397,8 @@ function MainAppLayout({ role, handleLogout }) {
   const [logs, setLogs] = useState([]);
   const [notifications, setNotifications] = useState([]);
 
-  const loggedUser = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user") || "{}");
-    } catch {
-      return {};
-    }
-  }, []);
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const isCareCenter = role === "care_center" || loggedUser?.role === "care_center";
-  const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
-  const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
-
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const ccId = user.careCenterId || user.id || "";
-      const currentRole = role || user.role || "";
-
-      const res = await API.get(`/rental/notifications?careCenterId=${ccId}&role=${currentRole}&t=${Date.now()}`);
-      if (res.data && Array.isArray(res.data)) {
-        setNotifications(
-          res.data.map((n) => ({
-            id: n.id,
-            title: n.title,
-            message: n.message,
-            type: n.type || "info",
-            care_center_id: n.care_center_id || n.careCenterId || "",
-            careCenterName: n.care_center_name || n.careCenterName || "",
-            time: n.created_at || n.time,
-            read: false,
-          }))
-        );
-      }
-    } catch (err) {
-      console.error("Failed to fetch notifications:", err);
-    }
-  }, [role]);
-
-  const unreadCount = useMemo(() => {
-    if (!notifications || notifications.length === 0) return 0;
-    if (!isCareCenter) return notifications.filter((n) => !n.read).length;
-
-    return notifications.filter((n) => {
-      if (n.read) return false;
-      const nCcId = (n.care_center_id || n.careCenterId || "").toString().trim().toLowerCase();
-      const nCcName = (n.careCenterName || "").toLowerCase().trim();
-      const nText = `${n.title || ""} ${n.message || ""}`.toLowerCase();
-
-      return (
-        (nCcId && myCenterId && (nCcId === myCenterId || nCcId.replace(/\D/g, "") === myCenterId.replace(/\D/g, ""))) ||
-        (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) ||
-        (myCenterName && nText.includes(myCenterName)) ||
-        (!nCcId && !nCcName)
-      );
-    }).length;
-  }, [notifications, isCareCenter, myCenterId, myCenterName]);
-
-  // const handleOpenNotifications = () => {
-  //   fetchNotifications();
-  //   setNotifOpen(true);
-  // };
-  const handleOpenNotifications = async () => {
-  try {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const ccId = user.careCenterId || user.id || "";
-    const currentRole = role || user.role || "";
-
-    const res = await API.get(`/rental/notifications?careCenterId=${ccId}&role=${currentRole}&t=${Date.now()}`);
-    if (res.data) {
-      setNotifications(res.data);
-    }
-  } catch (err) {
-    console.error("Notif Fetch Error:", err);
-  }
-  setNotifOpen(true);
-};
   const markNotifRead = (id) => setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   const markAllNotifRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   
@@ -388,8 +407,7 @@ function MainAppLayout({ role, handleLogout }) {
     try {
       await API.delete(`/rental/notifications/${id}`);
     } catch (err) {
-      console.error("Failed to delete notification from DB:", err);
-      toast.error("Failed to delete notification from server");
+      console.error("Failed to delete notification:", err);
     }
   };
 
@@ -401,16 +419,23 @@ function MainAppLayout({ role, handleLogout }) {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchAllData = async () => {
       try {
-        const ccRes = await API.get("/master/carecenters").catch(() => ({ data: [] }));
-        const eqRes = await API.get("/master/equipment").catch(() => ({ data: [] }));
-        const catRes = await API.get("/master/categories").catch(() => ({ data: [] }));
-        const refRes = await API.get("/master/references").catch(() => ({ data: [] }));
-        const deRes = await API.get("/master/delivery-executives").catch(() => ({ data: [] }));
-        
-        if (ccRes.data) {
-          setCareCenters(ccRes.data.map(c => ({
+        const [ccRes, eqRes, catRes, refRes, deRes, reqRes] = await Promise.all([
+          API.get("/master/carecenters").catch(() => ({ data: [] })),
+          API.get("/master/equipment").catch(() => ({ data: [] })),
+          API.get("/master/categories").catch(() => ({ data: [] })),
+          API.get("/master/references").catch(() => ({ data: [] })),
+          API.get("/master/delivery-executives").catch(() => ({ data: [] })),
+          API.get("/rental/requisitions").catch(() => ({ data: [] }))
+        ]);
+
+        if (!isMounted) return;
+
+        if (Array.isArray(ccRes.data)) {
+          setCareCenters(ccRes.data.map((c) => ({
             id: c.id, 
             name: c.name, 
             address: c.address, 
@@ -421,8 +446,8 @@ function MainAppLayout({ role, handleLogout }) {
           })));
         }
 
-        if (eqRes.data) {
-          setEquipmentCatalog(eqRes.data.map(e => ({
+        if (Array.isArray(eqRes.data)) {
+          setEquipmentCatalog(eqRes.data.map((e) => ({
             id: e.id, 
             name: e.name, 
             category: e.category, 
@@ -432,13 +457,12 @@ function MainAppLayout({ role, handleLogout }) {
           })));
         }
 
-        if (catRes.data) setCategories(catRes.data);
-        if (refRes.data) setReferences(refRes.data);
-        if (deRes.data) setDeliveryExecutives(deRes.data);
+        if (Array.isArray(catRes.data)) setCategories(catRes.data);
+        if (Array.isArray(refRes.data)) setReferences(refRes.data);
+        if (Array.isArray(deRes.data)) setDeliveryExecutives(deRes.data);
 
-        const reqRes = await API.get("/rental/requisitions").catch(() => ({ data: [] }));
-        if (reqRes.data) {
-          setLogs(reqRes.data.map(r => ({
+        if (Array.isArray(reqRes.data)) {
+          setLogs(reqRes.data.map((r) => ({
             id: r.id,
             careCenterId: r.care_center_id || r.careCenterId,
             careCenterName: r.careCenterName || "Care Center", 
@@ -459,15 +483,43 @@ function MainAppLayout({ role, handleLogout }) {
           })));
         }
 
-        await fetchNotifications();
+        // Notification fetch
+        let userObj = {};
+        try {
+          userObj = JSON.parse(localStorage.getItem("user") || "{}");
+        } catch {
+          userObj = {};
+        }
+
+        const ccId = userObj?.careCenterId || userObj?.id || "";
+        const userRole = userObj?.role || role || "";
+
+        const notifRes = await API.get(`/rental/notifications?careCenterId=${ccId}&role=${userRole}`).catch(() => ({ data: [] }));
+        
+        if (isMounted && Array.isArray(notifRes.data)) {
+          setNotifications(notifRes.data.map((n) => ({
+            id: n.id,
+            title: n.title,
+            message: n.message,
+            type: n.type || "info",
+            care_center_id: n.care_center_id || n.careCenterId || "",
+            careCenterName: n.care_center_name || n.careCenterName || "",
+            time: n.created_at || n.time,
+            read: false
+          })));
+        }
 
       } catch (err) {
-        console.error("Failed to fetch Live Data:", err);
+        console.error("Data load error:", err);
       }
     };
 
     fetchAllData();
-  }, [fetchNotifications]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [role]);
 
   return (
     <div className="font-body flex h-screen w-full overflow-hidden bg-slate-50">
@@ -476,7 +528,7 @@ function MainAppLayout({ role, handleLogout }) {
         mobileOpen={mobileOpen} 
         setMobileOpen={setMobileOpen} 
         unreadCount={unreadCount} 
-        onOpenNotifications={handleOpenNotifications} 
+        onOpenNotifications={() => setNotifOpen(true)} 
       />
       
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -484,7 +536,7 @@ function MainAppLayout({ role, handleLogout }) {
           role={role} 
           setMobileOpen={setMobileOpen} 
           unreadCount={unreadCount} 
-          onOpenNotifications={handleOpenNotifications} 
+          onOpenNotifications={() => setNotifOpen(true)} 
           onLogout={handleLogout} 
         />
         
@@ -522,40 +574,26 @@ function MainAppLayout({ role, handleLogout }) {
 }
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [role, setRole] = useState(null);
+  const [auth, setAuth] = useState(getInitialAuth);
 
   const handleLogin = (selectedRole) => {
-    setRole(selectedRole);
-    setIsAuthenticated(true);
+    setAuth({ isAuth: true, role: selectedRole });
     toast.success("Login Successful!"); 
   };
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    setRole(null);
+    setAuth({ isAuth: false, role: null });
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     toast.success("Logout Successful!"); 
   };
 
-  useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
-      const parsedUser = JSON.parse(user);
-      setTimeout(() => {
-        setRole(parsedUser.role);
-        setIsAuthenticated(true);
-      }, 0);
-    }
-  }, []);
-
   return (
     <Router>
       <FontImport />
       <Routes>
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} /> } />
-        <Route path="/*" element={ isAuthenticated ? <MainAppLayout role={role} handleLogout={handleLogout} /> : <Navigate to="/login" replace /> } />
+        <Route path="/login" element={auth.isAuth ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} /> } />
+        <Route path="/*" element={ auth.isAuth ? <MainAppLayout role={auth.role} handleLogout={handleLogout} /> : <Navigate to="/login" replace /> } />
       </Routes>
       <Toaster />
     </Router>
