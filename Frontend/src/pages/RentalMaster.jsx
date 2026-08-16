@@ -2749,7 +2749,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <thead>
               <tr className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 text-xs font-bold uppercase tracking-wide text-slate-400 backdrop-blur">
                 <th className="px-5 py-3">Device</th>
-                <th className="px-5 py-3">Patient &amp; Incharge</th>
+                <th className="px-5 py-3">Patient &amp;</th>
                 
                 {/* Clickable Header Sort: Login Date */}
                 <th 
