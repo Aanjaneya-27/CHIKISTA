@@ -86,7 +86,7 @@ export default function WelcomeBanner({ user, onClose }) {
                 <Activity className="h-3 w-3 animate-pulse" />
                 <span>System Online</span>
               </div>
-              <span className="text-[10px] text-slate-400 font-normal">Click anywhere to close</span>
+              <span className="text-[10px] text-slate-400 font-normal"></span>
             </div>
           </div>
         </div>
