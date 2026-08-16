@@ -16,7 +16,6 @@
 //   CreditCard, 
 //   Save, 
 //   X, 
-//   ClipboardList, 
 //   ArrowLeft, 
 //   ChevronRight, 
 //   ImagePlus, 
@@ -27,9 +26,7 @@
 //   ArrowUpDown,
 //   ArrowUp,
 //   ArrowDown,
-//   Phone,
-//   CheckCircle2,
-//   HelpCircle
+//   Phone
 // } from "lucide-react";
 // import { 
 //   PrimaryButton, 
@@ -240,6 +237,7 @@
 //   );
 // }
 
+// // 🧮 TOP BAR QUICK TOTAL DAYS CALCULATOR MODAL
 // function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
 //   const isQuick = !log || log?.isQuickCalc;
 //   const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date) || todayISO());
@@ -347,7 +345,7 @@
 //   );
 // }
 
-// // 👁️ 1. DEDICATED READ-ONLY VIEW PAGE (MATCHING SCREENSHOT UI)
+// // 👁️ 1. DEDICATED READ-ONLY VIEW PAGE
 // function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], onBack }) {
 //   const eqId = log?.equipmentId || log?.equipment_id;
 //   const equipmentName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || eqId || "—";
@@ -587,7 +585,7 @@
 //   );
 // }
 
-// // 📄 2. EDITABLE FULL FORM PAGE (USED FOR NEW REQUISITION & EDIT ACTIONS)
+// // 📄 2. EDITABLE FULL FORM PAGE (USED FOR ADD & EDIT ACTIONS)
 // function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
 //   const isEdit = mode === "edit";
 
@@ -1203,7 +1201,7 @@
 //     const endUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
 
 //     const X = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
-//     const Y = end.getDate();
+//     const Y = now.getDate();
 
 //     return `${X}/${Y}`;
 //   };
@@ -1603,14 +1601,6 @@
 
 //                       <td className="px-5 py-3.5">
 //                         <div className="flex items-center justify-end gap-1">
-                          
-//                           <IconAction 
-//                             title="Calculate Total Days" 
-//                             tone="amber" 
-//                             onClick={() => setCalcModal(log)}
-//                           >
-//                             <Calculator className="h-4 w-4 text-amber-600" />
-//                           </IconAction>
 
 //                           {!isClosed && (
 //                             <IconAction 
@@ -1678,8 +1668,6 @@
 //     </div>
 //   );
 // }
-
-
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { 
   Search, 
@@ -1698,6 +1686,7 @@ import {
   CreditCard, 
   Save, 
   X, 
+  
   ArrowLeft, 
   ChevronRight, 
   ImagePlus, 
@@ -1922,7 +1911,7 @@ function KpiCards({ logs = [] }) {
 // 🧮 TOP BAR QUICK TOTAL DAYS CALCULATOR MODAL
 function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
   const isQuick = !log || log?.isQuickCalc;
-  const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date) || todayISO());
+  const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date || log?.loginDate) || todayISO());
   const [tempLogoutDate, setTempLogoutDate] = useState(() => formatForDateInput(log?.logoutDate || log?.logout_date) || "");
 
   const eqId = log?.equipmentId || log?.equipment_id;
@@ -1932,17 +1921,20 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
   const calculatedDisplay = useMemo(() => {
     if (!tempLoginDate) return "—";
     const login = new Date(tempLoginDate);
+    if (isNaN(login.getTime())) return "—";
     login.setHours(0, 0, 0, 0);
 
     if (tempLogoutDate) {
       const logout = new Date(tempLogoutDate);
-      logout.setHours(0, 0, 0, 0);
-      const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
-      const endUtc = Date.UTC(logout.getFullYear(), logout.getMonth(), logout.getDate());
-      let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
-      if (diffDays < 0) diffDays = 0;
-      const logoutDay = logout.getDate();
-      return `${diffDays} / ${logoutDay}`;
+      if (!isNaN(logout.getTime())) {
+        logout.setHours(0, 0, 0, 0);
+        const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
+        const endUtc = Date.UTC(logout.getFullYear(), logout.getMonth(), logout.getDate());
+        let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
+        if (diffDays < 0) diffDays = 0;
+        const logoutDay = logout.getDate();
+        return `${diffDays} / ${logoutDay}`;
+      }
     }
 
     const now = new Date();
@@ -2142,20 +2134,28 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
           <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
             <div>
               <p className="text-xs font-medium text-slate-400">Billing Type</p>
-              <p className="font-extrabold text-teal-600 uppercase mt-0.5">{log?.billingType || log?.billing_type || "MONTHLY"}</p>
+              <p className="font-extrabold text-teal-600 uppercase mt-0.5">
+                {log?.billingType || log?.billing_type || "MONTHLY"}
+              </p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Rental Charge</p>
-              <p className="font-extrabold text-slate-800 mt-0.5">₹{log?.rentalCharge || log?.rental_charge || "0"}</p>
+              <p className="font-extrabold text-slate-800 mt-0.5">
+                ₹{log?.rentalCharge !== undefined && log?.rentalCharge !== "" ? log?.rentalCharge : (log?.rental_charge || "0")}
+              </p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Deposit / Advance</p>
-              <p className="font-extrabold text-slate-800 mt-0.5">₹{log?.depositAdvance || log?.deposit_advance || "0"}</p>
+              <p className="font-extrabold text-slate-800 mt-0.5">
+                ₹{log?.depositAdvance !== undefined && log?.depositAdvance !== "" ? log?.depositAdvance : (log?.deposit_advance || "0")}
+              </p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Installation Charge</p>
-              <p className="font-extrabold text-slate-800 mt-0.5">₹{log?.installationCharge || log?.installation_charge || "0"}</p>
+              <p className="font-extrabold text-slate-800 mt-0.5">
+                ₹{log?.installationCharge !== undefined && log?.installationCharge !== "" ? log?.installationCharge : (log?.installation_charge || "0")}
+              </p>
             </div>
           </div>
         </div>
@@ -2267,7 +2267,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   );
 }
 
-// 📄 2. EDITABLE FULL FORM PAGE (USED FOR ADD & EDIT ACTIONS)
+// 📄 2. FULL EDITABLE REQUISITION FORM PAGE
 function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
   const isEdit = mode === "edit";
 
@@ -2329,9 +2329,9 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         logoutDate: formatForDateInput(initial.logoutDate || initial.logout_date),
         recallDate: formatForDateInput(initial.recallDate || initial.recall_date),
         billingType: initial.billingType || initial.billing_type || "Daily",
-        rentalCharge: initial.rentalCharge || initial.rental_charge || "",
-        depositAdvance: initial.depositAdvance || initial.deposit_advance || "",
-        installationCharge: initial.installationCharge || initial.installation_charge || "",
+        rentalCharge: initial.rentalCharge !== undefined ? initial.rentalCharge : (initial.rental_charge !== undefined ? initial.rental_charge : ""),
+        depositAdvance: initial.depositAdvance !== undefined ? initial.depositAdvance : (initial.deposit_advance !== undefined ? initial.deposit_advance : ""),
+        installationCharge: initial.installationCharge !== undefined ? initial.installationCharge : (initial.installation_charge !== undefined ? initial.installation_charge : ""),
         careCenterId: ccId || matchedUserCenter?.id || "",
         inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || initial.pocMobile || cc?.phone || "",
         altMobile: initial.altMobile || initial.alt_mobile || initial.altPocMobile || initial.altMobileNumber || "",
@@ -2603,7 +2603,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
                 </Select>
               </Field>
 
-              {/* 🔄 Incharge Mobile & Alt Mobile */}
+              {/* Incharge Mobile & Alt Mobile */}
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Incharge Mobile" error={errors.inchargeMobile}>
                   <TextInput maxLength={10} value={form.inchargeMobile} error={errors.inchargeMobile} onChange={(e) => set({ inchargeMobile: e.target.value })} placeholder="10-digit number" />
@@ -2819,8 +2819,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [sortOrder, setSortOrder] = useState("desc");
 
   // 🔄 Navigation State
-  const [viewDetailLog, setViewDetailLog] = useState(null); // For Screenshot-style View Page
-  const [pageForm, setPageForm] = useState(null); // { mode: "add" | "edit", data: log }
+  const [viewDetailLog, setViewDetailLog] = useState(null); // Screenshot View Page
+  const [pageForm, setPageForm] = useState(null); // Full Page Add/Edit Form
 
   const [calcModal, setCalcModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -2858,20 +2858,23 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     if (!loginStr) return "—";
 
     const login = new Date(loginStr);
+    if (isNaN(login.getTime())) return "—";
     login.setHours(0, 0, 0, 0); 
 
     if (logoutStr) {
       const logout = new Date(logoutStr);
-      logout.setHours(0, 0, 0, 0);
+      if (!isNaN(logout.getTime())) {
+        logout.setHours(0, 0, 0, 0);
 
-      const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
-      const endUtc = Date.UTC(logout.getFullYear(), logout.getMonth(), logout.getDate());
+        const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
+        const endUtc = Date.UTC(logout.getFullYear(), logout.getMonth(), logout.getDate());
 
-      let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1; 
-      if (diffDays < 0) diffDays = 0; 
+        let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1; 
+        if (diffDays < 0) diffDays = 0; 
 
-      const logoutDay = logout.getDate();
-      return `${diffDays}/${logoutDay}`;
+        const logoutDay = logout.getDate();
+        return `${diffDays}/${logoutDay}`;
+      }
     }
 
     const now = new Date();
@@ -2883,7 +2886,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     const endUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
 
     const X = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
-    const Y = now.getDate();
+    const Y = now.getDate(); // 👈 FIXED: now.getDate() is safe and valid
 
     return `${X}/${Y}`;
   };
@@ -2969,17 +2972,31 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         quantity: data.quantity || 1,
         start_date: data.startDate || data.loginDate, 
         logout_date: data.logoutDate || data.logout_date || null,
+        
+        billing_type: data.billingType || "Daily",
+        rental_charge: data.rentalCharge !== "" ? data.rentalCharge : 0,
+        deposit_advance: data.depositAdvance !== "" ? data.depositAdvance : 0,
+        installation_charge: data.installationCharge !== "" ? data.installationCharge : 0,
+        
+        age: data.age || "",
+        attendant_name: data.attendantName || "",
+        mobile_number: data.mobileNumber || "",
+        alt_mobile_number: data.altMobileNumber || "",
+        delivery_address: data.deliveryAddress || "",
+
         incharge_mobile: data.inchargeMobile || data.phone || data.pocMobile || "",
         alt_mobile: data.altMobile || data.altMobileNumber || "",
+        care_address: data.careAddress || "",
         bed_number: data.bedNo || data.bed_number || "", 
         referral_doctor: data.referral || data.referralDoctor || data.referral_doctor || "",         
         gst_number: data.gstNo || data.gstNumber || data.gst_number || "",
         payment_type: chosenMode,
-        deal_type: data.dealType,
-        unit: data.unit,
+        deal_type: data.dealType || "B2B",
+        unit: data.unit || "ODCOM",
         mode: chosenMode,
+        record_date: data.recordDate || todayISO(),
         notify_date: data.notifyDate || null,
-        delivery_address: data.deliveryAddress,
+        recall_date: data.recallDate || null,
         notes: data.notes || "",
         accessory: accStr,
         accessories: accStr, 
@@ -2988,15 +3005,20 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       };
 
       if (data.id) {
-        // 🔄 UPDATE
         await API.put(`/rental/requisitions/${data.id}`, backendData);
         toast.success("Requisition updated successfully!");
       } else {
-        // ➕ CREATE NEW
         const reqId = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
         await API.post("/rental/requisitions", { ...backendData, id: reqId });
         toast.success("Requisition created and deployed!");
       }
+
+      setLogs((prev) => {
+        if (data.id) {
+          return prev.map((l) => (l.id === data.id ? { ...l, ...data, ...backendData } : l));
+        }
+        return [{ id: `REQ-${Date.now()}`, ...data, ...backendData }, ...prev];
+      });
 
       await fetchLogs();
       setPageForm(null);
@@ -3235,7 +3257,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               ) : (
                 filtered.map((log, i) => {
                   const actualLogoutDate = log?.logoutDate || log?.logout_date;
-                  const dynamicDays = getDynamicTotalDays(log?.startDate || log?.start_date, actualLogoutDate);
+                  const dynamicDays = getDynamicTotalDays(log?.startDate || log?.start_date || log?.loginDate, actualLogoutDate);
                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
 
                   const rowColor = currentMode === "Prepaid" 
@@ -3274,7 +3296,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                           </p>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 text-slate-600 font-medium">{formatDateShort(log?.startDate || log?.start_date)}</td>
+                      <td className="px-5 py-3.5 text-slate-600 font-medium">{formatDateShort(log?.startDate || log?.start_date || log?.loginDate)}</td>
                       <td className="px-5 py-3.5 text-slate-600">{actualLogoutDate ? formatDateShort(actualLogoutDate) : "—"}</td>
                       
                       <td className="px-5 py-3.5">
