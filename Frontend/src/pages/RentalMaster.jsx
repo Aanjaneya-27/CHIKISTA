@@ -2163,7 +2163,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
                 <Select disabled={readOnly} value={form.status} onChange={(e) => set({ status: e.target.value })}>
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
-                  <option value="Closed">Closed (Returned)</option>
+                  <option value="Closed">Closed</option>
                 </Select>
               </Field>
             </div>
@@ -2702,7 +2702,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <option value="Both">Status: Both</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
-            <option value="Closed">Closed (Returned)</option>
+            <option value="Closed">Closed</option>
           </select>
           
           <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[110px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
