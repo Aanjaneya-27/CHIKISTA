@@ -1686,7 +1686,7 @@ import {
   CreditCard, 
   Save, 
   X, 
- 
+   
   ArrowLeft, 
   ChevronRight, 
   ImagePlus, 
@@ -2019,13 +2019,13 @@ function SectionHeading({ icon: Icon, children }) {
   );
 }
 
-// 👁️ 1. DEDICATED READ-ONLY VIEW PAGE
+// 👁️ 1. DEDICATED READ-ONLY VIEW PAGE (SCREENSHOT UI RESTORED)
 function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], onBack }) {
   const eqId = log?.equipmentId || log?.equipment_id;
   const equipmentName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || eqId || "—";
   
   const ccId = log?.careCenterId || log?.care_center_id;
-  const careCenterName = log?.careCenterName || careCenters.find(c => c?.id === ccId)?.name || ccId || "—";
+  const careCenterName = log?.careCenterName || log?.care_center_name || careCenters.find(c => c?.id === ccId)?.name || ccId || "—";
 
   const rawStatus = String(log?.status || log?.requisition_status || "Active").trim();
   const statusColor = rawStatus.toLowerCase() === "active" 
@@ -2033,6 +2033,24 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
     : rawStatus.toLowerCase() === "closed" || rawStatus.toLowerCase() === "returned"
     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
     : "bg-slate-100 text-slate-700 border-slate-200";
+
+  // Safe Parameter Getters
+  const billingTypeVal = log?.billingType || log?.billing_type || "Daily";
+  const rentalChargeVal = log?.rentalCharge ?? log?.rental_charge ?? 0;
+  const depositAdvanceVal = log?.depositAdvance ?? log?.deposit_advance ?? 0;
+  const installationChargeVal = log?.installationCharge ?? log?.installation_charge ?? 0;
+
+  const inchargeMobileVal = log?.inchargeMobile || log?.incharge_mobile || log?.phone || log?.pocMobile || "—";
+  const altMobileVal = log?.altMobile || log?.alt_mobile || "—";
+  const careAddressVal = log?.careAddress || log?.care_address || log?.address || "—";
+  const bedNoVal = log?.bedNumber || log?.bed_number || log?.bedNo || "—";
+  const referralVal = log?.referralDoctor || log?.referral_doctor || log?.referral || "—";
+
+  const ageVal = log?.age || "—";
+  const mobileVal = log?.mobileNumber || log?.mobile_number || "—";
+  const altMobilePatientVal = log?.altMobileNumber || log?.alt_mobile_number || "—";
+  const attendantVal = log?.attendantName || log?.attendant_name || "—";
+  const deliveryAddressVal = log?.deliveryAddress || log?.delivery_address || "—";
 
   return (
     <div className="fade-slide-up space-y-6">
@@ -2095,25 +2113,25 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Record Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{log?.recordDate || log?.record_date || "—"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.recordDate || log?.record_date) || "—"}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Log In Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{log?.startDate || log?.start_date || log?.loginDate || "—"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.startDate || log?.start_date || log?.loginDate) || "—"}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Notify Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{log?.notifyDate || log?.notify_date || "0000-00-00"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.notifyDate || log?.notify_date) || "0000-00-00"}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Log Out Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{log?.logoutDate || log?.logout_date || "—"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.logoutDate || log?.logout_date) || "—"}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Recall Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{log?.recallDate || log?.recall_date || "—"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.recallDate || log?.recall_date) || "—"}</p>
             </div>
 
             <div className="col-span-2 pt-1">
@@ -2135,26 +2153,26 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             <div>
               <p className="text-xs font-medium text-slate-400">Billing Type</p>
               <p className="font-extrabold text-teal-600 uppercase mt-0.5">
-                {log?.billingType || log?.billing_type || "MONTHLY"}
+                {billingTypeVal}
               </p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Rental Charge</p>
               <p className="font-extrabold text-slate-800 mt-0.5">
-                ₹{log?.rentalCharge !== undefined && log?.rentalCharge !== "" ? log?.rentalCharge : (log?.rental_charge !== undefined ? log?.rental_charge : "0")}
+                ₹{rentalChargeVal}
               </p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Deposit / Advance</p>
               <p className="font-extrabold text-slate-800 mt-0.5">
-                ₹{log?.depositAdvance !== undefined && log?.depositAdvance !== "" ? log?.depositAdvance : (log?.deposit_advance !== undefined ? log?.deposit_advance : "0")}
+                ₹{depositAdvanceVal}
               </p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Installation Charge</p>
               <p className="font-extrabold text-slate-800 mt-0.5">
-                ₹{log?.installationCharge !== undefined && log?.installationCharge !== "" ? log?.installationCharge : (log?.installation_charge !== undefined ? log?.installation_charge : "0")}
+                ₹{installationChargeVal}
               </p>
             </div>
           </div>
@@ -2178,34 +2196,34 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
               <p className="text-xs font-medium text-slate-400">Age:</p>
             </div>
             <div>
-              <p className="font-bold text-slate-800">{log?.age || "—"}</p>
+              <p className="font-bold text-slate-800">{ageVal}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Mobile:</p>
             </div>
             <div>
-              <p className="font-bold text-slate-800">{log?.mobileNumber || log?.mobile_number || "—"}</p>
+              <p className="font-bold text-slate-800">{mobileVal}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Alt Mobile:</p>
             </div>
             <div>
-              <p className="font-bold text-slate-800">{log?.altMobileNumber || log?.alt_mobile_number || "—"}</p>
+              <p className="font-bold text-slate-800">{altMobilePatientVal}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Attendant:</p>
             </div>
             <div>
-              <p className="font-bold text-slate-800">{log?.attendantName || log?.attendant_name || "—"}</p>
+              <p className="font-bold text-slate-800">{attendantVal}</p>
             </div>
 
             <div className="col-span-2 pt-2">
               <p className="text-xs font-medium text-slate-400 mb-1.5">Delivery Address:</p>
               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
-                {log?.deliveryAddress || log?.delivery_address || "—"}
+                {deliveryAddressVal}
               </div>
             </div>
           </div>
@@ -2229,34 +2247,34 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
               <p className="text-xs font-medium text-slate-400">Incharge Mobile:</p>
             </div>
             <div>
-              <p className="font-bold text-slate-800">{log?.inchargeMobile || log?.incharge_mobile || log?.phone || "—"}</p>
+              <p className="font-bold text-slate-800">{inchargeMobileVal}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Alt Mobile:</p>
             </div>
             <div>
-              <p className="font-bold text-slate-800">{log?.altMobile || log?.alt_mobile || "—"}</p>
+              <p className="font-bold text-slate-800">{altMobileVal}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Bed No:</p>
             </div>
             <div>
-              <p className="font-bold text-slate-800">{log?.bedNo || log?.bed_number || "—"}</p>
+              <p className="font-bold text-slate-800">{bedNoVal}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Referral:</p>
             </div>
             <div>
-              <p className="font-bold text-slate-800">{log?.referral || log?.referral_doctor || "—"}</p>
+              <p className="font-bold text-slate-800">{referralVal}</p>
             </div>
 
             <div className="col-span-2 pt-2">
               <p className="text-xs font-medium text-slate-400 mb-1.5">Care Address:</p>
               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
-                {log?.careAddress || log?.care_address || log?.address || "—"}
+                {careAddressVal}
               </div>
             </div>
           </div>
@@ -2329,15 +2347,15 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         logoutDate: formatForDateInput(initial.logoutDate || initial.logout_date),
         recallDate: formatForDateInput(initial.recallDate || initial.recall_date),
         billingType: initial.billingType || initial.billing_type || "Daily",
-        rentalCharge: initial.rentalCharge !== undefined ? initial.rentalCharge : (initial.rental_charge !== undefined ? initial.rental_charge : ""),
-        depositAdvance: initial.depositAdvance !== undefined ? initial.depositAdvance : (initial.deposit_advance !== undefined ? initial.deposit_advance : ""),
-        installationCharge: initial.installationCharge !== undefined ? initial.installationCharge : (initial.installation_charge !== undefined ? initial.installation_charge : ""),
+        rentalCharge: initial.rentalCharge ?? initial.rental_charge ?? "",
+        depositAdvance: initial.depositAdvance ?? initial.deposit_advance ?? "",
+        installationCharge: initial.installationCharge ?? initial.installation_charge ?? "",
         careCenterId: ccId || matchedUserCenter?.id || "",
         inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || initial.pocMobile || cc?.phone || "",
-        altMobile: initial.altMobile || initial.alt_mobile || initial.altPocMobile || "",
+        altMobile: initial.altMobile || initial.alt_mobile || "",
         careAddress: initial.careAddress || initial.care_address || initial.address || cc?.address || "",
-        bedNo: initial.bedNo || initial.bed_number || initial.bed_no || "",
-        referral: initial.referral || initial.referral_doctor || initial.referralDoctor || "",
+        bedNo: initial.bedNumber || initial.bed_number || initial.bedNo || "",
+        referral: initial.referralDoctor || initial.referral_doctor || initial.referral || "",
         patientName: initial.patientName || initial.patient_name || "",
         age: initial.age || "",
         attendantName: initial.attendantName || initial.attendant_name || "",
@@ -2909,7 +2927,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
         const patient = String(l.patientName || l.patient_name || "");
         const inchargeMobile = String(l.inchargeMobile || l.incharge_mobile || l.phone || l.pocMobile || "");
-        const altMobile = String(l.altMobile || l.alt_mobile || l.altPocMobile || "");
+        const altMobile = String(l.altMobile || l.alt_mobile || "");
         const logId = String(l.id || "");
 
         const matchesSearch = !q || 
@@ -2948,7 +2966,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  // 🔄 100% COMPLETE PARAMETERS SUBMIT HANDLER
+  // 🔄 100% COMPLETE PARAMETERS SUBMIT HANDLER (DUAL-KEY SYNC)
   const handleFormSubmit = async (data) => {
     try {
       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
@@ -2965,39 +2983,73 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       let finalStatus = data.status || (data.logoutDate ? "Closed" : "Active");
       if (String(finalStatus).toLowerCase() === "returned") finalStatus = "Closed";
 
+      const rentalChargeNum = data.rentalCharge !== "" && data.rentalCharge !== undefined ? Number(data.rentalCharge) : 0;
+      const depositAdvanceNum = data.depositAdvance !== "" && data.depositAdvance !== undefined ? Number(data.depositAdvance) : 0;
+      const installationChargeNum = data.installationCharge !== "" && data.installationCharge !== undefined ? Number(data.installationCharge) : 0;
+
       const backendData = {
         care_center_id: finalCareCenterId,
+        careCenterId: finalCareCenterId,
         care_center_name: finalCareCenterName,
+        careCenterName: finalCareCenterName,
         equipment_id: data.equipmentId || data.deviceModel,
+        equipmentId: data.equipmentId || data.deviceModel,
         patient_name: data.patientName,
+        patientName: data.patientName,
         quantity: data.quantity || 1,
         start_date: data.startDate || data.loginDate, 
+        startDate: data.startDate || data.loginDate,
+        loginDate: data.startDate || data.loginDate,
         logout_date: data.logoutDate || data.logout_date || null,
+        logoutDate: data.logoutDate || data.logout_date || null,
         
+        // 💳 Commercial Parameters (Both Keys Sent)
         billing_type: data.billingType || "Daily",
-        rental_charge: data.rentalCharge !== "" ? data.rentalCharge : 0,
-        deposit_advance: data.depositAdvance !== "" ? data.depositAdvance : 0,
-        installation_charge: data.installationCharge !== "" ? data.installationCharge : 0,
+        billingType: data.billingType || "Daily",
+        rental_charge: rentalChargeNum,
+        rentalCharge: rentalChargeNum,
+        deposit_advance: depositAdvanceNum,
+        depositAdvance: depositAdvanceNum,
+        installation_charge: installationChargeNum,
+        installationCharge: installationChargeNum,
         
+        // 👤 Patient Details
         age: data.age || "",
         attendant_name: data.attendantName || "",
+        attendantName: data.attendantName || "",
         mobile_number: data.mobileNumber || "",
+        mobileNumber: data.mobileNumber || "",
         alt_mobile_number: data.altMobileNumber || "",
+        altMobileNumber: data.altMobileNumber || "",
         delivery_address: data.deliveryAddress || "",
+        deliveryAddress: data.deliveryAddress || "",
 
+        // 🏥 Logistics & Care Center
         incharge_mobile: data.inchargeMobile || data.phone || data.pocMobile || "",
+        inchargeMobile: data.inchargeMobile || data.phone || data.pocMobile || "",
         alt_mobile: data.altMobile || "",
+        altMobile: data.altMobile || "",
         care_address: data.careAddress || "",
+        careAddress: data.careAddress || "",
         bed_number: data.bedNo || data.bed_number || "", 
+        bedNumber: data.bedNo || data.bed_number || "",
+        bedNo: data.bedNo || data.bed_number || "",
         referral_doctor: data.referral || data.referralDoctor || data.referral_doctor || "",         
+        referralDoctor: data.referral || data.referralDoctor || data.referral_doctor || "",         
+        referral: data.referral || data.referralDoctor || data.referral_doctor || "",         
         gst_number: data.gstNo || data.gstNumber || data.gst_number || "",
         payment_type: chosenMode,
+        paymentType: chosenMode,
         deal_type: data.dealType || "B2B",
+        dealType: data.dealType || "B2B",
         unit: data.unit || "ODCOM",
         mode: chosenMode,
         record_date: data.recordDate || todayISO(),
+        recordDate: data.recordDate || todayISO(),
         notify_date: data.notifyDate || null,
+        notifyDate: data.notifyDate || null,
         recall_date: data.recallDate || null,
+        recallDate: data.recallDate || null,
         notes: data.notes || "",
         accessory: accStr,
         accessories: accStr, 
@@ -3014,9 +3066,10 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         toast.success("Requisition created and deployed!");
       }
 
+      // Safe state update matching string IDs
       setLogs((prev) => {
         if (data.id) {
-          return prev.map((l) => (l.id === data.id ? { ...l, ...data, ...backendData } : l));
+          return prev.map((l) => (String(l.id) === String(data.id) ? { ...l, ...data, ...backendData } : l));
         }
         return [{ id: `REQ-${Date.now()}`, ...data, ...backendData }, ...prev];
       });
@@ -3274,7 +3327,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                   if (catMatch) actualDevice = catMatch.name;
 
                   const inchargePhone = log?.inchargeMobile || log?.incharge_mobile || log?.phone || log?.pocMobile || "";
-                  const altPhone = log?.altMobile || log?.alt_mobile || log?.altPocMobile || "";
+                  const altPhone = log?.altMobile || log?.alt_mobile || "";
                   
                   const s = String(log?.status || "").toLowerCase();
                   const isClosed = s === "closed" || s === "returned";
