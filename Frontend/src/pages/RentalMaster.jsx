@@ -1,9 +1,9 @@
-// import { useState, useEffect, useMemo, useCallback } from "react"; 
-// import { Search, SlidersHorizontal, Plus, Eye, Pencil, Trash2, PackageCheck, Clock, Activity, AlertTriangle, Building2, User, Tag, CreditCard, Save, X, ClipboardList, ArrowLeft, ChevronRight, ImagePlus, Truck, FileText, Calendar, ChevronDown, Calculator } from "lucide-react"; 
+// import { useState, useEffect, useMemo, useCallback } from "react";
+// import { Search, SlidersHorizontal, Plus, Eye, Pencil, Trash2, PackageCheck, Clock, Activity, AlertTriangle, Building2, User, Tag, CreditCard, Save, X, ClipboardList, ArrowLeft, ChevronRight, ImagePlus, Truck, FileText, Calendar, ChevronDown, Calculator } from "lucide-react";
 // import { PrimaryButton, GhostButton, IconAction, ConfirmDialog, StatusBadge, Field, Select, TextInput, toast } from "../components/UiComponents";
 // import { RENTAL_STATES, DEAL_TYPE_OPTIONS, MODE_OPTIONS, UNIT_OPTIONS, PAYMENT_TYPES } from "../data/MockData";
 // import { formatDateShort, todayISO } from "../utils/Helper";
-// import API from "../utils/api"; 
+// import API from "../utils/api";
 
 // function GlobalPolish() {
 //   return (
@@ -221,7 +221,6 @@
 //   );
 // }
 
-// // 🧮 Temporary Scratchpad Calculator Modal (No DB Changes)
 // function CalculateTotalDaysModal({ log, equipmentCatalog, onClose }) {
 //   const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log.startDate || log.start_date) || todayISO());
 //   const [tempLogoutDate, setTempLogoutDate] = useState(() => formatForDateInput(log.logoutDate || log.logout_date) || "");
@@ -242,7 +241,7 @@
 //       const endUtc = Date.UTC(logout.getFullYear(), logout.getMonth(), logout.getDate());
 //       let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
 //       if (diffDays < 0) diffDays = 0;
-//       const logoutDay = logout.getDate(); // 👈 Day of Logout Date
+//       const logoutDay = logout.getDate();
 //       return `${diffDays} / ${logoutDay}`;
 //     }
 
@@ -259,8 +258,6 @@
 //   return (
 //     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
 //       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
-        
-//         {/* Header */}
 //         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
 //           <div>
 //             <h3 className="font-display text-base font-bold text-slate-800">Calculate Total Days</h3>
@@ -271,17 +268,16 @@
 //           </button>
 //         </div>
 
-//         {/* Inputs */}
 //         <div className="p-6 space-y-4">
 //           <div>
 //             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
 //               Log In Date
 //             </label>
 //             <input 
-//               type="date"
-//               value={tempLoginDate}
-//               onChange={(e) => setTempLoginDate(e.target.value)}
-//               className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+//               type="date" 
+//               value={tempLoginDate} 
+//               onChange={(e) => setTempLoginDate(e.target.value)} 
+//               className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
 //             />
 //           </div>
 
@@ -290,15 +286,14 @@
 //               Log Out Date
 //             </label>
 //             <input 
-//               type="date"
-//               value={tempLogoutDate}
-//               onChange={(e) => setTempLogoutDate(e.target.value)}
-//               className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+//               type="date" 
+//               value={tempLogoutDate} 
+//               onChange={(e) => setTempLogoutDate(e.target.value)} 
+//               className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
 //             />
 //             <p className="text-[11px] text-slate-400 mt-1">Leave empty to calculate until today</p>
 //           </div>
 
-//           {/* Dynamic Result Box */}
 //           <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5 text-center my-2">
 //             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Days</span>
 //             <p className="mt-1 font-display text-3xl font-extrabold text-teal-700">
@@ -307,23 +302,20 @@
 //           </div>
 //         </div>
 
-//         {/* Footer Actions (Purely Closes Modal - No Data Mutation) */}
 //         <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
 //           <button 
 //             type="button" 
-//             onClick={onClose}
+//             onClick={onClose} 
 //             className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
 //           >
 //             Done
 //           </button>
 //         </div>
-
 //       </div>
 //     </div>
 //   );
 // }
 
-// // 👈 Auto Today Date in Empty Form
 // const emptyForm = { 
 //   careCenterId: "", 
 //   address: "", 
@@ -351,6 +343,35 @@
 
 // function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCatalog, references = [], categories = [], onClose, onSubmit }) {
 //   const readOnly = modalMode === "view";
+
+//   const loggedUser = useMemo(() => {
+//     try {
+//       return JSON.parse(localStorage.getItem("user") || "{}");
+//     } catch {
+//       return {};
+//     }
+//   }, []);
+//   const isCareCenterUser = loggedUser?.role === "care_center";
+
+//   const matchedUserCenter = useMemo(() => {
+//     if (!isCareCenterUser) return null;
+//     return careCenters.find((c) => 
+//       c.id === loggedUser.careCenterId || 
+//       c.id === loggedUser.id || 
+//       (c.phone && loggedUser.phone && String(c.phone).replace(/\D/g, "").slice(-10) === String(loggedUser.phone).replace(/\D/g, "").slice(-10)) ||
+//       (c.name && loggedUser.name && c.name.trim().toLowerCase() === loggedUser.name.trim().toLowerCase())
+//     ) || {
+//       id: loggedUser.careCenterId || loggedUser.id || "CC-ME",
+//       name: loggedUser.careCenterName || loggedUser.name || "My Care Center"
+//     };
+//   }, [careCenters, isCareCenterUser, loggedUser]);
+
+//   const modalDropdownCareCenters = useMemo(() => {
+//     if (isCareCenterUser && matchedUserCenter) {
+//       return [matchedUserCenter];
+//     }
+//     return filterActive(careCenters);
+//   }, [careCenters, isCareCenterUser, matchedUserCenter]);
   
 //   const [form, setForm] = useState(() => {
 //     if (initial) {
@@ -391,14 +412,23 @@
 //         notifyDate: mappedNotify,
 //         deliveryAddress: initial.deliveryAddress || initial.delivery_address || "",
 //         notes: initial.notes || "",
-//         contactPerson: initial.contactPerson || initial.contact_person || cc?.contactPerson || "",
+//         contactPerson: initial.contactPerson || initial.contact_person || cc?.contactPerson || cc?.contact_person || "",
 //         phone: initial.phone || cc?.phone || "",
 //         gst: initial.gst || initial.gst_number || initial.gstNumber || cc?.gst || "",
 //         address: initial.address || cc?.address || "",
 //         accessory: parsedAcc
 //       };
 //     }
-//     return emptyForm;
+
+//     const defaultCcId = matchedUserCenter?.id || "";
+//     return {
+//       ...emptyForm,
+//       careCenterId: defaultCcId,
+//       address: matchedUserCenter?.address || "",
+//       phone: matchedUserCenter?.phone || loggedUser.phone || "",
+//       contactPerson: matchedUserCenter?.contact_person || matchedUserCenter?.contactPerson || "",
+//       gst: matchedUserCenter?.gst || ""
+//     };
 //   });
   
 //   const [errors, setErrors] = useState({});
@@ -413,7 +443,7 @@
 //       set({ careCenterId: "other", address: "", contactPerson: "", phone: "", gst: "" });
 //     } else {
 //       const cc = careCenters.find((c) => c.id === id);
-//       set({ careCenterId: id, address: cc?.address || "", contactPerson: cc?.contactPerson || "", phone: cc?.phone || "", gst: cc?.gst || "" });
+//       set({ careCenterId: id, address: cc?.address || "", contactPerson: cc?.contactPerson || cc?.contact_person || "", phone: cc?.phone || "", gst: cc?.gst || "" });
 //     }
 //   };
 
@@ -438,8 +468,8 @@
 //       return;
 //     }
 //     const equipment = equipmentCatalog.find((eq) => eq.id === form.equipmentId);
-//     let careCenterName = "Other";
-//     if (form.careCenterId !== "other") {
+//     let careCenterName = isCareCenterUser ? (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "") : "Other";
+//     if (form.careCenterId !== "other" && !isCareCenterUser) {
 //       careCenterName = careCenters.find((c) => c.id === form.careCenterId)?.name || "";
 //     }
 //     onSubmit({ 
@@ -455,7 +485,6 @@
 
 //   const titles = { add: "New Log Requisition", edit: "Edit Requisition", view: "Requisition Details" };
 
-//   const activeCareCenters = useMemo(() => filterActive(careCenters), [careCenters]);
 //   const activeEquipment = useMemo(() => filterActive(equipmentCatalog), [equipmentCatalog]);
 //   const activeReferrals = useMemo(() => filterActive(references), [references]);
 //   const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
@@ -481,9 +510,9 @@
 //               <div className="sm:col-span-2">
 //                 <Field label="Select Care Center" required error={errors.careCenterId}>
 //                   <Select disabled={readOnly} value={form.careCenterId} error={errors.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
-//                     <option value="">Choose a care center…</option>
-//                     {activeCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-//                     <option value="other">Other (Add New)</option>
+//                     {!isCareCenterUser && <option value="">Choose a care center…</option>}
+//                     {modalDropdownCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+//                     {!isCareCenterUser && <option value="other">Other (Add New)</option>}
 //                   </Select>
 //                 </Field>
 //               </div>
@@ -652,17 +681,51 @@
 // }
 
 // function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], categories = [], onCancel, onSubmit }) {
-//   // 👈 Default recordDate initialized to Today's date automatically
-//   const [form, setForm] = useState(() => ({
-//     ...emptyForm,
-//     recordDate: todayISO(),
-//     loginDate: todayISO()
-//   }));
+//   const loggedUser = useMemo(() => {
+//     try {
+//       return JSON.parse(localStorage.getItem("user") || "{}");
+//     } catch {
+//       return {};
+//     }
+//   }, []);
+//   const isCareCenterUser = loggedUser?.role === "care_center";
+
+//   const matchedUserCenter = useMemo(() => {
+//     if (!isCareCenterUser) return null;
+//     return careCenters.find((c) => 
+//       c.id === loggedUser.careCenterId || 
+//       c.id === loggedUser.id || 
+//       (c.phone && loggedUser.phone && String(c.phone).replace(/\D/g, "").slice(-10) === String(loggedUser.phone).replace(/\D/g, "").slice(-10)) ||
+//       (c.name && loggedUser.name && c.name.trim().toLowerCase() === loggedUser.name.trim().toLowerCase())
+//     ) || {
+//       id: loggedUser.careCenterId || loggedUser.id || "CC-ME",
+//       name: loggedUser.careCenterName || loggedUser.name || "My Care Center"
+//     };
+//   }, [careCenters, isCareCenterUser, loggedUser]);
+
+//   const pageDropdownCareCenters = useMemo(() => {
+//     if (isCareCenterUser && matchedUserCenter) {
+//       return [matchedUserCenter];
+//     }
+//     return filterActive(careCenters);
+//   }, [careCenters, isCareCenterUser, matchedUserCenter]);
+
+//   const [form, setForm] = useState(() => {
+//     const defaultCcId = matchedUserCenter?.id || "";
+//     return {
+//       ...emptyForm,
+//       careCenterId: defaultCcId,
+//       careAddress: matchedUserCenter?.address || "",
+//       pocMobile: matchedUserCenter?.phone || loggedUser.phone || "",
+//       recordDate: todayISO(),
+//       loginDate: todayISO()
+//     };
+//   });
+
 //   const [errors, setErrors] = useState({});
 //   const [photos, setPhotos] = useState([]);
 //   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-//   const activeCareCenters = useMemo(() => filterActive(careCenters), [careCenters]);
 //   const activeEquipment = useMemo(() => filterActive(equipmentCatalog), [equipmentCatalog]);
 //   const activeReferrals = useMemo(() => filterActive(references), [references]);
 //   const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
@@ -717,8 +780,8 @@
 //       return; 
 //     }
 //     const equipment = equipmentCatalog.find((eq) => eq.id === form.deviceModel);
-//     let careCenterName = "Other";
-//     if (form.careCenterId !== "other") {
+//     let careCenterName = isCareCenterUser ? (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "") : "Other";
+//     if (form.careCenterId !== "other" && !isCareCenterUser) {
 //       careCenterName = careCenters.find((c) => c.id === form.careCenterId)?.name || "";
 //     }
 //     onSubmit({
@@ -741,7 +804,7 @@
 //     <div className="fade-slide-up space-y-5">
 //       <GlobalPolish />
 //       <div className="flex items-center gap-2 text-sm">
-//         <button onClick={onCancel} className="flex items-center gap-1.5 font-semibold text-slate-500 transition-colors hover:text-teal-600"><ArrowLeft className="h-4 w-4" /> Rental Master</button>
+//         <button onClick={onCancel} className="flex items-center gap-1.5 font-semibold text-slate-500 transition-colors hover:text-teal-600 cursor-pointer"><ArrowLeft className="h-4 w-4" /> Rental Master</button>
 //         <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
 //         <span className="font-semibold text-slate-700">Log Asset Requisition</span>
 //       </div>
@@ -782,7 +845,6 @@
 //             />
 //           </Field>
 
-//           {/* 👈 Record Date Auto Populated */}
 //           <Field label="Record Date">
 //             <TextInput type="date" value={form.recordDate} onChange={(e) => set({ recordDate: e.target.value })} />
 //           </Field>
@@ -825,9 +887,9 @@
 //             <div className="space-y-4">
 //               <Field label="Care Center Name">
 //                 <Select value={form.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
-//                   <option value="">-- Select Care Center --</option>
-//                   {activeCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-//                   <option value="other">Other (Add New)</option>
+//                   {!isCareCenterUser && <option value="">-- Select Care Center --</option>}
+//                   {pageDropdownCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+//                   {!isCareCenterUser && <option value="other">Other (Add New)</option>}
 //                 </Select>
 //               </Field>
 //               <div className="grid grid-cols-2 gap-4">
@@ -899,7 +961,7 @@
 //                           <span className="w-full truncate text-[9px] font-semibold">{file.name}</span>
 //                         </div>
 //                       )}
-//                       <button type="button" onClick={() => removeFile(idx)} className="absolute right-1 top-1 hidden h-5 w-5 place-items-center rounded-full bg-rose-500 text-white shadow-md transition hover:bg-rose-600 group-hover:grid">
+//                       <button type="button" onClick={() => removeFile(idx)} className="absolute right-1 top-1 hidden h-5 w-5 place-items-center rounded-full bg-rose-500 text-white shadow-md transition hover:bg-rose-600 group-hover:grid cursor-pointer">
 //                         <X className="h-3 w-3" />
 //                       </button>
 //                     </div>
@@ -920,7 +982,44 @@
 //   );
 // }
 
-// export default function RentalMaster({ permissions, careCenters, equipmentCatalog, references = [], categories = [] }) {
+// export default function RentalMaster({ permissions = { canAdd: true, canEdit: true, canDelete: true }, careCenters = [], equipmentCatalog = [], references = [], categories = [] }) {
+//   const loggedUser = useMemo(() => {
+//     try {
+//       return JSON.parse(localStorage.getItem("user") || "{}");
+//     } catch {
+//       return {};
+//     }
+//   }, []);
+//   const isCareCenterUser = loggedUser?.role === "care_center";
+
+//   const matchedUserCenter = useMemo(() => {
+//     if (!isCareCenterUser) return null;
+//     const cleanUserPhone = (loggedUser?.phone || "").toString().replace(/\D/g, "").slice(-10);
+//     const cleanUserName = (loggedUser?.careCenterName || loggedUser?.name || "").trim().toLowerCase();
+
+//     return careCenters.find((c) => {
+//       const cleanCcPhone = (c.phone || "").toString().replace(/\D/g, "").slice(-10);
+//       const cleanCcName = (c.name || "").trim().toLowerCase();
+
+//       return (
+//         (c.id && loggedUser?.careCenterId && String(c.id) === String(loggedUser.careCenterId)) ||
+//         (c.id && loggedUser?.id && String(c.id) === String(loggedUser.id)) ||
+//         (cleanUserPhone && cleanCcPhone && cleanUserPhone === cleanCcPhone) ||
+//         (cleanUserName && cleanCcName && (cleanCcName.includes(cleanUserName) || cleanUserName.includes(cleanCcName)))
+//       );
+//     }) || {
+//       id: loggedUser.careCenterId || loggedUser.id || "CC-ME",
+//       name: loggedUser.careCenterName || loggedUser.name || "My Care Center"
+//     };
+//   }, [careCenters, isCareCenterUser, loggedUser]);
+
+//   const filterBarDropdownCareCenters = useMemo(() => {
+//     if (isCareCenterUser && matchedUserCenter) {
+//       return [matchedUserCenter];
+//     }
+//     return filterActive(careCenters);
+//   }, [careCenters, isCareCenterUser, matchedUserCenter]);
+
 //   const [logs, setLogs] = useState(() => {
 //     try {
 //       const cached = localStorage.getItem("cached_requisitions");
@@ -935,8 +1034,8 @@
 //   const fetchLogs = useCallback(async () => {
 //     try {
 //       const response = await API.get(`/rental/requisitions?t=${Date.now()}`);
-//       setLogs(response.data);
-//       localStorage.setItem("cached_requisitions", JSON.stringify(response.data));
+//       setLogs(response.data || []);
+//       localStorage.setItem("cached_requisitions", JSON.stringify(response.data || []));
 //     } catch (error) {
 //       console.error("Failed to fetch logs:", error);
 //     } finally {
@@ -951,8 +1050,8 @@
 //       try {
 //         const response = await API.get(`/rental/requisitions?t=${Date.now()}`);
 //         if (isMounted) {
-//           setLogs(response.data);
-//           localStorage.setItem("cached_requisitions", JSON.stringify(response.data));
+//           setLogs(response.data || []);
+//           localStorage.setItem("cached_requisitions", JSON.stringify(response.data || []));
 //         }
 //       } catch (error) {
 //         console.error("Failed to fetch logs:", error);
@@ -979,9 +1078,28 @@
 //   const [careCenterFilter, setCareCenterFilter] = useState("All"); 
 
 //   const [modal, setModal] = useState(null); 
-//   const [calcModal, setCalcModal] = useState(null); // 👈 Calculator state
+//   const [calcModal, setCalcModal] = useState(null);
 //   const [confirmDelete, setConfirmDelete] = useState(null);
 //   const [showAddPage, setShowAddPage] = useState(false);
+
+//   const scopedLogs = useMemo(() => {
+//     if (!isCareCenterUser) return logs;
+
+//     const myCenterId = (matchedUserCenter?.id || loggedUser.careCenterId || loggedUser.id || "").toString().trim().toLowerCase();
+//     const myCenterName = (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "").toString().trim().toLowerCase();
+//     const myCenterIdNumeric = myCenterId.replace(/\D/g, "");
+
+//     return logs.filter((l) => {
+//       const ccId = (l.careCenterId || l.care_center_id || "").toString().trim().toLowerCase();
+//       const ccIdNumeric = ccId.replace(/\D/g, "");
+//       const ccName = (l.careCenterName || l.care_center_name || careCenters.find((c) => String(c.id) === String(ccId))?.name || ccId || "").toString().trim().toLowerCase();
+
+//       const idMatch = (ccId && myCenterId && ccId === myCenterId) || (ccIdNumeric && myCenterIdNumeric && ccIdNumeric === myCenterIdNumeric);
+//       const nameMatch = (ccName && myCenterName && (ccName.includes(myCenterName) || myCenterName.includes(ccName)));
+
+//       return idMatch || nameMatch;
+//     });
+//   }, [logs, isCareCenterUser, matchedUserCenter, loggedUser, careCenters]);
 
 //   const monthOptions = useMemo(() => {
 //     const opts = [];
@@ -994,7 +1112,6 @@
 //     return opts;
 //   }, []);
 
-//   // 👈 Updated Total Days logic: Y = Logout Day (Not Month)
 //   const getDynamicTotalDays = (loginStr, logoutStr, monthOffset) => {
 //     if (!loginStr) return "—";
 
@@ -1011,7 +1128,7 @@
 //       let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1; 
 //       if (diffDays < 0) diffDays = 0; 
 
-//       const logoutDay = logout.getDate(); // 👈 Logout Day of the Month
+//       const logoutDay = logout.getDate();
 //       return `${diffDays}/${logoutDay}`;
 //     }
 
@@ -1041,10 +1158,10 @@
 //   };
 
 //   const filtered = useMemo(() => {
-//     return logs.filter((l) => {
+//     return scopedLogs.filter((l) => {
 //       const ccId = l.careCenterId || l.care_center_id;
-//       const ccName = l.careCenterName || careCenters.find((c) => c.id === ccId)?.name || ccId;
-      
+//       const ccName = l.careCenterName || careCenters.find((c) => c.id === ccId)?.name || ccId || "";
+
 //       const eqId = l.equipmentId || l.equipment_id;
 //       const eqName = l.equipmentName || equipmentCatalog.find(e => e.id === eqId)?.name || eqId;
 
@@ -1063,20 +1180,30 @@
 //       const matchesDealType = dealTypeFilter === "All" || (l.dealType || l.deal_type) === dealTypeFilter;
 //       const matchesUnit = unitFilter === "All" || currentUnit === unitFilter;
 //       const matchesMode = modeFilter === "All" || currentMode === modeFilter;
-//       const matchesCareCenter = careCenterFilter === "All" || ccId === careCenterFilter;
+      
+//       const matchesCareCenter = isCareCenterUser || careCenterFilter === "All" || ccId === careCenterFilter;
 
 //       return matchesSearch && matchesStatus && matchesDealType && matchesUnit && matchesMode && matchesCareCenter;
 //     });
-//   }, [logs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, careCenters, equipmentCatalog]);
+//   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, careCenters, equipmentCatalog, isCareCenterUser]);
 
 //   const handleAdd = async (data) => {
 //     try {
 //       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
 //       const chosenMode = data.mode || data.paymentType || "Postpaid";
       
+//       const finalCareCenterId = isCareCenterUser 
+//         ? (matchedUserCenter?.id || loggedUser.careCenterId || loggedUser.id || "CC-ME")
+//         : (data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id));
+
+//       const finalCareCenterName = isCareCenterUser
+//         ? (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "")
+//         : (data.careCenterName || "");
+
 //       const backendData = {
 //         id: data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
-//         care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
+//         care_center_id: finalCareCenterId,
+//         care_center_name: finalCareCenterName,
 //         equipment_id: data.equipmentId || data.deviceModel,
 //         patient_name: data.patientName,
 //         quantity: data.quantity || 1,
@@ -1139,6 +1266,7 @@
 
 //       const backendData = {
 //         care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
+//         care_center_name: data.careCenterName || data.care_center_name || "",
 //         equipment_id: data.equipmentId || data.equipment_id,
 //         patient_name: data.patientName || data.patient_name,
 //         quantity: data.quantity || 1,
@@ -1190,7 +1318,6 @@
 //     <div className="space-y-5">
 //       <GlobalPolish />
       
-//       {/* 🏷️ Top Header with Log Requisition Button */}
 //       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 //         <div>
 //           <h1 className="font-display text-2xl font-bold tracking-tight text-slate-800">Rental Master Sheet</h1>
@@ -1204,19 +1331,17 @@
 //         )}
 //       </div>
 
-//       {/* 📊 KPI Cards */}
-//       <KpiCards logs={logs} />
+//       <KpiCards logs={scopedLogs} />
       
-//       {/* 🔍 Full Width Balanced Filter Bar */}
 //       <div style={{ animationDelay: "80ms" }} className="rise-in rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm shadow-slate-200/40">
 //         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
-//           {/* Search Box */}
 //           <div className="group relative flex-[2] min-w-[220px]">
 //             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-teal-500" />
 //             <input 
 //               value={search} 
 //               onChange={(e) => setSearch(e.target.value)} 
+//               autoComplete="off"
 //               placeholder="Search by ID, patient, device, care center…" 
 //               className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" 
 //             />
@@ -1224,7 +1349,6 @@
 
 //           <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400 hidden sm:block" />
           
-//           {/* Calendar Month Picker */}
 //           <div className="relative group flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-slate-200 bg-slate-50/70 hover:bg-teal-50 transition cursor-pointer shrink-0 shadow-2xs" title="Filter by Month">
 //             <Calendar className="h-4 w-4 text-slate-500 group-hover:text-teal-600" />
 //             <select value={monthFilter} onChange={(e) => setMonthFilter(Number(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
@@ -1234,37 +1358,38 @@
 //             </select>
 //           </div>
 
-//           {/* Care Center Dropdown */}
-//           <select value={careCenterFilter} onChange={(e) => setCareCenterFilter(e.target.value)} className="flex-1 min-w-[130px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
-//             <option value="All">All Care Centers</option>
-//             {filterActive(careCenters).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+//           {/* Care Center Dropdown: Super Admin sees All + List, Care Center sees ONLY their Center */}
+//           <select 
+//             value={careCenterFilter} 
+//             onChange={(e) => setCareCenterFilter(e.target.value)} 
+//             className="flex-1 min-w-[130px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+//           >
+//             {!isCareCenterUser && <option value="All">All Care Centers</option>}
+//             {filterBarDropdownCareCenters.map((c) => (
+//               <option key={c.id} value={c.id}>{c.name}</option>
+//             ))}
 //           </select>
 
-//           {/* Status Dropdown */}
 //           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
 //             <option value="All">All Status</option>
 //             {RENTAL_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
 //           </select>
           
-//           {/* Deal Types Dropdown */}
 //           <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[115px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
 //             <option value="All">All Deal Types</option>
 //             {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
 //           </select>
           
-//           {/* Units Dropdown */}
 //           <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
 //             <option value="All">All Units</option>
 //             {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
 //           </select>
 
-//           {/* Modes Dropdown */}
 //           <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
 //             <option value="All">All Modes</option>
 //             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
 //           </select>
 
-//           {/* Reset Button (Cross Mark) */}
 //           <button 
 //             type="button"
 //             onClick={() => {
@@ -1332,7 +1457,7 @@
 //                     ? "bg-emerald-50/70 hover:bg-emerald-100" 
 //                     : currentMode === "Postpaid" 
 //                     ? "bg-rose-50/70 hover:bg-rose-100"       
-//                     : "hover:bg-teal-50/40";                 
+//                     : "hover:bg-teal-50/40";                  
 
 //                   const eqId = log.equipmentId || log.equipment_id;
 //                   let actualDevice = eqId || log.equipmentName || "—";
@@ -1395,7 +1520,7 @@
 //           </table>
 //         </div>
 //         <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/40 px-5 py-3 text-xs text-slate-400">
-//           <span>Showing {filtered.length} of {logs.length} requisitions</span>
+//           <span>Showing {filtered.length} of {scopedLogs.length} requisitions</span>
 //           <span className="hidden sm:inline">Chikitsa · Live data</span>
 //         </div>
 //       </div>
@@ -1427,9 +1552,51 @@
 // }
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Search, SlidersHorizontal, Plus, Eye, Pencil, Trash2, PackageCheck, Clock, Activity, AlertTriangle, Building2, User, Tag, CreditCard, Save, X, ClipboardList, ArrowLeft, ChevronRight, ImagePlus, Truck, FileText, Calendar, ChevronDown, Calculator } from "lucide-react";
-import { PrimaryButton, GhostButton, IconAction, ConfirmDialog, StatusBadge, Field, Select, TextInput, toast } from "../components/UiComponents";
-import { RENTAL_STATES, DEAL_TYPE_OPTIONS, MODE_OPTIONS, UNIT_OPTIONS, PAYMENT_TYPES } from "../data/MockData";
+import { 
+  Search, 
+  SlidersHorizontal, 
+  Plus, 
+  Eye, 
+  Pencil, 
+  Trash2, 
+  PackageCheck, 
+  Clock, 
+  Activity, 
+  AlertTriangle, 
+  Building2, 
+  User, 
+  Tag, 
+  CreditCard, 
+  Save, 
+  X, 
+  ClipboardList, 
+  ArrowLeft, 
+  ChevronRight, 
+  ImagePlus, 
+  Truck, 
+  FileText, 
+  Calendar, 
+  ChevronDown, 
+  Calculator,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
+} from "lucide-react";
+import { 
+  PrimaryButton, 
+  GhostButton, 
+  IconAction, 
+  ConfirmDialog, 
+  Field, 
+  Select, 
+  TextInput, 
+  toast 
+} from "../components/UiComponents";
+import { 
+  DEAL_TYPE_OPTIONS, 
+  MODE_OPTIONS, 
+  UNIT_OPTIONS 
+} from "../data/MockData";
 import { formatDateShort, todayISO } from "../utils/Helper";
 import API from "../utils/api";
 
@@ -1470,54 +1637,12 @@ const filterActive = (list = []) => {
   return list.filter((item) => {
     if (!item) return false;
     if (typeof item === "string") return true;
-    const st = (item.status || item.state || "").toString().trim().toLowerCase();
+    const st = String(item.status || item.state || "").trim().toLowerCase();
     if (st === "inactive" || st === "disabled" || item.is_active === 0 || item.isActive === false) {
       return false;
     }
     return true;
   });
-};
-
-const getCalculatedStatus = (startDateStr, logoutDateStr, currentStatus) => {
-  if (currentStatus && ["returned", "return"].includes(currentStatus.toString().trim().toLowerCase())) {
-    return "Returned";
-  }
-
-  if (!startDateStr || !logoutDateStr) return "Pending";
-
-  const parseSafeDate = (dStr) => {
-    if (!dStr) return null;
-    let str = dStr.toString().trim();
-    if (str.includes("T")) str = str.split("T")[0];
-    if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(str)) {
-      const p = str.split(/[-/]/);
-      str = `${p[2]}-${p[1]}-${p[0]}`;
-    }
-    const d = new Date(`${str}T00:00:00`);
-    return isNaN(d.getTime()) ? null : d;
-  };
-
-  const start = parseSafeDate(startDateStr);
-  const logout = parseSafeDate(logoutDateStr);
-
-  if (!start || !logout) return currentStatus || "Pending";
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const tTime = today.getTime();
-  const sTime = start.getTime();
-  const lTime = logout.getTime();
-
-  const overdueLimit = new Date(logout);
-  overdueLimit.setDate(overdueLimit.getDate() + 3);
-  const oTime = overdueLimit.getTime();
-
-  if (tTime >= sTime && tTime <= lTime) return "Active";
-  if (tTime > lTime && tTime <= oTime) return "Pending";
-  if (tTime > oTime) return "Overdue";
-
-  return "Pending";
 };
 
 const formatForDateInput = (d) => {
@@ -1561,7 +1686,9 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
     <div className="relative text-left">
       <div 
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`flex min-h-[42px] w-full flex-wrap items-center justify-between gap-1.5 rounded-lg border bg-white px-3 py-2 text-sm transition-all ${error ? 'border-rose-300 ring-4 ring-rose-500/10' : 'border-slate-200 hover:border-teal-300 focus:border-teal-500'} ${disabled ? 'bg-slate-50 cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+        className={`flex min-h-[42px] w-full flex-wrap items-center justify-between gap-1.5 rounded-lg border bg-white px-3 py-2 text-sm transition-all ${
+          error ? 'border-rose-300 ring-4 ring-rose-500/10' : 'border-slate-200 hover:border-teal-300 focus:border-teal-500'
+        } ${disabled ? 'bg-slate-50 cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
       >
         <div className="flex flex-wrap gap-1.5 items-center flex-1">
           {safeSelected.length === 0 && <span className="text-slate-400">{placeholder}</span>}
@@ -1591,7 +1718,9 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
                   <div 
                     key={optName} 
                     onClick={() => toggleOption(optName)} 
-                    className={`cursor-pointer px-4 py-2 text-sm transition-colors hover:bg-teal-50 ${isSel ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-slate-700'}`}
+                    className={`cursor-pointer px-4 py-2 text-sm transition-colors hover:bg-teal-50 ${
+                      isSel ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-slate-700'
+                    }`}
                   >
                     {optName}
                   </div>
@@ -1605,36 +1734,34 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
   );
 }
 
-function KpiCards({ logs }) {
-  const count = (s) => logs.filter((l) => {
-    const rawStatus = l.status || l.requisition_status || l.return_status;
-    const dynamicStatus = getCalculatedStatus(
-      l.startDate || l.start_date, 
-      l.logoutDate || l.logout_date, 
-      rawStatus
-    );
-    return dynamicStatus === s;
-  }).length;
+function KpiCards({ logs = [] }) {
+  const count = (s) => logs.filter((l) => String(l?.status || "Active").toLowerCase() === s.toLowerCase()).length;
 
   const cards = [
     { label: "Active Rentals", value: count("Active"), icon: Activity, tone: "teal" },
-    { label: "Pending Requisitions", value: count("Pending"), icon: Clock, tone: "amber" },
-    { label: "Overdue Returns", value: count("Overdue"), icon: AlertTriangle, tone: "rose" },
-    { label: "Units Returned", value: count("Returned"), icon: PackageCheck, tone: "slate" },
+    { label: "Closed Rentals", value: count("Closed"), icon: PackageCheck, tone: "slate" },
+    { label: "Inactive Rentals", value: count("Inactive"), icon: AlertTriangle, tone: "rose" },
+    { label: "Total Requisitions", value: logs.length, icon: Clock, tone: "amber" },
   ];
+
   const toneMap = {
     teal: { chip: "bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-teal-500/30", bar: "from-teal-400 to-teal-600", glow: "bg-teal-400/10" },
-    amber: { chip: "bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-amber-500/30", bar: "from-amber-300 to-amber-500", glow: "bg-amber-400/10" },
-    rose: { chip: "bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-rose-500/30", bar: "from-rose-400 to-rose-600", glow: "bg-rose-400/10" },
     slate: { chip: "bg-gradient-to-br from-slate-600 to-slate-700 text-white shadow-slate-500/30", bar: "from-slate-400 to-slate-600", glow: "bg-slate-400/10" },
+    rose: { chip: "bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-rose-500/30", bar: "from-rose-400 to-rose-600", glow: "bg-rose-400/10" },
+    amber: { chip: "bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-amber-500/30", bar: "from-amber-300 to-amber-500", glow: "bg-amber-400/10" },
   };
+
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       {cards.map((c, i) => {
         const Icon = c.icon;
         const t = toneMap[c.tone];
         return (
-          <div key={c.label} style={{ animationDelay: `${i * 60}ms` }} className="rise-in group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/70 sm:p-5">
+          <div 
+            key={c.label} 
+            style={{ animationDelay: `${i * 60}ms` }} 
+            className="rise-in group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/70 sm:p-5"
+          >
             <span className={`absolute inset-x-0 top-0 h-1 scale-x-0 bg-gradient-to-r transition-transform duration-300 group-hover:scale-x-100 ${t.bar}`} />
             <div className={`pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100 ${t.glow}`} />
             <div className={`relative grid h-11 w-11 place-items-center rounded-xl shadow-lg transition-transform duration-300 group-hover:scale-105 ${t.chip}`}>
@@ -1649,13 +1776,13 @@ function KpiCards({ logs }) {
   );
 }
 
-function CalculateTotalDaysModal({ log, equipmentCatalog, onClose }) {
-  const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log.startDate || log.start_date) || todayISO());
-  const [tempLogoutDate, setTempLogoutDate] = useState(() => formatForDateInput(log.logoutDate || log.logout_date) || "");
+function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
+  const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date) || todayISO());
+  const [tempLogoutDate, setTempLogoutDate] = useState(() => formatForDateInput(log?.logoutDate || log?.logout_date) || "");
 
-  const eqId = log.equipmentId || log.equipment_id;
-  const eqName = equipmentCatalog.find(e => e.id === eqId)?.name || log.equipmentName || "Device";
-  const patientName = log.patientName || log.patient_name || "Patient";
+  const eqId = log?.equipmentId || log?.equipment_id;
+  const eqName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || "Device";
+  const patientName = log?.patientName || log?.patient_name || "Patient";
 
   const calculatedDisplay = useMemo(() => {
     if (!tempLoginDate) return "—";
@@ -1711,7 +1838,7 @@ function CalculateTotalDaysModal({ log, equipmentCatalog, onClose }) {
 
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Log Out Date
+              Log Out Date (Optional)
             </label>
             <input 
               type="date" 
@@ -1719,7 +1846,7 @@ function CalculateTotalDaysModal({ log, equipmentCatalog, onClose }) {
               onChange={(e) => setTempLogoutDate(e.target.value)} 
               className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
             />
-            <p className="text-[11px] text-slate-400 mt-1">Leave empty to calculate until today</p>
+            <p className="text-[11px] text-slate-400 mt-1">Leave empty to calculate active days until today</p>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5 text-center my-2">
@@ -1747,6 +1874,8 @@ function CalculateTotalDaysModal({ log, equipmentCatalog, onClose }) {
 const emptyForm = { 
   careCenterId: "", 
   address: "", 
+  inchargeName: "", 
+  inchargeMobile: "", 
   contactPerson: "", 
   phone: "", 
   gst: "", 
@@ -1766,10 +1895,11 @@ const emptyForm = {
   notes: "", 
   bedNo: "", 
   referral: "", 
+  status: "Active",
   accessory: [] 
 };
 
-function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCatalog, references = [], categories = [], onClose, onSubmit }) {
+function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmentCatalog = [], references = [], categories = [], onClose, onSubmit }) {
   const readOnly = modalMode === "view";
 
   const loggedUser = useMemo(() => {
@@ -1818,7 +1948,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
       const mappedStart = formatForDateInput(initial.startDate || initial.start_date) || todayISO();
       const mappedLogout = formatForDateInput(initial.logoutDate || initial.logout_date);
       const mappedNotify = formatForDateInput(initial.notifyDate || initial.notify_date);
-      const initialStatus = initial.status || initial.requisition_status || initial.return_status || "Pending";
+      const initialStatus = initial.status || "Active";
       const initialMode = initial.mode || initial.paymentType || initial.payment_type || "Postpaid";
 
       return {
@@ -1840,6 +1970,8 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
         notifyDate: mappedNotify,
         deliveryAddress: initial.deliveryAddress || initial.delivery_address || "",
         notes: initial.notes || "",
+        inchargeName: initial.inchargeName || initial.incharge_name || initial.contactPerson || initial.contact_person || cc?.contactPerson || cc?.contact_person || "",
+        inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || initial.pocMobile || cc?.phone || "",
         contactPerson: initial.contactPerson || initial.contact_person || cc?.contactPerson || cc?.contact_person || "",
         phone: initial.phone || cc?.phone || "",
         gst: initial.gst || initial.gst_number || initial.gstNumber || cc?.gst || "",
@@ -1854,7 +1986,9 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
       careCenterId: defaultCcId,
       address: matchedUserCenter?.address || "",
       phone: matchedUserCenter?.phone || loggedUser.phone || "",
+      inchargeMobile: matchedUserCenter?.phone || loggedUser.phone || "",
       contactPerson: matchedUserCenter?.contact_person || matchedUserCenter?.contactPerson || "",
+      inchargeName: matchedUserCenter?.contact_person || matchedUserCenter?.contactPerson || "",
       gst: matchedUserCenter?.gst || ""
     };
   });
@@ -1862,16 +1996,20 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
   const [errors, setErrors] = useState({});
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  const modalCurrentStatus = useMemo(() => {
-    return getCalculatedStatus(form.startDate, form.logoutDate, form.status);
-  }, [form.startDate, form.logoutDate, form.status]);
-
   const handleCareCenterChange = (id) => {
     if (id === "other") {
-      set({ careCenterId: "other", address: "", contactPerson: "", phone: "", gst: "" });
+      set({ careCenterId: "other", address: "", contactPerson: "", inchargeName: "", inchargeMobile: "", phone: "", gst: "" });
     } else {
       const cc = careCenters.find((c) => c.id === id);
-      set({ careCenterId: id, address: cc?.address || "", contactPerson: cc?.contactPerson || cc?.contact_person || "", phone: cc?.phone || "", gst: cc?.gst || "" });
+      set({ 
+        careCenterId: id, 
+        address: cc?.address || "", 
+        contactPerson: cc?.contactPerson || cc?.contact_person || "", 
+        inchargeName: cc?.contactPerson || cc?.contact_person || "",
+        phone: cc?.phone || "", 
+        inchargeMobile: cc?.phone || "",
+        gst: cc?.gst || "" 
+      });
     }
   };
 
@@ -1882,9 +2020,11 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
     if (!form.quantity || Number(form.quantity) < 1) e.quantity = "Quantity must be at least 1.";
     if (!form.patientName) e.patientName = "Patient name is required.";
     if (!form.startDate) e.startDate = "Login date is required.";
-    if (!form.logoutDate) e.logoutDate = "Logout date is required.";
     if (form.paymentType === "Prepaid" && !form.notifyDate) e.notifyDate = "Notify date is mandatory for Prepaid requisitions.";
     if (!form.deliveryAddress) e.deliveryAddress = "Delivery address is required.";
+    if (form.inchargeMobile && !/^\d{10}$/.test(String(form.inchargeMobile).trim())) {
+      e.inchargeMobile = "Enter a valid 10-digit mobile number.";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -1906,7 +2046,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
       equipmentName: equipment?.name || form.equipmentId, 
       category: equipment?.category || "General", 
       careCenterName, 
-      status: form.status || "Pending", 
+      status: form.status || "Active", 
       deliveryStatus: form.deliveryStatus || "Pending Dispatch" 
     });
   };
@@ -1922,18 +2062,24 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
       <div className="fade-slide-up flex w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/20 ring-1 ring-black/5 sm:rounded-2xl" style={{ maxHeight: "92vh" }}>
         <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-teal-50/70 via-white to-white px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-md shadow-teal-500/30"><ClipboardList className="h-4.5 w-4.5" /></div>
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-md shadow-teal-500/30">
+              <ClipboardList className="h-4.5 w-4.5" />
+            </div>
             <div>
               <h2 className="font-display text-base font-bold tracking-tight text-slate-800">{titles[modalMode]}</h2>
               {initial?.id && <p className="text-xs font-medium text-slate-400">{initial.id}</p>}
             </div>
           </div>
-          <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"><X className="h-4 w-4" /></button>
+          <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         <div className="smooth-scroll min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
           <div>
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600"><Building2 className="h-3.5 w-3.5" /> Care Center</p>
+            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
+              <Building2 className="h-3.5 w-3.5" /> Care Center &amp; Incharge
+            </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Field label="Select Care Center" required error={errors.careCenterId}>
@@ -1944,13 +2090,26 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
                   </Select>
                 </Field>
               </div>
-              <Field label="Contact Person / Doctor"><TextInput disabled={readOnly} value={form.contactPerson} onChange={(e) => set({ contactPerson: e.target.value })} placeholder="Enter name" /></Field>
-              <Field label="Phone"><TextInput disabled={readOnly} value={form.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="Enter phone" /></Field>
-              <Field label="GST / ID Number"><TextInput disabled={readOnly} value={form.gst || form.gst_number || form.gstNumber || ""} onChange={(e) => set({ gst: e.target.value })} placeholder="Enter GST/ID" /></Field>
-              <Field label="Address"><TextInput disabled={readOnly} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder="Enter full address" /></Field>
+              
+              <Field label="Incharge Name / Doctor">
+                <TextInput disabled={readOnly} value={form.inchargeName} onChange={(e) => set({ inchargeName: e.target.value, contactPerson: e.target.value })} placeholder="Enter Incharge name" />
+              </Field>
+              
+              <Field label="Incharge Mobile" error={errors.inchargeMobile}>
+                <TextInput disabled={readOnly} maxLength={10} value={form.inchargeMobile} error={errors.inchargeMobile} onChange={(e) => set({ inchargeMobile: e.target.value, phone: e.target.value })} placeholder="10-digit mobile" />
+              </Field>
+
+              <Field label="GST / ID Number">
+                <TextInput disabled={readOnly} value={form.gst || form.gst_number || form.gstNumber || ""} onChange={(e) => set({ gst: e.target.value })} placeholder="Enter GST/ID" />
+              </Field>
+              <Field label="Facility Address">
+                <TextInput disabled={readOnly} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder="Enter full address" />
+              </Field>
               
               <div className="sm:col-span-2 grid grid-cols-2 gap-4">
-                <Field label="Bed No"><TextInput disabled={readOnly} value={form.bedNo || form.bed_number || form.bedNumber || ""} onChange={(e) => set({ bedNo: e.target.value, bed_number: e.target.value })} /></Field>
+                <Field label="Bed No">
+                  <TextInput disabled={readOnly} value={form.bedNo || form.bed_number || form.bedNumber || ""} onChange={(e) => set({ bedNo: e.target.value, bed_number: e.target.value })} />
+                </Field>
                 <Field label="Referral">
                   <Select disabled={readOnly} value={form.referral || form.referral_doctor || form.referralDoctor || ""} onChange={(e) => set({ referral: e.target.value, referral_doctor: e.target.value })}>
                     <option value="">-- Select Referral --</option>
@@ -1968,18 +2127,41 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
           <div className="border-t border-slate-100" />
           
           <div>
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600"><Tag className="h-3.5 w-3.5" /> Record Types</p>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="Deal Type"><Select disabled={readOnly} value={form.dealType} onChange={(e) => set({ dealType: e.target.value })}>{DEAL_TYPE_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}</Select></Field>
-              <Field label="Unit"><Select disabled={readOnly} value={form.unit} onChange={(e) => set({ unit: e.target.value })}>{UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}</Select></Field>
-              <Field label="Mode"><Select disabled={readOnly} value={form.mode} onChange={(e) => set({ mode: e.target.value, paymentType: e.target.value })}>{MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}</Select></Field>
+            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
+              <Tag className="h-3.5 w-3.5" /> Record Types &amp; Status
+            </p>
+            <div className="grid gap-4 sm:grid-cols-4">
+              <Field label="Deal Type">
+                <Select disabled={readOnly} value={form.dealType} onChange={(e) => set({ dealType: e.target.value })}>
+                  {DEAL_TYPE_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </Select>
+              </Field>
+              <Field label="Unit">
+                <Select disabled={readOnly} value={form.unit} onChange={(e) => set({ unit: e.target.value })}>
+                  {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+                </Select>
+              </Field>
+              <Field label="Mode">
+                <Select disabled={readOnly} value={form.mode} onChange={(e) => set({ mode: e.target.value, paymentType: e.target.value })}>
+                  {MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </Select>
+              </Field>
+              <Field label="Status">
+                <Select disabled={readOnly} value={form.status} onChange={(e) => set({ status: e.target.value })}>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                  <option value="Closed">Closed</option>
+                </Select>
+              </Field>
             </div>
           </div>
 
           <div className="border-t border-slate-100" />
 
           <div>
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600"><User className="h-3.5 w-3.5" /> Patient</p>
+            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
+              <User className="h-3.5 w-3.5" /> Patient Details
+            </p>
             <Field label="Patient Name" required error={errors.patientName}>
               <TextInput disabled={readOnly} value={form.patientName} error={errors.patientName} placeholder="Full name of the patient" onChange={(e) => set({ patientName: e.target.value })} />
             </Field>
@@ -1988,7 +2170,9 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
           <div className="border-t border-slate-100" />
 
           <div>
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600"><ClipboardList className="h-3.5 w-3.5" /> Equipment Details</p>
+            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
+              <ClipboardList className="h-3.5 w-3.5" /> Equipment &amp; Dates
+            </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Field label="Equipment" required error={errors.equipmentId}>
@@ -2015,69 +2199,32 @@ function RequisitionModal({ mode: modalMode, initial, careCenters, equipmentCata
               <Field label="Quantity" required error={errors.quantity}>
                 <TextInput disabled={readOnly} type="number" min={1} value={form.quantity} error={errors.quantity} onChange={(e) => set({ quantity: e.target.value })} />
               </Field>
-              <Field label="Login Date (Rental Start)" required error={errors.startDate}>
+              <Field label="Login Date (Start Date)" required error={errors.startDate}>
                 <TextInput disabled={readOnly} type="date" value={form.startDate} error={errors.startDate} onChange={(e) => set({ startDate: e.target.value })} />
               </Field>
-              <Field label="Logout Date (Return)" required error={errors.logoutDate}>
+              
+              <Field label="Logout Date (Optional)">
                 <TextInput 
                   disabled={readOnly} 
                   type="date" 
                   value={form.logoutDate || ""} 
-                  error={errors.logoutDate} 
-                  onChange={(e) => set({ logoutDate: e.target.value, logout_date: e.target.value })} 
+                  onChange={(e) => set({ 
+                    logoutDate: e.target.value, 
+                    logout_date: e.target.value,
+                    status: e.target.value ? "Closed" : form.status 
+                  })} 
                 />
               </Field>
+
+              <Field label="Notify Date" required={form.paymentType === "Prepaid"} error={errors.notifyDate}>
+                <TextInput disabled={readOnly} type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
+              </Field>
+
               <div className="sm:col-span-2">
                 <Field label="Delivery Address" required error={errors.deliveryAddress}>
                   <TextInput disabled={readOnly} value={form.deliveryAddress} error={errors.deliveryAddress} placeholder="Where should the equipment be delivered?" onChange={(e) => set({ deliveryAddress: e.target.value })} />
                 </Field>
               </div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100" />
-
-          <div>
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600"><CreditCard className="h-3.5 w-3.5" /> Payment</p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Payment Type</label>
-                <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
-                  {PAYMENT_TYPES.map((pt) => (
-                    <button key={pt} type="button" disabled={readOnly} onClick={() => set({ paymentType: pt, mode: pt })} className={`flex-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-all duration-200 ${form.paymentType === pt ? "bg-white text-teal-700 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"}`}>
-                      {pt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <Field label="Notify Date" required={form.paymentType === "Prepaid"} error={errors.notifyDate} hint={form.paymentType === "Postpaid" ? "Optional for postpaid requisitions" : "Required — customer will be notified on this date"}>
-                <TextInput disabled={readOnly} type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
-              </Field>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-slate-500">Current Status</p>
-                <p className="text-sm font-bold text-slate-800">{modalCurrentStatus}</p>
-              </div>
-
-              {modalCurrentStatus === "Returned" ? (
-                <span className="rounded-md bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
-                  ✓ Unit Returned
-                </span>
-              ) : (
-                !readOnly && (
-                  <button
-                    type="button"
-                    onClick={() => set({ status: "Returned", requisition_status: "Returned", return_status: "Returned" })}
-                    className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95 cursor-pointer"
-                  >
-                    <PackageCheck className="h-4 w-4" /> Mark as Returned
-                  </button>
-                )
-              )}
             </div>
           </div>
 
@@ -2108,7 +2255,7 @@ function SectionHeading({ icon: Icon, children }) {
   );
 }
 
-function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], categories = [], onCancel, onSubmit }) {
+function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
   const loggedUser = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}");
@@ -2144,9 +2291,11 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
       ...emptyForm,
       careCenterId: defaultCcId,
       careAddress: matchedUserCenter?.address || "",
-      pocMobile: matchedUserCenter?.phone || loggedUser.phone || "",
+      inchargeMobile: matchedUserCenter?.phone || loggedUser.phone || "",
+      inchargeName: matchedUserCenter?.contact_person || matchedUserCenter?.contactPerson || "",
       recordDate: todayISO(),
-      loginDate: todayISO()
+      loginDate: todayISO(),
+      status: "Active"
     };
   });
 
@@ -2160,13 +2309,14 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
 
   const handleCareCenterChange = (id) => {
     if (id === "other") {
-      set({ careCenterId: "other", careAddress: "", pocMobile: "" });
+      set({ careCenterId: "other", careAddress: "", inchargeMobile: "", inchargeName: "" });
     } else {
       const cc = careCenters.find((c) => c.id === id);
       set({ 
         careCenterId: id, 
         careAddress: cc?.address || "", 
-        pocMobile: cc?.phone || ""
+        inchargeMobile: cc?.phone || "",
+        inchargeName: cc?.contact_person || cc?.contactPerson || ""
       });
     }
   };
@@ -2191,11 +2341,13 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
     if (!form.mode) e.mode = "Please select a mode.";
     if (!form.deviceModel) e.deviceModel = "Please choose an equipment model.";
     if (!form.loginDate) e.loginDate = "Log in date is required.";
-    if (!form.logoutDate) e.logoutDate = "Logout date is required to calculate total days.";
     if (!form.billingType) e.billingType = "Please select a billing type.";
     if (!form.patientName) e.patientName = "Patient name is required.";
     if (form.mode === "Prepaid" && !form.notifyDate) {
       e.notifyDate = "Notify Date is mandatory for Prepaid!";
+    }
+    if (form.inchargeMobile && !/^\d{10}$/.test(String(form.inchargeMobile).trim())) {
+      e.inchargeMobile = "Enter a valid 10-digit mobile number.";
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -2220,9 +2372,10 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
       careCenterName, 
       quantity: 1, 
       startDate: form.loginDate, 
+      logoutDate: form.logoutDate || null,
       paymentType: form.mode, 
       deliveryAddress: form.deliveryAddress, 
-      status: "Active", 
+      status: form.status || (form.logoutDate ? "Closed" : "Active"), 
       deliveryStatus: "Pending Dispatch", 
       photoCount: photos.length,
     });
@@ -2232,7 +2385,9 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
     <div className="fade-slide-up space-y-5">
       <GlobalPolish />
       <div className="flex items-center gap-2 text-sm">
-        <button onClick={onCancel} className="flex items-center gap-1.5 font-semibold text-slate-500 transition-colors hover:text-teal-600 cursor-pointer"><ArrowLeft className="h-4 w-4" /> Rental Master</button>
+        <button onClick={onCancel} className="flex items-center gap-1.5 font-semibold text-slate-500 transition-colors hover:text-teal-600 cursor-pointer">
+          <ArrowLeft className="h-4 w-4" /> Rental Master
+        </button>
         <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
         <span className="font-semibold text-slate-700">Log Asset Requisition</span>
       </div>
@@ -2245,11 +2400,33 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
       </div>
 
       <div style={{ animationDelay: "40ms" }} className="relative z-40 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
-        <SectionHeading icon={Tag}>Record Types</SectionHeading>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Deal Type" required error={errors.dealType}><Select value={form.dealType} error={errors.dealType} onChange={(e) => set({ dealType: e.target.value })}><option value="">--- Select ---</option>{DEAL_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}</Select></Field>
-          <Field label="Unit" required error={errors.unit}><Select value={form.unit} error={errors.unit} onChange={(e) => set({ unit: e.target.value })}><option value="">--- Select ---</option>{UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}</Select></Field>
-          <Field label="Payment Mode" required error={errors.mode}><Select value={form.mode} error={errors.mode} onChange={(e) => set({ mode: e.target.value, paymentType: e.target.value })}><option value="">--- Select ---</option>{MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}</Select></Field>
+        <SectionHeading icon={Tag}>Record Types &amp; Status</SectionHeading>
+        <div className="grid gap-4 sm:grid-cols-4">
+          <Field label="Deal Type" required error={errors.dealType}>
+            <Select value={form.dealType} error={errors.dealType} onChange={(e) => set({ dealType: e.target.value })}>
+              <option value="">--- Select ---</option>
+              {DEAL_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
+            </Select>
+          </Field>
+          <Field label="Unit" required error={errors.unit}>
+            <Select value={form.unit} error={errors.unit} onChange={(e) => set({ unit: e.target.value })}>
+              <option value="">--- Select ---</option>
+              {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+            </Select>
+          </Field>
+          <Field label="Payment Mode" required error={errors.mode}>
+            <Select value={form.mode} error={errors.mode} onChange={(e) => set({ mode: e.target.value, paymentType: e.target.value })}>
+              <option value="">--- Select ---</option>
+              {MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
+            </Select>
+          </Field>
+          <Field label="Status">
+            <Select value={form.status || "Active"} onChange={(e) => set({ status: e.target.value })}>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Closed">Closed</option>
+            </Select>
+          </Field>
         </div>
       </div>
 
@@ -2285,10 +2462,13 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
             <TextInput type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
           </Field>
           
-          <Field label="Log Out Date" required error={errors.logoutDate}>
-            <TextInput type="date" value={form.logoutDate} error={errors.logoutDate} onChange={(e) => set({ logoutDate: e.target.value })} />
+          <Field label="Log Out Date (Optional)">
+            <TextInput type="date" value={form.logoutDate} onChange={(e) => set({ logoutDate: e.target.value })} />
           </Field>
-          <Field label="Recall Date"><TextInput type="date" value={form.recallDate} onChange={(e) => set({ recallDate: e.target.value })} /></Field>
+
+          <Field label="Recall Date">
+            <TextInput type="date" value={form.recallDate} onChange={(e) => set({ recallDate: e.target.value })} />
+          </Field>
         </div>
       </div>
 
@@ -2311,7 +2491,7 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
       <div style={{ animationDelay: "160ms" }} className="relative z-10 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <div className="grid gap-8 lg:grid-cols-2">
           <div>
-            <SectionHeading icon={Building2}>Care Center Context</SectionHeading>
+            <SectionHeading icon={Building2}>Care Center &amp; Incharge</SectionHeading>
             <div className="space-y-4">
               <Field label="Care Center Name">
                 <Select value={form.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
@@ -2321,8 +2501,12 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
                 </Select>
               </Field>
               <div className="grid grid-cols-2 gap-4">
-                <Field label="POC Mobile"><TextInput value={form.pocMobile} onChange={(e) => set({ pocMobile: e.target.value })} /></Field>
-                <Field label="Alt POC Mobile"><TextInput value={form.altPocMobile} onChange={(e) => set({ altPocMobile: e.target.value })} /></Field>
+                <Field label="Incharge Name">
+                  <TextInput value={form.inchargeName} onChange={(e) => set({ inchargeName: e.target.value })} placeholder="Incharge Name" />
+                </Field>
+                <Field label="Incharge Mobile" error={errors.inchargeMobile}>
+                  <TextInput maxLength={10} value={form.inchargeMobile} error={errors.inchargeMobile} onChange={(e) => set({ inchargeMobile: e.target.value })} placeholder="10-digit number" />
+                </Field>
               </div>
               <Field label="Care Address"><textarea rows={2} value={form.careAddress} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none resize-none border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30" onChange={(e) => set({ careAddress: e.target.value })} /></Field>
               
@@ -2351,8 +2535,8 @@ function NewRequisitionPage({ careCenters, equipmentCatalog, references = [], ca
               </div>
               <Field label="Attendant Name"><TextInput value={form.attendantName} onChange={(e) => set({ attendantName: e.target.value })} /></Field>
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Mobile Number"><TextInput value={form.mobileNumber} onChange={(e) => set({ mobileNumber: e.target.value })} /></Field>
-                <Field label="Alt Mobile Number"><TextInput value={form.altMobileNumber} onChange={(e) => set({ altMobileNumber: e.target.value })} /></Field>
+                <Field label="Mobile Number"><TextInput maxLength={10} value={form.mobileNumber} onChange={(e) => set({ mobileNumber: e.target.value })} /></Field>
+                <Field label="Alt Mobile Number"><TextInput maxLength={10} value={form.altMobileNumber} onChange={(e) => set({ altMobileNumber: e.target.value })} /></Field>
               </div>
               <Field label="Delivery Address"><textarea rows={3} value={form.deliveryAddress} onChange={(e) => set({ deliveryAddress: e.target.value })} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" /></Field>
             </div>
@@ -2422,16 +2606,16 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
   const matchedUserCenter = useMemo(() => {
     if (!isCareCenterUser) return null;
-    const cleanUserPhone = (loggedUser?.phone || "").toString().replace(/\D/g, "").slice(-10);
-    const cleanUserName = (loggedUser?.careCenterName || loggedUser?.name || "").trim().toLowerCase();
+    const cleanUserPhone = String(loggedUser?.phone || "").replace(/\D/g, "").slice(-10);
+    const cleanUserName = String(loggedUser?.careCenterName || loggedUser?.name || "").trim().toLowerCase();
 
     return careCenters.find((c) => {
-      const cleanCcPhone = (c.phone || "").toString().replace(/\D/g, "").slice(-10);
-      const cleanCcName = (c.name || "").trim().toLowerCase();
+      const cleanCcPhone = String(c?.phone || "").replace(/\D/g, "").slice(-10);
+      const cleanCcName = String(c?.name || "").trim().toLowerCase();
 
       return (
-        (c.id && loggedUser?.careCenterId && String(c.id) === String(loggedUser.careCenterId)) ||
-        (c.id && loggedUser?.id && String(c.id) === String(loggedUser.id)) ||
+        (c?.id && loggedUser?.careCenterId && String(c.id) === String(loggedUser.careCenterId)) ||
+        (c?.id && loggedUser?.id && String(c.id) === String(loggedUser.id)) ||
         (cleanUserPhone && cleanCcPhone && cleanUserPhone === cleanCcPhone) ||
         (cleanUserName && cleanCcName && (cleanCcName.includes(cleanUserName) || cleanUserName.includes(cleanCcName)))
       );
@@ -2498,12 +2682,13 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   }, []);
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("Both"); // Both (All), Active, Inactive, Closed
   const [dealTypeFilter, setDealTypeFilter] = useState("All");
   const [unitFilter, setUnitFilter] = useState("All"); 
   const [modeFilter, setModeFilter] = useState("All");
   const [monthFilter, setMonthFilter] = useState(0); 
   const [careCenterFilter, setCareCenterFilter] = useState("All"); 
+  const [sortOrder, setSortOrder] = useState("desc");
 
   const [modal, setModal] = useState(null); 
   const [calcModal, setCalcModal] = useState(null);
@@ -2513,14 +2698,15 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const scopedLogs = useMemo(() => {
     if (!isCareCenterUser) return logs;
 
-    const myCenterId = (matchedUserCenter?.id || loggedUser.careCenterId || loggedUser.id || "").toString().trim().toLowerCase();
-    const myCenterName = (matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "").toString().trim().toLowerCase();
+    const myCenterId = String(matchedUserCenter?.id || loggedUser.careCenterId || loggedUser.id || "").trim().toLowerCase();
+    const myCenterName = String(matchedUserCenter?.name || loggedUser.careCenterName || loggedUser.name || "").trim().toLowerCase();
     const myCenterIdNumeric = myCenterId.replace(/\D/g, "");
 
     return logs.filter((l) => {
-      const ccId = (l.careCenterId || l.care_center_id || "").toString().trim().toLowerCase();
+      if (!l) return false;
+      const ccId = String(l.careCenterId || l.care_center_id || "").trim().toLowerCase();
       const ccIdNumeric = ccId.replace(/\D/g, "");
-      const ccName = (l.careCenterName || l.care_center_name || careCenters.find((c) => String(c.id) === String(ccId))?.name || ccId || "").toString().trim().toLowerCase();
+      const ccName = String(l.careCenterName || l.care_center_name || careCenters.find((c) => String(c?.id) === String(ccId))?.name || ccId || "").trim().toLowerCase();
 
       const idMatch = (ccId && myCenterId && ccId === myCenterId) || (ccIdNumeric && myCenterIdNumeric && ccIdNumeric === myCenterIdNumeric);
       const nameMatch = (ccName && myCenterName && (ccName.includes(myCenterName) || myCenterName.includes(ccName)));
@@ -2586,34 +2772,58 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   };
 
   const filtered = useMemo(() => {
-    return scopedLogs.filter((l) => {
-      const ccId = l.careCenterId || l.care_center_id;
-      const ccName = l.careCenterName || careCenters.find((c) => c.id === ccId)?.name || ccId || "";
+    const q = String(search || "").toLowerCase().trim();
+    const sFilter = String(statusFilter || "Both").trim().toLowerCase();
 
-      const eqId = l.equipmentId || l.equipment_id;
-      const eqName = l.equipmentName || equipmentCatalog.find(e => e.id === eqId)?.name || eqId;
+    return scopedLogs
+      .filter((l) => {
+        if (!l) return false;
 
-      const rawStatus = l.status || l.requisition_status || l.return_status;
-      const currentCalcStatus = getCalculatedStatus(l.startDate || l.start_date, l.logoutDate || l.logout_date, rawStatus);
-      const currentMode = l.mode || l.paymentType || l.payment_type || "";
-      const currentUnit = l.unit || "";
+        const ccId = String(l.careCenterId || l.care_center_id || "");
+        const ccObj = careCenters.find((c) => c && String(c.id) === ccId);
+        const ccName = String(l.careCenterName || ccObj?.name || ccId || "");
 
-      const matchesSearch = !search || 
-        l.id.toString().toLowerCase().includes(search.toLowerCase()) || 
-        (eqName || "").toLowerCase().includes(search.toLowerCase()) || 
-        (l.patientName || l.patient_name || "").toLowerCase().includes(search.toLowerCase()) || 
-        (ccName || "").toLowerCase().includes(search.toLowerCase());
-        
-      const matchesStatus = statusFilter === "All" || currentCalcStatus === statusFilter;
-      const matchesDealType = dealTypeFilter === "All" || (l.dealType || l.deal_type) === dealTypeFilter;
-      const matchesUnit = unitFilter === "All" || currentUnit === unitFilter;
-      const matchesMode = modeFilter === "All" || currentMode === modeFilter;
-      
-      const matchesCareCenter = isCareCenterUser || careCenterFilter === "All" || ccId === careCenterFilter;
+        const eqId = String(l.equipmentId || l.equipment_id || "");
+        const eqObj = equipmentCatalog.find((e) => e && String(e.id) === eqId);
+        const eqName = String(l.equipmentName || eqObj?.name || eqId || "");
 
-      return matchesSearch && matchesStatus && matchesDealType && matchesUnit && matchesMode && matchesCareCenter;
-    });
-  }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, careCenters, equipmentCatalog, isCareCenterUser]);
+        const patient = String(l.patientName || l.patient_name || "");
+        const incharge = String(l.inchargeName || l.incharge_name || l.contactPerson || l.contact_person || "");
+        const inchargeMobile = String(l.inchargeMobile || l.incharge_mobile || l.phone || l.pocMobile || "");
+        const logId = String(l.id || "");
+
+        const matchesSearch = !q || 
+          logId.toLowerCase().includes(q) || 
+          eqName.toLowerCase().includes(q) || 
+          patient.toLowerCase().includes(q) || 
+          ccName.toLowerCase().includes(q) ||
+          incharge.toLowerCase().includes(q) ||
+          inchargeMobile.includes(q);
+          
+        const rawStatus = String(l.status || l.requisition_status || "Active").trim().toLowerCase();
+        const matchesStatus = (sFilter === "both" || sFilter === "all")
+          ? true
+          : rawStatus === sFilter;
+
+        const dType = String(l.dealType || l.deal_type || "");
+        const matchesDealType = dealTypeFilter === "All" || dType === dealTypeFilter;
+
+        const unitVal = String(l.unit || "");
+        const matchesUnit = unitFilter === "All" || unitVal === unitFilter;
+
+        const modeVal = String(l.mode || l.paymentType || l.payment_type || "");
+        const matchesMode = modeFilter === "All" || modeVal === modeFilter;
+
+        const matchesCareCenter = isCareCenterUser || careCenterFilter === "All" || ccId === careCenterFilter;
+
+        return matchesSearch && matchesStatus && matchesDealType && matchesUnit && matchesMode && matchesCareCenter;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a?.startDate || a?.start_date || a?.loginDate || 0).getTime();
+        const dateB = new Date(b?.startDate || b?.start_date || b?.loginDate || 0).getTime();
+        return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+      });
+  }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
   const handleAdd = async (data) => {
     try {
@@ -2636,7 +2846,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         patient_name: data.patientName,
         quantity: data.quantity || 1,
         start_date: data.startDate || data.loginDate, 
-        logout_date: data.logoutDate || data.logout_date || data.startDate || data.loginDate, 
+        logout_date: data.logoutDate || data.logout_date || null,
+        incharge_name: data.inchargeName || data.contactPerson || "",
+        incharge_mobile: data.inchargeMobile || data.phone || data.pocMobile || "",
         bed_number: data.bedNo || data.bed_number || "", 
         referral_doctor: data.referral || data.referralDoctor || data.referral_doctor || "",         
         gst_number: data.gstNo || data.gstNumber || data.gst_number || "",
@@ -2649,8 +2861,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         notes: data.notes || "",
         accessory: accStr,
         accessories: accStr, 
-        status: "Active",
-        requisition_status: "Active"
+        status: data.status || (data.logoutDate ? "Closed" : "Active"),
+        requisition_status: data.status || (data.logoutDate ? "Closed" : "Active")
       };
 
       await API.post("/rental/requisitions", backendData);
@@ -2663,7 +2875,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   };
 
   const handleEdit = async (data) => {
-    const targetStatus = data.status || data.requisition_status || data.return_status || "Active";
+    const targetStatus = data.status || "Active";
     const chosenMode = data.mode || data.paymentType || data.payment_type || "Postpaid";
     const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
 
@@ -2700,6 +2912,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         quantity: data.quantity || 1,
         start_date: newStartDate,
         logout_date: newLogoutDate,
+        incharge_name: data.inchargeName || data.contactPerson || "",
+        incharge_mobile: data.inchargeMobile || data.phone || data.pocMobile || "",
         bed_number: data.bedNo || data.bed_number || data.bedNumber || "", 
         referral_doctor: data.referral || data.referral_doctor || data.referralDoctor || "",         
         gst_number: data.gst || data.gst_number || data.gstNumber || "",
@@ -2739,11 +2953,20 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   };
 
   if (showAddPage) {
-    return <NewRequisitionPage careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} categories={categories} onCancel={() => setShowAddPage(false)} onSubmit={handleAdd} />;
+    return (
+      <NewRequisitionPage 
+        careCenters={careCenters} 
+        equipmentCatalog={equipmentCatalog} 
+        references={references} 
+        categories={categories} 
+        onCancel={() => setShowAddPage(false)} 
+        onSubmit={handleAdd} 
+      />
+    );
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5 fade-slide-up">
       <GlobalPolish />
       
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -2761,22 +2984,24 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       <KpiCards logs={scopedLogs} />
       
+      {/* Search & Filter Bar */}
       <div style={{ animationDelay: "80ms" }} className="rise-in rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm shadow-slate-200/40">
         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
-          <div className="group relative flex-[2] min-w-[220px]">
+          <div className="group relative flex-[2] min-w-[200px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-teal-500" />
             <input 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
               autoComplete="off"
-              placeholder="Search by ID, patient, device, care center…" 
+              placeholder="Search by ID, patient, device, incharge…" 
               className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" 
             />
           </div>
 
           <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400 hidden sm:block" />
           
+          {/* Month Filter */}
           <div className="relative group flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-slate-200 bg-slate-50/70 hover:bg-teal-50 transition cursor-pointer shrink-0 shadow-2xs" title="Filter by Month">
             <Calendar className="h-4 w-4 text-slate-500 group-hover:text-teal-600" />
             <select value={monthFilter} onChange={(e) => setMonthFilter(Number(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
@@ -2786,7 +3011,18 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             </select>
           </div>
 
-          {/* Care Center Dropdown: Super Admin sees All + List, Care Center sees ONLY their Center */}
+          {/* Date Sorting Toggle Button */}
+          <button 
+            type="button"
+            onClick={() => setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:border-teal-400 hover:text-teal-700 transition cursor-pointer"
+            title="Toggle Sort by Login Date"
+          >
+            {sortOrder === "desc" ? <ArrowDown className="h-3.5 w-3.5 text-teal-600" /> : <ArrowUp className="h-3.5 w-3.5 text-teal-600" />}
+            <span>{sortOrder === "desc" ? "Newest" : "Oldest"}</span>
+          </button>
+
+          {/* Care Center Dropdown */}
           <select 
             value={careCenterFilter} 
             onChange={(e) => setCareCenterFilter(e.target.value)} 
@@ -2798,17 +3034,24 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             ))}
           </select>
 
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
-            <option value="All">All Status</option>
-            {RENTAL_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+          {/* Status Filter: Both, Active, Inactive, Closed */}
+          <select 
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)} 
+            className="flex-1 min-w-[120px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+          >
+            <option value="Both">Status: Both</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Closed">Closed</option>
           </select>
           
-          <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[115px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
-            <option value="All">All Deal Types</option>
+          <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[110px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+            <option value="All">All Deals</option>
             {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           
-          <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+          <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="flex-1 min-w-[100px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
             <option value="All">All Units</option>
             {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
           </select>
@@ -2822,12 +3065,13 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             type="button"
             onClick={() => {
               setSearch("");
-              setStatusFilter("All");
+              setStatusFilter("Both");
               setDealTypeFilter("All");
               setUnitFilter("All");
               setModeFilter("All");
               setCareCenterFilter("All");
               setMonthFilter(0);
+              setSortOrder("desc");
               toast.success("Filters reset");
             }}
             title="Reset all filters"
@@ -2838,15 +3082,26 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         </div>
       </div>
 
+      {/* Main Table (Without Status Column) */}
       <div style={{ animationDelay: "140ms" }} className="rise-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/40">
         <div className="smooth-scroll-x overflow-x-auto">
           <table className="w-full text-left text-sm" style={{ minWidth: 800 }}>
             <thead>
               <tr className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 text-xs font-bold uppercase tracking-wide text-slate-400 backdrop-blur">
-                <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Device</th>
-                <th className="px-5 py-3">Patients</th>
-                <th className="px-5 py-3">Login Date</th>
+                <th className="px-5 py-3">Patient &amp; Incharge</th>
+                
+                {/* Header Date Sorting */}
+                <th 
+                  onClick={() => setSortOrder((p) => (p === "desc" ? "asc" : "desc"))}
+                  className="px-5 py-3 cursor-pointer hover:text-teal-700 transition select-none"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Login Date</span>
+                    <ArrowUpDown className="h-3 w-3" />
+                  </div>
+                </th>
+
                 <th className="px-5 py-3">Logout Date</th>
                 <th className="px-5 py-3">Total Days</th>
                 <th className="px-5 py-3 text-right">Actions</th>
@@ -2856,9 +3111,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               {loading && filtered.length === 0 ? (
                 Array.from({ length: 5 }).map((_, idx) => (
                   <tr key={idx} className="animate-pulse">
-                    <td className="px-5 py-4"><div className="h-5 w-16 bg-slate-100 rounded-md"></div></td>
                     <td className="px-5 py-4"><div className="h-5 w-28 bg-slate-100 rounded-md"></div></td>
-                    <td className="px-5 py-4"><div className="h-5 w-24 bg-slate-100 rounded-md"></div></td>
+                    <td className="px-5 py-4"><div className="h-5 w-32 bg-slate-100 rounded-md"></div></td>
                     <td className="px-5 py-4"><div className="h-5 w-20 bg-slate-100 rounded-md"></div></td>
                     <td className="px-5 py-4"><div className="h-5 w-20 bg-slate-100 rounded-md"></div></td>
                     <td className="px-5 py-4"><div className="h-5 w-10 bg-slate-100 rounded-md"></div></td>
@@ -2867,7 +3121,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-14 text-center">
+                  <td colSpan={6} className="px-5 py-14 text-center">
                     <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-slate-100"><Search className="h-5 w-5 text-slate-400" /></div>
                     <p className="mt-3 text-sm font-semibold text-slate-500">No requisitions match your filters</p>
                     <p className="text-xs text-slate-400">Try adjusting the search or filter criteria</p>
@@ -2875,11 +3129,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                 </tr>
               ) : (
                 filtered.map((log, i) => {
-                  const actualLogoutDate = log.logoutDate || log.logout_date;
-                  const dynamicDays = getDynamicTotalDays(log.startDate || log.start_date, actualLogoutDate, monthFilter);
-                  const rawStatus = log.status || log.requisition_status || log.return_status;
-                  const currentStatus = getCalculatedStatus(log.startDate || log.start_date, actualLogoutDate, rawStatus);
-                  const currentMode = log.mode || log.paymentType || log.payment_type || "Postpaid";
+                  const actualLogoutDate = log?.logoutDate || log?.logout_date;
+                  const dynamicDays = getDynamicTotalDays(log?.startDate || log?.start_date, actualLogoutDate, monthFilter);
+                  const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
 
                   const rowColor = currentMode === "Prepaid" 
                     ? "bg-emerald-50/70 hover:bg-emerald-100" 
@@ -2887,27 +3139,35 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                     ? "bg-rose-50/70 hover:bg-rose-100"       
                     : "hover:bg-teal-50/40";                  
 
-                  const eqId = log.equipmentId || log.equipment_id;
-                  let actualDevice = eqId || log.equipmentName || "—";
+                  const eqId = log?.equipmentId || log?.equipment_id;
+                  let actualDevice = eqId || log?.equipmentName || "—";
                   
-                  const catMatch = equipmentCatalog.find(e => e.id === eqId);
+                  const catMatch = equipmentCatalog.find(e => e?.id === eqId);
                   if (catMatch) actualDevice = catMatch.name;
+
+                  const inchargeName = log?.inchargeName || log?.incharge_name || log?.contactPerson || log?.contact_person || "";
+                  const inchargePhone = log?.inchargeMobile || log?.incharge_mobile || log?.phone || log?.pocMobile || "";
+                  const isClosed = String(log?.status || "").toLowerCase() === "closed";
 
                   return (
                     <tr 
-                      key={log.id} 
+                      key={log?.id || i} 
                       style={{ animationDelay: `${Math.min(i, 8) * 35}ms` }} 
                       className={`rise-in group/row relative transition-colors duration-150 ${rowColor}`}
                     >
-                      <td className="relative px-5 py-3.5">
-                        <span className="absolute left-0 top-1/2 h-0 w-0.5 -translate-y-1/2 bg-teal-500 transition-all duration-200 group-hover/row:h-6" />
-                        <StatusBadge status={currentStatus} glow={currentStatus === "Active"} />
-                      </td>
                       <td className="px-5 py-3.5 font-bold text-slate-800">
                         {actualDevice}
                       </td>
-                      <td className="px-5 py-3.5 text-slate-600">{log.patientName || log.patient_name || "—"}</td>
-                      <td className="px-5 py-3.5 text-slate-600">{formatDateShort(log.startDate || log.start_date)}</td>
+                      <td className="px-5 py-3.5">
+                        <p className="font-semibold text-slate-800">{log?.patientName || log?.patient_name || "—"}</p>
+                        {inchargeName && (
+                          <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                            <User className="h-3 w-3 text-slate-400 shrink-0" /> {inchargeName}
+                            {inchargePhone && <span className="text-slate-400">({inchargePhone})</span>}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 text-slate-600 font-medium">{formatDateShort(log?.startDate || log?.start_date)}</td>
                       <td className="px-5 py-3.5 text-slate-600">{actualLogoutDate ? formatDateShort(actualLogoutDate) : "—"}</td>
                       
                       <td className="px-5 py-3.5">
@@ -2925,11 +3185,11 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                             <Calculator className="h-4 w-4 text-amber-600" />
                           </IconAction>
 
-                          {currentStatus !== "Returned" && (
+                          {!isClosed && (
                             <IconAction 
-                              title="Mark as Returned" 
+                              title="Mark as Closed" 
                               tone="teal" 
-                              onClick={() => handleEdit({ ...log, status: "Returned", requisition_status: "Returned", return_status: "Returned" })}
+                              onClick={() => handleEdit({ ...log, status: "Closed", requisition_status: "Closed", return_status: "Closed" })}
                             >
                               <PackageCheck className="h-4 w-4 text-emerald-600" />
                             </IconAction>
