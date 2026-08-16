@@ -1552,6 +1552,7 @@
 
 // }
 
+
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { 
   Search, 
@@ -1581,7 +1582,9 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Phone
+  Phone,
+  CheckCircle2,
+  HelpCircle
 } from "lucide-react";
 import { 
   PrimaryButton, 
@@ -1596,8 +1599,7 @@ import {
 import { 
   DEAL_TYPE_OPTIONS, 
   MODE_OPTIONS, 
-  UNIT_OPTIONS,
-  PAYMENT_TYPES 
+  UNIT_OPTIONS 
 } from "../data/MockData";
 import { formatDateShort, todayISO } from "../utils/Helper";
 import API from "../utils/api";
@@ -1793,7 +1795,6 @@ function KpiCards({ logs = [] }) {
   );
 }
 
-// 🧮 CALCULATE TOTAL DAYS MODAL
 function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
   const isQuick = !log || log?.isQuickCalc;
   const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date) || todayISO());
@@ -1892,455 +1893,6 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
   );
 }
 
-const emptyForm = { 
-  careCenterId: "", 
-  address: "", 
-  inchargeMobile: "", 
-  altMobile: "", 
-  phone: "", 
-  gst: "", 
-  equipmentId: "", 
-  quantity: 1, 
-  recordDate: todayISO(), 
-  startDate: todayISO(), 
-  loginDate: todayISO(),
-  logoutDate: "", 
-  patientName: "", 
-  paymentType: "Postpaid", 
-  dealType: "B2B", 
-  unit: "ODCOM", 
-  mode: "Postpaid", 
-  notifyDate: "", 
-  deliveryAddress: "", 
-  notes: "", 
-  bedNo: "", 
-  referral: "", 
-  status: "Active",
-  accessory: [] 
-};
-
-// 📝 ORIGINAL REQUISITION MODAL (RESTORED TO FULL RICH LAYOUT)
-function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmentCatalog = [], references = [], categories = [], onClose, onSubmit }) {
-  const readOnly = modalMode === "view";
-
-  const loggedUser = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user") || "{}");
-    } catch {
-      return {};
-    }
-  }, []);
-  const isCareCenterUser = loggedUser?.role === "care_center";
-
-  const matchedUserCenter = useMemo(() => {
-    if (!isCareCenterUser) return null;
-    return careCenters.find((c) => 
-      c?.id === loggedUser?.careCenterId || 
-      c?.id === loggedUser?.id || 
-      (c?.phone && loggedUser?.phone && String(c.phone).replace(/\D/g, "").slice(-10) === String(loggedUser.phone).replace(/\D/g, "").slice(-10)) ||
-      (c?.name && loggedUser?.name && c.name.trim().toLowerCase() === loggedUser.name.trim().toLowerCase())
-    ) || {
-      id: loggedUser?.careCenterId || loggedUser?.id || "CC-ME",
-      name: loggedUser?.careCenterName || loggedUser?.name || "My Care Center"
-    };
-  }, [careCenters, isCareCenterUser, loggedUser]);
-
-  const modalDropdownCareCenters = useMemo(() => {
-    if (isCareCenterUser && matchedUserCenter) {
-      return [matchedUserCenter];
-    }
-    return filterActive(careCenters);
-  }, [careCenters, isCareCenterUser, matchedUserCenter]);
-  
-  const [form, setForm] = useState(() => {
-    if (initial) {
-      const rawAcc = initial.accessory || initial.accessories;
-      let parsedAcc = [];
-      
-      if (Array.isArray(rawAcc)) {
-        parsedAcc = rawAcc.map(getOptionLabel).filter(Boolean);
-      } else if (typeof rawAcc === "string" && rawAcc.trim() !== "") {
-        parsedAcc = rawAcc.split(",").map(item => item.trim()).filter(Boolean);
-      }
-
-      const ccId = initial.careCenterId || initial.care_center_id || "";
-      const cc = careCenters.find((c) => c?.id === ccId);
-      const mappedRecord = formatForDateInput(initial.recordDate || initial.record_date) || todayISO();
-      const mappedStart = formatForDateInput(initial.startDate || initial.start_date || initial.loginDate) || todayISO();
-      const mappedLogout = formatForDateInput(initial.logoutDate || initial.logout_date);
-      const mappedNotify = formatForDateInput(initial.notifyDate || initial.notify_date);
-      
-      let initialStatus = initial.status || initial.requisition_status || "Active";
-      if (String(initialStatus).toLowerCase() === "returned") initialStatus = "Closed";
-
-      const initialMode = initial.mode || initial.paymentType || initial.payment_type || "Postpaid";
-
-      return {
-        ...emptyForm,
-        ...initial,
-        status: initialStatus,
-        careCenterId: ccId,
-        equipmentId: initial.equipmentId || initial.equipment_id || "",
-        patientName: initial.patientName || initial.patient_name || "",
-        recordDate: mappedRecord,
-        startDate: mappedStart,
-        loginDate: mappedStart,
-        logoutDate: mappedLogout,
-        bedNo: initial.bedNo || initial.bed_no || initial.bed_number || "",
-        referral: initial.referral || initial.referral_doctor || initial.referralDoctor || "",
-        dealType: initial.dealType || initial.deal_type || "B2B",
-        unit: initial.unit || "ODCOM",
-        mode: initialMode,
-        paymentType: initialMode,
-        notifyDate: mappedNotify,
-        deliveryAddress: initial.deliveryAddress || initial.delivery_address || "",
-        notes: initial.notes || "",
-        inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || initial.pocMobile || cc?.phone || "",
-        altMobile: initial.altMobile || initial.alt_mobile || initial.altPocMobile || initial.altMobileNumber || "",
-        phone: initial.phone || cc?.phone || "",
-        gst: initial.gst || initial.gst_number || initial.gstNumber || cc?.gst || "",
-        address: initial.address || cc?.address || "",
-        accessory: parsedAcc
-      };
-    }
-
-    const defaultCcId = matchedUserCenter?.id || "";
-    return {
-      ...emptyForm,
-      careCenterId: defaultCcId,
-      address: matchedUserCenter?.address || "",
-      phone: matchedUserCenter?.phone || loggedUser?.phone || "",
-      inchargeMobile: matchedUserCenter?.phone || loggedUser?.phone || "",
-      altMobile: "",
-      gst: matchedUserCenter?.gst || ""
-    };
-  });
-  
-  const [errors, setErrors] = useState({});
-  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
-
-  const handleCareCenterChange = (id) => {
-    if (id === "other") {
-      set({ careCenterId: "other", address: "", inchargeMobile: "", altMobile: "", phone: "", gst: "" });
-    } else {
-      const cc = careCenters.find((c) => c?.id === id);
-      set({ 
-        careCenterId: id, 
-        address: cc?.address || "", 
-        phone: cc?.phone || "", 
-        inchargeMobile: cc?.phone || "",
-        altMobile: "",
-        gst: cc?.gst || "" 
-      });
-    }
-  };
-
-  const validate = () => {
-    const e = {};
-    if (!form.careCenterId) e.careCenterId = "Please select a care center.";
-    if (!form.equipmentId) e.equipmentId = "Please select equipment.";
-    if (!form.quantity || Number(form.quantity) < 1) e.quantity = "Quantity must be at least 1.";
-    if (!form.patientName) e.patientName = "Patient name is required.";
-    if (!form.startDate) e.startDate = "Login date is required.";
-    if (form.paymentType === "Prepaid" && !form.notifyDate) e.notifyDate = "Notify date is mandatory for Prepaid requisitions.";
-    if (!form.deliveryAddress) e.deliveryAddress = "Delivery address is required.";
-    if (form.inchargeMobile && !/^\d{10}$/.test(String(form.inchargeMobile).trim())) {
-      e.inchargeMobile = "Enter a valid 10-digit mobile number.";
-    }
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleSubmit = () => {
-    if (readOnly) return onClose();
-    if (!validate()) {
-      toast.error("Please fill all required fields correctly."); 
-      return;
-    }
-    const equipment = equipmentCatalog.find((eq) => eq?.id === form.equipmentId);
-    let careCenterName = isCareCenterUser ? (matchedUserCenter?.name || loggedUser?.careCenterName || loggedUser?.name || "") : "Other";
-    if (form.careCenterId !== "other" && !isCareCenterUser) {
-      careCenterName = careCenters.find((c) => c?.id === form.careCenterId)?.name || "";
-    }
-    onSubmit({ 
-      ...form, 
-      id: initial?.id,
-      equipmentName: equipment?.name || form.equipmentId, 
-      category: equipment?.category || "General", 
-      careCenterName, 
-      status: form.status || (form.logoutDate ? "Closed" : "Active"), 
-      deliveryStatus: form.deliveryStatus || "Pending Dispatch" 
-    });
-  };
-
-  const titles = { add: "New Log Requisition", edit: "Edit Requisition", view: "Requisition Details" };
-
-  const activeEquipment = useMemo(() => filterActive(equipmentCatalog), [equipmentCatalog]);
-  const activeReferrals = useMemo(() => filterActive(references), [references]);
-  const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
-
-  const isClosed = String(form.status || "").toLowerCase() === "closed" || String(form.status || "").toLowerCase() === "returned";
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:items-center sm:p-4">
-      <div className="fade-slide-up flex w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/20 ring-1 ring-black/5 sm:rounded-2xl" style={{ maxHeight: "92vh" }}>
-        
-        {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-teal-50/70 via-white to-white px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-md shadow-teal-500/30">
-              <ClipboardList className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <h2 className="font-display text-base font-bold tracking-tight text-slate-800">{titles[modalMode]}</h2>
-              {initial?.id && <p className="text-xs font-medium text-slate-400">{initial.id}</p>}
-            </div>
-          </div>
-          <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <div className="smooth-scroll min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
-          
-          {/* Section 1: Care Center */}
-          <div>
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
-              <Building2 className="h-3.5 w-3.5" /> Care Center
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <Field label="Select Care Center" required error={errors.careCenterId}>
-                  <Select disabled={readOnly} value={form.careCenterId} error={errors.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
-                    {!isCareCenterUser && <option value="">Choose a care center…</option>}
-                    {modalDropdownCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    {!isCareCenterUser && <option value="other">Other (Add New)</option>}
-                  </Select>
-                </Field>
-              </div>
-              
-              {/* 🔄 Incharge Mobile & Alt Mobile */}
-              <Field label="Incharge Mobile" error={errors.inchargeMobile}>
-                <TextInput disabled={readOnly} maxLength={10} value={form.inchargeMobile} error={errors.inchargeMobile} onChange={(e) => set({ inchargeMobile: e.target.value, phone: e.target.value })} placeholder="10-digit mobile" />
-              </Field>
-
-              <Field label="Alt Mobile">
-                <TextInput disabled={readOnly} maxLength={10} value={form.altMobile} onChange={(e) => set({ altMobile: e.target.value })} placeholder="Alternative mobile" />
-              </Field>
-
-              <Field label="GST / ID Number">
-                <TextInput disabled={readOnly} value={form.gst || form.gst_number || form.gstNumber || ""} onChange={(e) => set({ gst: e.target.value })} placeholder="Enter GST/ID" />
-              </Field>
-              <Field label="Address">
-                <TextInput disabled={readOnly} value={form.address} onChange={(e) => set({ address: e.target.value })} placeholder="Enter full address" />
-              </Field>
-              
-              <div className="sm:col-span-2 grid grid-cols-2 gap-4">
-                <Field label="Bed No">
-                  <TextInput disabled={readOnly} value={form.bedNo || form.bed_number || form.bedNumber || ""} onChange={(e) => set({ bedNo: e.target.value, bed_number: e.target.value })} />
-                </Field>
-                <Field label="Referral">
-                  <Select disabled={readOnly} value={form.referral || form.referral_doctor || form.referralDoctor || ""} onChange={(e) => set({ referral: e.target.value, referral_doctor: e.target.value })}>
-                    <option value="">-- Select Referral --</option>
-                    {activeReferrals.map((r) => (
-                      <option key={r.id} value={r.doctorName || r.name}>
-                        {r.doctorName || r.name} {r.domain ? `(${r.domain})` : ""}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100" />
-          
-          {/* Section 2: Record Types */}
-          <div>
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
-              <Tag className="h-3.5 w-3.5" /> Record Types
-            </p>
-            <div className="grid gap-4 sm:grid-cols-4">
-              <Field label="Deal Type">
-                <Select disabled={readOnly} value={form.dealType} onChange={(e) => set({ dealType: e.target.value })}>
-                  {DEAL_TYPE_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
-                </Select>
-              </Field>
-              <Field label="Unit">
-                <Select disabled={readOnly} value={form.unit} onChange={(e) => set({ unit: e.target.value })}>
-                  {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
-                </Select>
-              </Field>
-              <Field label="Mode">
-                <Select disabled={readOnly} value={form.mode} onChange={(e) => set({ mode: e.target.value, paymentType: e.target.value })}>
-                  {MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
-                </Select>
-              </Field>
-              <Field label="Status">
-                <Select disabled={readOnly} value={form.status} onChange={(e) => set({ status: e.target.value })}>
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                  <option value="Closed">Closed</option>
-                </Select>
-              </Field>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100" />
-
-          {/* Section 3: Patient */}
-          <div>
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
-              <User className="h-3.5 w-3.5" /> Patient
-            </p>
-            <Field label="Patient Name" required error={errors.patientName}>
-              <TextInput disabled={readOnly} value={form.patientName} error={errors.patientName} placeholder="Full name of the patient" onChange={(e) => set({ patientName: e.target.value })} />
-            </Field>
-          </div>
-
-          <div className="border-t border-slate-100" />
-
-          {/* Section 4: Equipment Details */}
-          <div>
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
-              <ClipboardList className="h-3.5 w-3.5" /> Equipment Details
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <Field label="Equipment" required error={errors.equipmentId}>
-                  <Select disabled={readOnly} value={form.equipmentId} error={errors.equipmentId} onChange={(e) => set({ equipmentId: e.target.value })}>
-                    <option value="">Select equipment…</option>
-                    {activeEquipment.map((eq) => <option key={eq.id} value={eq.id}>{eq.name} — ₹{eq.dailyRate}/day</option>)}
-                  </Select>
-                </Field>
-              </div>
-              
-              <div className="sm:col-span-2">
-                <Field label="Select Accessory" error={errors.accessory}>
-                  <MultiSelect
-                    options={activeCategories}
-                    selected={form.accessory}
-                    onChange={(newAccessories) => set({ accessory: newAccessories })}
-                    placeholder="-- Choose Accessories --"
-                    error={errors.accessory}
-                    disabled={readOnly}
-                  />
-                </Field>
-              </div>
-
-              <Field label="Quantity" required error={errors.quantity}>
-                <TextInput disabled={readOnly} type="number" min={1} value={form.quantity} error={errors.quantity} onChange={(e) => set({ quantity: e.target.value })} />
-              </Field>
-              <Field label="Login Date (Rental Start)" required error={errors.startDate}>
-                <TextInput disabled={readOnly} type="date" value={form.startDate} error={errors.startDate} onChange={(e) => set({ startDate: e.target.value, loginDate: e.target.value })} />
-              </Field>
-              
-              {/* Logout date optional */}
-              <Field label="Logout Date (Optional Return)">
-                <TextInput 
-                  disabled={readOnly} 
-                  type="date" 
-                  value={form.logoutDate || ""} 
-                  onChange={(e) => set({ 
-                    logoutDate: e.target.value, 
-                    logout_date: e.target.value,
-                    status: e.target.value ? "Closed" : form.status 
-                  })} 
-                />
-              </Field>
-
-              <div className="sm:col-span-2">
-                <Field label="Delivery Address" required error={errors.deliveryAddress}>
-                  <TextInput disabled={readOnly} value={form.deliveryAddress} error={errors.deliveryAddress} placeholder="Where should the equipment be delivered?" onChange={(e) => set({ deliveryAddress: e.target.value })} />
-                </Field>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100" />
-
-          {/* Section 5: Payment */}
-          <div>
-            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600">
-              <CreditCard className="h-3.5 w-3.5" /> Payment
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-600">Payment Type</label>
-                <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
-                  {PAYMENT_TYPES.map((pt) => (
-                    <button 
-                      key={pt} 
-                      type="button" 
-                      disabled={readOnly} 
-                      onClick={() => set({ paymentType: pt, mode: pt })} 
-                      className={`flex-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-all duration-200 ${
-                        form.paymentType === pt ? "bg-white text-teal-700 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      {pt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <Field label="Notify Date" required={form.paymentType === "Prepaid"} error={errors.notifyDate} hint={form.paymentType === "Postpaid" ? "Optional for postpaid requisitions" : "Required — customer will be notified on this date"}>
-                <TextInput disabled={readOnly} type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
-              </Field>
-            </div>
-          </div>
-
-          {/* Section 6: Current Status Overview Box */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-slate-500">Current Status</p>
-                <p className="text-sm font-bold text-slate-800">{form.status || "Active"}</p>
-              </div>
-
-              {isClosed ? (
-                <span className="rounded-md bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
-                  ✓ Unit Closed / Returned
-                </span>
-              ) : (
-                !readOnly && (
-                  <button
-                    type="button"
-                    onClick={() => set({ 
-                      status: "Closed", 
-                      requisition_status: "Closed", 
-                      return_status: "Closed",
-                      logoutDate: form.logoutDate || todayISO() 
-                    })}
-                    className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95 cursor-pointer"
-                  >
-                    <PackageCheck className="h-4 w-4" /> Mark as Closed
-                  </button>
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Section 7: Notes */}
-          <Field label="Notes">
-            <textarea disabled={readOnly} rows={2} value={form.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="Any additional instructions…" className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" />
-          </Field>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
-          <GhostButton onClick={onClose}>{readOnly ? "Close" : "Cancel"}</GhostButton>
-          {!readOnly && (
-            <PrimaryButton onClick={handleSubmit}>
-              <Save className="h-4 w-4" /> {modalMode === "add" ? "Create Requisition" : "Save Changes"}
-            </PrimaryButton>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SectionHeading({ icon: Icon, children }) {
   return (
     <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-600">
@@ -2350,8 +1902,250 @@ function SectionHeading({ icon: Icon, children }) {
   );
 }
 
-// 📄 FULL LOG REQUISITION PAGE (NEW REQUISITION PAGE)
-function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
+// 👁️ 1. DEDICATED READ-ONLY VIEW PAGE (MATCHING SCREENSHOT UI)
+function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], onBack }) {
+  const eqId = log?.equipmentId || log?.equipment_id;
+  const equipmentName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || eqId || "—";
+  
+  const ccId = log?.careCenterId || log?.care_center_id;
+  const careCenterName = log?.careCenterName || careCenters.find(c => c?.id === ccId)?.name || ccId || "—";
+
+  const rawStatus = String(log?.status || log?.requisition_status || "Active").trim();
+  const statusColor = rawStatus.toLowerCase() === "active" 
+    ? "bg-amber-50 text-amber-700 border-amber-200"
+    : rawStatus.toLowerCase() === "closed" || rawStatus.toLowerCase() === "returned"
+    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+    : "bg-slate-100 text-slate-700 border-slate-200";
+
+  return (
+    <div className="fade-slide-up space-y-6">
+      <GlobalPolish />
+      
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl">🔍</span>
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-800">
+              Requisition Record: #{log?.id || "—"}
+            </h1>
+          </div>
+          <p className="text-xs font-bold tracking-wider text-slate-400 mt-1 uppercase">
+            VIEW ONLY • RENTAL DETAILS
+          </p>
+        </div>
+
+        <button 
+          type="button"
+          onClick={onBack}
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer w-fit"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to Listing
+        </button>
+      </div>
+
+      {/* 4 Cards Matrix Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        
+        {/* Card 1: Logistics & Device Matrix */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-700">
+            📦 Logistics &amp; Device Matrix
+          </p>
+          
+          <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+            <div>
+              <p className="text-xs font-medium text-slate-400">Assigned Model</p>
+              <p className="font-bold text-slate-800 mt-0.5">{equipmentName}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-400">Accessory</p>
+              <p className="font-bold text-slate-800 mt-0.5">{log?.accessory || log?.accessories || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Deal Type</p>
+              <p className="font-bold text-slate-800 mt-0.5">{log?.dealType || log?.deal_type || "B2B"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-400">Unit</p>
+              <p className="font-bold text-slate-800 mt-0.5">{log?.unit || "ODCOM"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Mode</p>
+              <p className="font-bold text-slate-800 mt-0.5">{log?.mode || log?.paymentType || "Postpaid"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-400">Record Date</p>
+              <p className="font-bold text-slate-800 mt-0.5">{log?.recordDate || log?.record_date || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Log In Date</p>
+              <p className="font-bold text-slate-800 mt-0.5">{log?.startDate || log?.start_date || log?.loginDate || "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-400">Notify Date</p>
+              <p className="font-bold text-slate-800 mt-0.5">{log?.notifyDate || log?.notify_date || "0000-00-00"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Log Out Date</p>
+              <p className="font-bold text-slate-800 mt-0.5">{log?.logoutDate || log?.logout_date || "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-400">Recall Date</p>
+              <p className="font-bold text-slate-800 mt-0.5">{log?.recallDate || log?.recall_date || "—"}</p>
+            </div>
+
+            <div className="col-span-2 pt-1">
+              <p className="text-xs font-medium text-slate-400 mb-1">Status</p>
+              <span className={`inline-block rounded-md px-3 py-1 text-xs font-bold border ${statusColor}`}>
+                {rawStatus}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Commercial Parameters */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-600">
+            💳 Commercial Parameters
+          </p>
+
+          <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+            <div>
+              <p className="text-xs font-medium text-slate-400">Billing Type</p>
+              <p className="font-extrabold text-teal-600 uppercase mt-0.5">{log?.billingType || log?.billing_type || "MONTHLY"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-400">Rental Charge</p>
+              <p className="font-extrabold text-slate-800 mt-0.5">₹{log?.rentalCharge || log?.rental_charge || "0"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Deposit / Advance</p>
+              <p className="font-extrabold text-slate-800 mt-0.5">₹{log?.depositAdvance || log?.deposit_advance || "0"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-400">Installation Charge</p>
+              <p className="font-extrabold text-slate-800 mt-0.5">₹{log?.installationCharge || log?.installation_charge || "0"}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Patient Identity Details */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-600">
+            👤 Patient Identity Details
+          </p>
+
+          <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-sm">
+            <div>
+              <p className="text-xs font-medium text-slate-400">Patient Name:</p>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{log?.patientName || log?.patient_name || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Age:</p>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{log?.age || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Mobile:</p>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{log?.mobileNumber || log?.mobile_number || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Alt Mobile:</p>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{log?.altMobileNumber || log?.alt_mobile_number || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Attendant:</p>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{log?.attendantName || log?.attendant_name || "—"}</p>
+            </div>
+
+            <div className="col-span-2 pt-2">
+              <p className="text-xs font-medium text-slate-400 mb-1.5">Delivery Address:</p>
+              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
+                {log?.deliveryAddress || log?.delivery_address || "—"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Care Center Context */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-600">
+            🏥 Care Center Context
+          </p>
+
+          <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-sm">
+            <div>
+              <p className="text-xs font-medium text-slate-400">Care Center:</p>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{careCenterName}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Incharge Mobile:</p>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{log?.inchargeMobile || log?.incharge_mobile || log?.phone || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Alt Mobile:</p>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{log?.altMobile || log?.alt_mobile || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Bed No:</p>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{log?.bedNo || log?.bed_number || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-slate-400">Referral:</p>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{log?.referral || log?.referral_doctor || "—"}</p>
+            </div>
+
+            <div className="col-span-2 pt-2">
+              <p className="text-xs font-medium text-slate-400 mb-1.5">Care Address:</p>
+              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
+                {log?.careAddress || log?.address || "—"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// 📄 2. EDITABLE FULL FORM PAGE (USED FOR NEW REQUISITION & EDIT ACTIONS)
+function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
+  const isEdit = mode === "edit";
+
   const loggedUser = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}");
@@ -2382,15 +2176,83 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
   }, [careCenters, isCareCenterUser, matchedUserCenter]);
 
   const [form, setForm] = useState(() => {
+    if (initial) {
+      const rawAcc = initial.accessory || initial.accessories;
+      let parsedAcc = [];
+      if (Array.isArray(rawAcc)) {
+        parsedAcc = rawAcc.map(getOptionLabel).filter(Boolean);
+      } else if (typeof rawAcc === "string" && rawAcc.trim() !== "") {
+        parsedAcc = rawAcc.split(",").map(item => item.trim()).filter(Boolean);
+      }
+
+      const ccId = initial.careCenterId || initial.care_center_id || "";
+      const cc = careCenters.find((c) => c?.id === ccId);
+
+      let initialStatus = initial.status || initial.requisition_status || "Active";
+      if (String(initialStatus).toLowerCase() === "returned") initialStatus = "Closed";
+
+      return {
+        id: initial.id || null,
+        dealType: initial.dealType || initial.deal_type || "B2B",
+        unit: initial.unit || "ODCOM",
+        mode: initial.mode || initial.paymentType || initial.payment_type || "Postpaid",
+        deviceModel: initial.equipmentId || initial.equipment_id || initial.deviceModel || "",
+        accessory: parsedAcc,
+        recordDate: formatForDateInput(initial.recordDate || initial.record_date) || todayISO(),
+        loginDate: formatForDateInput(initial.startDate || initial.start_date || initial.loginDate) || todayISO(),
+        notifyDate: formatForDateInput(initial.notifyDate || initial.notify_date),
+        logoutDate: formatForDateInput(initial.logoutDate || initial.logout_date),
+        recallDate: formatForDateInput(initial.recallDate || initial.recall_date),
+        billingType: initial.billingType || initial.billing_type || "Daily",
+        rentalCharge: initial.rentalCharge || initial.rental_charge || "",
+        depositAdvance: initial.depositAdvance || initial.deposit_advance || "",
+        installationCharge: initial.installationCharge || initial.installation_charge || "",
+        careCenterId: ccId || matchedUserCenter?.id || "",
+        inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || initial.pocMobile || cc?.phone || "",
+        altMobile: initial.altMobile || initial.alt_mobile || initial.altPocMobile || initial.altMobileNumber || "",
+        careAddress: initial.careAddress || initial.address || cc?.address || "",
+        bedNo: initial.bedNo || initial.bed_no || initial.bed_number || "",
+        referral: initial.referral || initial.referral_doctor || initial.referralDoctor || "",
+        patientName: initial.patientName || initial.patient_name || "",
+        age: initial.age || "",
+        attendantName: initial.attendantName || initial.attendant_name || "",
+        mobileNumber: initial.mobileNumber || initial.mobile_number || "",
+        altMobileNumber: initial.altMobileNumber || initial.alt_mobile_number || "",
+        deliveryAddress: initial.deliveryAddress || initial.delivery_address || "",
+        notes: initial.notes || "",
+        status: initialStatus
+      };
+    }
+
     const defaultCcId = matchedUserCenter?.id || "";
     return {
-      ...emptyForm,
-      careCenterId: defaultCcId,
-      careAddress: matchedUserCenter?.address || "",
-      inchargeMobile: matchedUserCenter?.phone || loggedUser?.phone || "",
-      altMobile: "",
+      dealType: "B2B",
+      unit: "ODCOM",
+      mode: "Postpaid",
+      deviceModel: "",
+      accessory: [],
       recordDate: todayISO(),
       loginDate: todayISO(),
+      notifyDate: "",
+      logoutDate: "",
+      recallDate: "",
+      billingType: "Daily",
+      rentalCharge: "",
+      depositAdvance: "",
+      installationCharge: "",
+      careCenterId: defaultCcId,
+      inchargeMobile: matchedUserCenter?.phone || loggedUser?.phone || "",
+      altMobile: "",
+      careAddress: matchedUserCenter?.address || "",
+      bedNo: "",
+      referral: "",
+      patientName: "",
+      age: "",
+      attendantName: "",
+      mobileNumber: "",
+      altMobileNumber: "",
+      deliveryAddress: "",
+      notes: "",
       status: "Active"
     };
   });
@@ -2460,8 +2322,10 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
     if (form.careCenterId !== "other" && !isCareCenterUser) {
       careCenterName = careCenters.find((c) => c?.id === form.careCenterId)?.name || "";
     }
+
     onSubmit({
       ...form, 
+      id: form.id,
       equipmentId: form.deviceModel, 
       equipmentName: equipment?.name || form.deviceModel, 
       category: equipment?.category || "General", 
@@ -2485,16 +2349,24 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
           <ArrowLeft className="h-4 w-4" /> Rental Master
         </button>
         <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-        <span className="font-semibold text-slate-700">Log Asset Requisition</span>
+        <span className="font-semibold text-slate-700">
+          {isEdit ? "Edit Asset Requisition" : "Log Asset Requisition"}
+        </span>
       </div>
 
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-2xl font-extrabold tracking-tight text-slate-800">Log Asset Requisition</h2>
-        <div className="hidden items-center gap-2 sm:flex">
+        <div>
+          <h2 className="font-display text-2xl font-extrabold tracking-tight text-slate-800">
+            {isEdit ? "Edit Asset Requisition" : "Log Asset Requisition"}
+          </h2>
+          {form.id && <p className="text-xs text-slate-400 mt-0.5">Requisition ID: {form.id}</p>}
+        </div>
+        <div className="flex items-center gap-2">
           <GhostButton onClick={onCancel}>Discard</GhostButton>
         </div>
       </div>
 
+      {/* Section 1: Record Types */}
       <div style={{ animationDelay: "40ms" }} className="relative z-40 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <SectionHeading icon={Tag}>Record Types &amp; Status</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-4">
@@ -2526,6 +2398,7 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
         </div>
       </div>
 
+      {/* Section 2: Asset Allocation & Logistics */}
       <div style={{ animationDelay: "80ms" }} className="relative z-30 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <SectionHeading icon={Truck}>Asset Allocation &amp; Logistics</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-4">
@@ -2568,6 +2441,7 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
         </div>
       </div>
 
+      {/* Section 3: Commercials & Billing */}
       <div style={{ animationDelay: "120ms" }} className="relative z-20 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <SectionHeading icon={CreditCard}>Commercials &amp; Billing</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-4">
@@ -2578,12 +2452,19 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
               <option value="Monthly">Monthly</option>
             </Select>
           </Field>
-          <Field label="Rental Charge (₹)"><TextInput type="number" min={0} value={form.rentalCharge} onChange={(e) => set({ rentalCharge: e.target.value })} /></Field>
-          <Field label="Deposit / Advance (₹)"><TextInput type="number" min={0} value={form.depositAdvance} onChange={(e) => set({ depositAdvance: e.target.value })} /></Field>
-          <Field label="Installation Charge (₹)"><TextInput type="number" min={0} value={form.installationCharge} onChange={(e) => set({ installationCharge: e.target.value })} /></Field>
+          <Field label="Rental Charge (₹)">
+            <TextInput type="number" min={0} value={form.rentalCharge} onChange={(e) => set({ rentalCharge: e.target.value })} />
+          </Field>
+          <Field label="Deposit / Advance (₹)">
+            <TextInput type="number" min={0} value={form.depositAdvance} onChange={(e) => set({ depositAdvance: e.target.value })} />
+          </Field>
+          <Field label="Installation Charge (₹)">
+            <TextInput type="number" min={0} value={form.installationCharge} onChange={(e) => set({ installationCharge: e.target.value })} />
+          </Field>
         </div>
       </div>
 
+      {/* Section 4: Care Center & Patient Details */}
       <div style={{ animationDelay: "160ms" }} className="relative z-10 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <div className="grid gap-8 lg:grid-cols-2">
           <div>
@@ -2607,10 +2488,14 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
                 </Field>
               </div>
 
-              <Field label="Care Address"><textarea rows={2} value={form.careAddress} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none resize-none border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30" onChange={(e) => set({ careAddress: e.target.value })} /></Field>
+              <Field label="Care Address">
+                <textarea rows={2} value={form.careAddress} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none resize-none border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30" onChange={(e) => set({ careAddress: e.target.value })} />
+              </Field>
               
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Bed No"><TextInput value={form.bedNo} onChange={(e) => set({ bedNo: e.target.value })} /></Field>
+                <Field label="Bed No">
+                  <TextInput value={form.bedNo} onChange={(e) => set({ bedNo: e.target.value })} />
+                </Field>
                 
                 <Field label="Referral">
                   <Select value={form.referral} onChange={(e) => set({ referral: e.target.value })}>
@@ -2625,6 +2510,7 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
               </div>
             </div>
           </div>
+
           <div>
             <SectionHeading icon={User}>Patient Identity Details</SectionHeading>
             <div className="space-y-4">
@@ -2632,23 +2518,37 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
                 <Field label="Patient Name" required error={errors.patientName}>
                   <TextInput value={form.patientName} error={errors.patientName} onChange={(e) => set({ patientName: e.target.value })} />
                 </Field>
-                <Field label="Age"><TextInput type="number" min={0} value={form.age} onChange={(e) => set({ age: e.target.value })} /></Field>
+                <Field label="Age">
+                  <TextInput type="number" min={0} value={form.age} onChange={(e) => set({ age: e.target.value })} />
+                </Field>
               </div>
-              <Field label="Attendant Name"><TextInput value={form.attendantName} onChange={(e) => set({ attendantName: e.target.value })} /></Field>
+              <Field label="Attendant Name">
+                <TextInput value={form.attendantName} onChange={(e) => set({ attendantName: e.target.value })} />
+              </Field>
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Mobile Number"><TextInput maxLength={10} value={form.mobileNumber} onChange={(e) => set({ mobileNumber: e.target.value })} /></Field>
-                <Field label="Alt Mobile Number"><TextInput maxLength={10} value={form.altMobileNumber} onChange={(e) => set({ altMobileNumber: e.target.value })} /></Field>
+                <Field label="Mobile Number">
+                  <TextInput maxLength={10} value={form.mobileNumber} onChange={(e) => set({ mobileNumber: e.target.value })} />
+                </Field>
+                <Field label="Alt Mobile Number">
+                  <TextInput maxLength={10} value={form.altMobileNumber} onChange={(e) => set({ altMobileNumber: e.target.value })} />
+                </Field>
               </div>
-              <Field label="Delivery Address"><textarea rows={3} value={form.deliveryAddress} onChange={(e) => set({ deliveryAddress: e.target.value })} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" /></Field>
+              <Field label="Delivery Address">
+                <textarea rows={3} value={form.deliveryAddress} onChange={(e) => set({ deliveryAddress: e.target.value })} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" />
+              </Field>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Section 5: Notes */}
       <div style={{ animationDelay: "200ms" }} className="relative z-0 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
-        <Field label="Notes"><textarea rows={3} value={form.notes} onChange={(e) => set({ notes: e.target.value })} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" /></Field>
+        <Field label="Notes">
+          <textarea rows={3} value={form.notes} onChange={(e) => set({ notes: e.target.value })} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" />
+        </Field>
       </div>
 
+      {/* Section 6: Photo Verification */}
       <div style={{ animationDelay: "240ms" }} className="rise-in rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-6 transition-colors hover:border-teal-300 hover:bg-teal-50/30">
         <Field label="Asset Handover Photo Verification (Up to 10 photos/PDFs)">
           <div className="flex flex-col gap-4">
@@ -2663,7 +2563,7 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
             {photos.length > 0 && (
               <div className="flex flex-wrap gap-3">
                 {photos.map((file, idx) => {
-                  const isImage = file.type.startsWith("image/");
+                  const isImage = file.type?.startsWith("image/");
                   return (
                     <div key={idx} className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:ring-2 hover:ring-teal-500/50">
                       {isImage ? (
@@ -2688,7 +2588,7 @@ function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], reference
 
       <div className="mt-8 flex items-center justify-end border-t border-slate-200 pt-6 pb-4">
         <PrimaryButton onClick={handleSubmit} className="px-6 py-2.5 shadow-md hover:shadow-lg transition-all">
-          <Save className="h-4.5 w-4.5" /> Save Requisition &amp; Deploy
+          <Save className="h-4.5 w-4.5" /> {isEdit ? "Update Requisition Details" : "Save Requisition & Deploy"}
         </PrimaryButton>
       </div>
     </div>
@@ -2793,10 +2693,12 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [sortField, setSortField] = useState("startDate");
   const [sortOrder, setSortOrder] = useState("desc");
 
-  const [modal, setModal] = useState(null); 
+  // 🔄 Navigation State
+  const [viewDetailLog, setViewDetailLog] = useState(null); // For Screenshot-style View Page
+  const [pageForm, setPageForm] = useState(null); // { mode: "add" | "edit", data: log }
+
   const [calcModal, setCalcModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [showAddPage, setShowAddPage] = useState(false);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -2856,7 +2758,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     const endUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
 
     const X = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
-    const Y = now.getDate();
+    const Y = end.getDate();
 
     return `${X}/${Y}`;
   };
@@ -2918,7 +2820,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  const handleAdd = async (data) => {
+  const handleFormSubmit = async (data) => {
     try {
       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
       const chosenMode = data.mode || data.paymentType || "Postpaid";
@@ -2935,7 +2837,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       if (String(finalStatus).toLowerCase() === "returned") finalStatus = "Closed";
 
       const backendData = {
-        id: data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
         care_center_id: finalCareCenterId,
         care_center_name: finalCareCenterName,
         equipment_id: data.equipmentId || data.deviceModel,
@@ -2961,82 +2862,37 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         requisition_status: finalStatus
       };
 
-      await API.post("/rental/requisitions", backendData);
+      if (data.id) {
+        // 🔄 UPDATE
+        await API.put(`/rental/requisitions/${data.id}`, backendData);
+        toast.success("Requisition updated successfully!");
+      } else {
+        // ➕ CREATE NEW
+        const reqId = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
+        await API.post("/rental/requisitions", { ...backendData, id: reqId });
+        toast.success("Requisition created and deployed!");
+      }
+
       await fetchLogs();
-      setShowAddPage(false);
-      setModal(null);
-      toast.success("Requisition saved successfully!");
+      setPageForm(null);
     } catch (err) {
       toast.error("Error saving Requisition: " + (err.response?.data?.message || err.message)); 
     }
   };
 
-  const handleEdit = async (data) => {
-    let targetStatus = data.status || "Active";
-    if (String(targetStatus).toLowerCase() === "returned") targetStatus = "Closed";
-
-    const chosenMode = data.mode || data.paymentType || data.payment_type || "Postpaid";
-    const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
-
-    setLogs((prevLogs) => {
-      const updated = prevLogs.map((l) =>
-        l.id === data.id
-          ? {
-              ...l,
-              ...data,
-              status: targetStatus,
-              requisition_status: targetStatus,
-              return_status: targetStatus,
-              mode: chosenMode,
-              paymentType: chosenMode,
-              accessory: accStr,
-              accessories: accStr
-            }
-          : l
-      );
-      localStorage.setItem("cached_requisitions", JSON.stringify(updated));
-      return updated;
-    });
-
+  const handleFastClose = async (log) => {
     try {
-      const newLogoutDate = data.logoutDate || data.logout_date || null;
-      const newStartDate = data.startDate || data.start_date || data.loginDate;
-      const newNotifyDate = data.notifyDate || data.notify_date || null;
-
-      const backendData = {
-        care_center_id: data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id),
-        care_center_name: data.careCenterName || data.care_center_name || "",
-        equipment_id: data.equipmentId || data.equipment_id,
-        patient_name: data.patientName || data.patient_name,
-        quantity: data.quantity || 1,
-        start_date: newStartDate,
-        logout_date: newLogoutDate,
-        incharge_mobile: data.inchargeMobile || data.phone || data.pocMobile || "",
-        alt_mobile: data.altMobile || data.altMobileNumber || "",
-        bed_number: data.bedNo || data.bed_number || data.bedNumber || "", 
-        referral_doctor: data.referral || data.referral_doctor || data.referralDoctor || "",         
-        gst_number: data.gst || data.gst_number || data.gstNumber || "",
-        payment_type: chosenMode,
-        deal_type: data.dealType || data.deal_type,
-        unit: data.unit,
-        mode: chosenMode,
-        notify_date: newNotifyDate,
-        delivery_address: data.deliveryAddress || data.delivery_address,
-        notes: data.notes || "",
-        status: targetStatus,
-        requisition_status: targetStatus,
-        return_status: targetStatus,
-        returnStatus: targetStatus,
-        accessory: accStr,   
-        accessories: accStr 
-      };
-      
-      await API.put(`/rental/requisitions/${data.id}`, backendData); 
-      setModal(null);
-      toast.success("Requisition updated!"); 
+      await API.put(`/rental/requisitions/${log.id}`, {
+        ...log,
+        status: "Closed",
+        requisition_status: "Closed",
+        return_status: "Closed",
+        logout_date: log.logoutDate || todayISO()
+      });
+      toast.success("Marked as Closed!");
+      fetchLogs();
     } catch (err) {
-      toast.error("Update failed: " + (err.response?.data?.message || err.message));
-      fetchLogs(); 
+      toast.error("Failed to close: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -3051,15 +2907,30 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     }
   };
 
-  if (showAddPage) {
+  // 🌟 View 1: Screenshot Style Read-Only Matrix Page
+  if (viewDetailLog !== null) {
     return (
-      <NewRequisitionPage 
+      <RequisitionDetailView 
+        log={viewDetailLog} 
+        equipmentCatalog={equipmentCatalog}
+        careCenters={careCenters}
+        onBack={() => setViewDetailLog(null)}
+      />
+    );
+  }
+
+  // 🌟 View 2: Full Editable Form Page for Add / Edit
+  if (pageForm !== null) {
+    return (
+      <RequisitionFormPage 
+        initial={pageForm.data} 
+        mode={pageForm.mode}
         careCenters={careCenters} 
         equipmentCatalog={equipmentCatalog} 
         references={references} 
         categories={categories} 
-        onCancel={() => setShowAddPage(false)} 
-        onSubmit={handleAdd} 
+        onCancel={() => setPageForm(null)} 
+        onSubmit={handleFormSubmit} 
       />
     );
   }
@@ -3075,7 +2946,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         </div>
 
         {permissions.canAdd && (
-          <PrimaryButton onClick={() => setShowAddPage(true)} className="shrink-0 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98] px-4.5 py-2.5">
+          <PrimaryButton onClick={() => setPageForm({ mode: "add", data: null })} className="shrink-0 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98] px-4.5 py-2.5">
             <Plus className="h-4 w-4" /> New Log Requisition
           </PrimaryButton>
         )}
@@ -3300,21 +3171,41 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                             <IconAction 
                               title="Mark as Closed (Returned)" 
                               tone="teal" 
-                              onClick={() => handleEdit({ 
-                                ...log, 
-                                status: "Closed", 
-                                requisition_status: "Closed", 
-                                return_status: "Closed",
-                                logoutDate: log?.logoutDate || todayISO() 
-                              })}
+                              onClick={() => handleFastClose(log)}
                             >
                               <PackageCheck className="h-4 w-4 text-emerald-600" />
                             </IconAction>
                           )}
 
-                          <IconAction title="View" tone="teal" onClick={() => setModal({ mode: "view", data: log })}><Eye className="h-4 w-4" /></IconAction>
-                          {permissions.canEdit && <IconAction title="Edit" tone="teal" onClick={() => setModal({ mode: "edit", data: log })}><Pencil className="h-4 w-4" /></IconAction>}
-                          {permissions.canDelete && <IconAction title="Delete" tone="rose" onClick={() => setConfirmDelete(log)}><Trash2 className="h-4 w-4" /></IconAction>}
+                          {/* 👁️ VIEW ACTION: Opens Screenshot-Style Read-Only Matrix Page */}
+                          <IconAction 
+                            title="View Details" 
+                            tone="teal" 
+                            onClick={() => setViewDetailLog(log)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </IconAction>
+                          
+                          {/* ✏️ EDIT ACTION: Opens Full Editable Page */}
+                          {permissions.canEdit && (
+                            <IconAction 
+                              title="Edit Requisition" 
+                              tone="teal" 
+                              onClick={() => setPageForm({ mode: "edit", data: log })}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </IconAction>
+                          )}
+
+                          {permissions.canDelete && (
+                            <IconAction 
+                              title="Delete" 
+                              tone="rose" 
+                              onClick={() => setConfirmDelete(log)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </IconAction>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -3338,22 +3229,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         />
       )}
 
-      {modal && (
-        <RequisitionModal 
-          mode={modal.mode} 
-          initial={modal.data} 
-          careCenters={careCenters} 
-          equipmentCatalog={equipmentCatalog} 
-          references={references} 
-          categories={categories} 
-          onClose={() => setModal(null)} 
-          onSubmit={modal.mode === "add" ? handleAdd : handleEdit} 
-        />
-      )}
-
       <ConfirmDialog open={!!confirmDelete} title="Delete this requisition?" message={confirmDelete ? `${confirmDelete.id} will be permanently removed. This cannot be undone.` : ""} onCancel={() => setConfirmDelete(null)} onConfirm={handleDelete} />
     </div>
   );
 }
-
 
