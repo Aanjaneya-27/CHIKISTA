@@ -1566,15 +1566,22 @@ import {
   Building2, 
   User, 
   Tag, 
+  CreditCard, 
   Save, 
   X, 
   ClipboardList, 
+  ArrowLeft, 
+  ChevronRight, 
+  ImagePlus, 
+  Truck, 
+  FileText, 
   Calendar, 
   ChevronDown, 
   Calculator,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  
 } from "lucide-react";
 import { 
   PrimaryButton, 
@@ -2163,7 +2170,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
                 <Select disabled={readOnly} value={form.status} onChange={(e) => set({ status: e.target.value })}>
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
-                  <option value="Closed">Closed</option>
+                  <option value="Closed">Closed (Returned)</option>
                 </Select>
               </Field>
             </div>
@@ -2216,6 +2223,7 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
                 <TextInput disabled={readOnly} type="date" value={form.startDate} error={errors.startDate} onChange={(e) => set({ startDate: e.target.value, loginDate: e.target.value })} />
               </Field>
               
+              {/* Logout date optional */}
               <Field label="Logout Date (Optional)">
                 <TextInput 
                   disabled={readOnly} 
@@ -2259,6 +2267,358 @@ function RequisitionModal({ mode: modalMode, initial, careCenters = [], equipmen
   );
 }
 
+function SectionHeading({ icon: Icon, children }) {
+  return (
+    <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-600">
+      <span className="grid h-6 w-6 place-items-center rounded-md bg-teal-50 text-teal-600"><Icon className="h-3.5 w-3.5" /></span>
+      {children}
+    </p>
+  );
+}
+
+// 📄 FULL NEW REQUISITION PAGE (RESTORED COMPLETELY)
+function NewRequisitionPage({ careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
+  const loggedUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
+  const isCareCenterUser = loggedUser?.role === "care_center";
+
+  const matchedUserCenter = useMemo(() => {
+    if (!isCareCenterUser) return null;
+    return careCenters.find((c) => 
+      c?.id === loggedUser?.careCenterId || 
+      c?.id === loggedUser?.id || 
+      (c?.phone && loggedUser?.phone && String(c.phone).replace(/\D/g, "").slice(-10) === String(loggedUser.phone).replace(/\D/g, "").slice(-10)) ||
+      (c?.name && loggedUser?.name && c.name.trim().toLowerCase() === loggedUser.name.trim().toLowerCase())
+    ) || {
+      id: loggedUser?.careCenterId || loggedUser?.id || "CC-ME",
+      name: loggedUser?.careCenterName || loggedUser?.name || "My Care Center"
+    };
+  }, [careCenters, isCareCenterUser, loggedUser]);
+
+  const pageDropdownCareCenters = useMemo(() => {
+    if (isCareCenterUser && matchedUserCenter) {
+      return [matchedUserCenter];
+    }
+    return filterActive(careCenters);
+  }, [careCenters, isCareCenterUser, matchedUserCenter]);
+
+  const [form, setForm] = useState(() => {
+    const defaultCcId = matchedUserCenter?.id || "";
+    return {
+      ...emptyForm,
+      careCenterId: defaultCcId,
+      careAddress: matchedUserCenter?.address || "",
+      inchargeMobile: matchedUserCenter?.phone || loggedUser?.phone || "",
+      inchargeName: matchedUserCenter?.contact_person || matchedUserCenter?.contactPerson || "",
+      recordDate: todayISO(),
+      loginDate: todayISO(),
+      status: "Active"
+    };
+  });
+
+  const [errors, setErrors] = useState({});
+  const [photos, setPhotos] = useState([]);
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  const activeEquipment = useMemo(() => filterActive(equipmentCatalog), [equipmentCatalog]);
+  const activeReferrals = useMemo(() => filterActive(references), [references]);
+  const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
+
+  const handleCareCenterChange = (id) => {
+    if (id === "other") {
+      set({ careCenterId: "other", careAddress: "", inchargeMobile: "", inchargeName: "" });
+    } else {
+      const cc = careCenters.find((c) => c?.id === id);
+      set({ 
+        careCenterId: id, 
+        careAddress: cc?.address || "", 
+        inchargeMobile: cc?.phone || "",
+        inchargeName: cc?.contact_person || cc?.contactPerson || ""
+      });
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const newFiles = Array.from(e.target.files || []);
+    if (photos.length + newFiles.length > 10) {
+      toast.error("You can upload a maximum of 10 files."); 
+      return;
+    }
+    setPhotos((prev) => [...prev, ...newFiles].slice(0, 10));
+  };
+
+  const removeFile = (indexToRemove) => {
+    setPhotos((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!form.dealType) e.dealType = "Please select a deal type.";
+    if (!form.unit) e.unit = "Please select a unit.";
+    if (!form.mode) e.mode = "Please select a mode.";
+    if (!form.deviceModel) e.deviceModel = "Please choose an equipment model.";
+    if (!form.loginDate) e.loginDate = "Log in date is required.";
+    // Logout Date is intentionally NOT mandatory
+    if (!form.billingType) e.billingType = "Please select a billing type.";
+    if (!form.patientName) e.patientName = "Patient name is required.";
+    if (form.mode === "Prepaid" && !form.notifyDate) {
+      e.notifyDate = "Notify Date is mandatory for Prepaid!";
+    }
+    if (form.inchargeMobile && !/^\d{10}$/.test(String(form.inchargeMobile).trim())) {
+      e.inchargeMobile = "Enter a valid 10-digit mobile number.";
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (!validate()) { 
+      toast.error("Please fill all required fields correctly."); 
+      window.scrollTo({ top: 0, behavior: "smooth" }); 
+      return; 
+    }
+    const equipment = equipmentCatalog.find((eq) => eq?.id === form.deviceModel);
+    let careCenterName = isCareCenterUser ? (matchedUserCenter?.name || loggedUser?.careCenterName || loggedUser?.name || "") : "Other";
+    if (form.careCenterId !== "other" && !isCareCenterUser) {
+      careCenterName = careCenters.find((c) => c?.id === form.careCenterId)?.name || "";
+    }
+    onSubmit({
+      ...form, 
+      equipmentId: form.deviceModel, 
+      equipmentName: equipment?.name || form.deviceModel, 
+      category: equipment?.category || "General", 
+      careCenterName, 
+      quantity: 1, 
+      startDate: form.loginDate, 
+      logoutDate: form.logoutDate || null,
+      paymentType: form.mode, 
+      deliveryAddress: form.deliveryAddress, 
+      status: form.status || (form.logoutDate ? "Closed" : "Active"), 
+      deliveryStatus: "Pending Dispatch", 
+      photoCount: photos.length,
+    });
+  };
+
+  return (
+    <div className="fade-slide-up space-y-5">
+      <GlobalPolish />
+      <div className="flex items-center gap-2 text-sm">
+        <button onClick={onCancel} className="flex items-center gap-1.5 font-semibold text-slate-500 transition-colors hover:text-teal-600 cursor-pointer">
+          <ArrowLeft className="h-4 w-4" /> Rental Master
+        </button>
+        <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+        <span className="font-semibold text-slate-700">Log Asset Requisition</span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-2xl font-extrabold tracking-tight text-slate-800">Log Asset Requisition</h2>
+        <div className="hidden items-center gap-2 sm:flex">
+          <GhostButton onClick={onCancel}>Discard</GhostButton>
+        </div>
+      </div>
+
+      <div style={{ animationDelay: "40ms" }} className="relative z-40 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+        <SectionHeading icon={Tag}>Record Types &amp; Status</SectionHeading>
+        <div className="grid gap-4 sm:grid-cols-4">
+          <Field label="Deal Type" required error={errors.dealType}>
+            <Select value={form.dealType} error={errors.dealType} onChange={(e) => set({ dealType: e.target.value })}>
+              <option value="">--- Select ---</option>
+              {DEAL_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
+            </Select>
+          </Field>
+          <Field label="Unit" required error={errors.unit}>
+            <Select value={form.unit} error={errors.unit} onChange={(e) => set({ unit: e.target.value })}>
+              <option value="">--- Select ---</option>
+              {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+            </Select>
+          </Field>
+          <Field label="Payment Mode" required error={errors.mode}>
+            <Select value={form.mode} error={errors.mode} onChange={(e) => set({ mode: e.target.value, paymentType: e.target.value })}>
+              <option value="">--- Select ---</option>
+              {MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
+            </Select>
+          </Field>
+          <Field label="Status">
+            <Select value={form.status || "Active"} onChange={(e) => set({ status: e.target.value })}>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Closed">Closed (Returned)</option>
+            </Select>
+          </Field>
+        </div>
+      </div>
+
+      <div style={{ animationDelay: "80ms" }} className="relative z-30 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+        <SectionHeading icon={Truck}>Asset Allocation &amp; Logistics</SectionHeading>
+        <div className="grid gap-4 sm:grid-cols-4">
+          <Field label="Select Device Model" required error={errors.deviceModel}>
+            <Select value={form.deviceModel} error={errors.deviceModel} onChange={(e) => set({ deviceModel: e.target.value })}>
+              <option value="">-- Choose Equipment Model --</option>
+              {activeEquipment.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
+            </Select>
+          </Field>
+          
+          <Field label="Select Accessory" error={errors.accessory}>
+            <MultiSelect
+              options={activeCategories}
+              selected={form.accessory}
+              onChange={(newAccessories) => set({ accessory: newAccessories })}
+              placeholder="-- Choose Accessories --"
+              error={errors.accessory}
+            />
+          </Field>
+
+          <Field label="Record Date">
+            <TextInput type="date" value={form.recordDate} onChange={(e) => set({ recordDate: e.target.value })} />
+          </Field>
+
+          <Field label="Log In Date" required error={errors.loginDate}>
+            <TextInput type="date" value={form.loginDate} error={errors.loginDate} onChange={(e) => set({ loginDate: e.target.value })} />
+          </Field>
+          
+          <Field label="Notify Date" required={form.mode === "Prepaid"} error={errors.notifyDate}>
+            <TextInput type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
+          </Field>
+          
+          {/* Logout date optional */}
+          <Field label="Log Out Date (Optional)">
+            <TextInput type="date" value={form.logoutDate} onChange={(e) => set({ logoutDate: e.target.value })} />
+          </Field>
+
+          <Field label="Recall Date">
+            <TextInput type="date" value={form.recallDate} onChange={(e) => set({ recallDate: e.target.value })} />
+          </Field>
+        </div>
+      </div>
+
+      <div style={{ animationDelay: "120ms" }} className="relative z-20 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+        <SectionHeading icon={CreditCard}>Commercials &amp; Billing</SectionHeading>
+        <div className="grid gap-4 sm:grid-cols-4">
+          <Field label="Billing Type" required error={errors.billingType}>
+            <Select value={form.billingType} error={errors.billingType} onChange={(e) => set({ billingType: e.target.value })}>
+              <option value="Daily">Daily</option>
+              <option value="Fortnight">Fortnight</option>
+              <option value="Monthly">Monthly</option>
+            </Select>
+          </Field>
+          <Field label="Rental Charge (₹)"><TextInput type="number" min={0} value={form.rentalCharge} onChange={(e) => set({ rentalCharge: e.target.value })} /></Field>
+          <Field label="Deposit / Advance (₹)"><TextInput type="number" min={0} value={form.depositAdvance} onChange={(e) => set({ depositAdvance: e.target.value })} /></Field>
+          <Field label="Installation Charge (₹)"><TextInput type="number" min={0} value={form.installationCharge} onChange={(e) => set({ installationCharge: e.target.value })} /></Field>
+        </div>
+      </div>
+
+      <div style={{ animationDelay: "160ms" }} className="relative z-10 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div>
+            <SectionHeading icon={Building2}>Care Center &amp; Incharge</SectionHeading>
+            <div className="space-y-4">
+              <Field label="Care Center Name">
+                <Select value={form.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
+                  {!isCareCenterUser && <option value="">-- Select Care Center --</option>}
+                  {pageDropdownCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {!isCareCenterUser && <option value="other">Other (Add New)</option>}
+                </Select>
+              </Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Incharge Name">
+                  <TextInput value={form.inchargeName} onChange={(e) => set({ inchargeName: e.target.value })} placeholder="Incharge Name" />
+                </Field>
+                <Field label="Incharge Mobile" error={errors.inchargeMobile}>
+                  <TextInput maxLength={10} value={form.inchargeMobile} error={errors.inchargeMobile} onChange={(e) => set({ inchargeMobile: e.target.value })} placeholder="10-digit number" />
+                </Field>
+              </div>
+              <Field label="Care Address"><textarea rows={2} value={form.careAddress} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none resize-none border-slate-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30" onChange={(e) => set({ careAddress: e.target.value })} /></Field>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Bed No"><TextInput value={form.bedNo} onChange={(e) => set({ bedNo: e.target.value })} /></Field>
+                
+                <Field label="Referral">
+                  <Select value={form.referral} onChange={(e) => set({ referral: e.target.value })}>
+                    <option value="">-- Select Referral --</option>
+                    {activeReferrals.map((r) => (
+                      <option key={r.id} value={r.doctorName || r.name}>
+                        {r.doctorName || r.name} {r.domain ? `(${r.domain})` : ""}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+            </div>
+          </div>
+          <div>
+            <SectionHeading icon={User}>Patient Identity Details</SectionHeading>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Patient Name" required error={errors.patientName}><TextInput value={form.patientName} error={errors.patientName} onChange={(e) => set({ patientName: e.target.value })} /></Field>
+                <Field label="Age"><TextInput type="number" min={0} value={form.age} onChange={(e) => set({ age: e.target.value })} /></Field>
+              </div>
+              <Field label="Attendant Name"><TextInput value={form.attendantName} onChange={(e) => set({ attendantName: e.target.value })} /></Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Mobile Number"><TextInput maxLength={10} value={form.mobileNumber} onChange={(e) => set({ mobileNumber: e.target.value })} /></Field>
+                <Field label="Alt Mobile Number"><TextInput maxLength={10} value={form.altMobileNumber} onChange={(e) => set({ altMobileNumber: e.target.value })} /></Field>
+              </div>
+              <Field label="Delivery Address"><textarea rows={3} value={form.deliveryAddress} onChange={(e) => set({ deliveryAddress: e.target.value })} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" /></Field>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ animationDelay: "200ms" }} className="relative z-0 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+        <Field label="Notes"><textarea rows={3} value={form.notes} onChange={(e) => set({ notes: e.target.value })} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" /></Field>
+      </div>
+
+      <div style={{ animationDelay: "240ms" }} className="rise-in rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-6 transition-colors hover:border-teal-300 hover:bg-teal-50/30">
+        <Field label="Asset Handover Photo Verification (Up to 10 photos/PDFs)">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700">
+                <ImagePlus className="h-4 w-4" /> Choose files
+                <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={handleFileChange} />
+              </label>
+              <span className="text-xs font-medium text-slate-400">{photos.length} / 10 files chosen</span>
+            </div>
+            
+            {photos.length > 0 && (
+              <div className="flex flex-wrap gap-3">
+                {photos.map((file, idx) => {
+                  const isImage = file.type.startsWith("image/");
+                  return (
+                    <div key={idx} className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:ring-2 hover:ring-teal-500/50">
+                      {isImage ? (
+                        <img src={URL.createObjectURL(file)} alt="preview" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center bg-rose-50 p-1 text-center text-rose-500">
+                          <FileText className="mb-1 h-6 w-6" />
+                          <span className="w-full truncate text-[9px] font-semibold">{file.name}</span>
+                        </div>
+                      )}
+                      <button type="button" onClick={() => removeFile(idx)} className="absolute right-1 top-1 hidden h-5 w-5 place-items-center rounded-full bg-rose-500 text-white shadow-md transition hover:bg-rose-600 group-hover:grid cursor-pointer">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </Field>
+      </div>
+
+      <div className="mt-8 flex items-center justify-end border-t border-slate-200 pt-6 pb-4">
+        <PrimaryButton onClick={handleSubmit} className="px-6 py-2.5 shadow-md hover:shadow-lg transition-all">
+          <Save className="h-4.5 w-4.5" /> Save Requisition &amp; Deploy
+        </PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+// 🏢 MAIN RENTAL MASTER COMPONENT
 export default function RentalMaster({ permissions = { canAdd: true, canEdit: true, canDelete: true }, careCenters = [], equipmentCatalog = [], references = [], categories = [] }) {
   const loggedUser = useMemo(() => {
     try {
@@ -2360,6 +2720,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [modal, setModal] = useState(null); 
   const [calcModal, setCalcModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [showAddPage, setShowAddPage] = useState(false);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -2548,6 +2909,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       await API.post("/rental/requisitions", backendData);
       await fetchLogs();
+      setShowAddPage(false);
       setModal(null);
       toast.success("Requisition saved successfully!");
     } catch (err) {
@@ -2635,6 +2997,19 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     }
   };
 
+  if (showAddPage) {
+    return (
+      <NewRequisitionPage 
+        careCenters={careCenters} 
+        equipmentCatalog={equipmentCatalog} 
+        references={references} 
+        categories={categories} 
+        onCancel={() => setShowAddPage(false)} 
+        onSubmit={handleAdd} 
+      />
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-5 fade-slide-up">
       <GlobalPolish />
@@ -2646,7 +3021,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         </div>
 
         {permissions.canAdd && (
-          <PrimaryButton onClick={() => setModal({ mode: "add", data: null })} className="shrink-0 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98] px-4.5 py-2.5">
+          <PrimaryButton onClick={() => setShowAddPage(true)} className="shrink-0 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98] px-4.5 py-2.5">
             <Plus className="h-4 w-4" /> New Log Requisition
           </PrimaryButton>
         )}
@@ -2702,7 +3077,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <option value="Both">Status: Both</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
-            <option value="Closed">Closed</option>
+            <option value="Closed">Closed (Returned)</option>
           </select>
           
           <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[110px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
@@ -2749,7 +3124,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <thead>
               <tr className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 text-xs font-bold uppercase tracking-wide text-slate-400 backdrop-blur">
                 <th className="px-5 py-3">Device</th>
-                <th className="px-5 py-3">Patient</th>
+                <th className="px-5 py-3">Patient &amp; Incharge</th>
                 
                 {/* Clickable Header Sort: Login Date */}
                 <th 
