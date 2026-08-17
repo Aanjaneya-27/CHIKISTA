@@ -189,9 +189,9 @@ const getRequisitions = async (req, res) => {
   try {
     const rows = await Requisition.getAll();
     return res.status(200).json(rows);
-  } catch (error) {
+  } catch (error) { 
     console.error("Fetch Requisitions Error:", error);
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: "Server error while fetching requisitions", error: error.message }); 
   }
 };
 
@@ -210,14 +210,12 @@ const createRequisition = async (req, res) => {
           careCenterId
         );
       }
-    } catch (notifErr) {
-      // Don't crash main request if notification fails
-    }
+    } catch (notifErr) {}
 
     return res.status(201).json({ message: "Requisition created successfully!", id: reqId });
   } catch (error) {
     console.error("Create Requisition Error:", error);
-    return res.status(500).json({ message: error.sqlMessage || error.message });
+    return res.status(400).json({ message: error.sqlMessage || error.message || "Failed to create requisition" });
   }
 };
 
@@ -228,25 +226,23 @@ const updateRequisition = async (req, res) => {
 
     const patientName = req.body.patient_name || req.body.patientName || "Patient";
     const careCenterId = req.body.care_center_id || req.body.careCenterId || null;
-    const status = req.body.logout_date || req.body.logoutDate ? "Closed" : "Active";
+    const status = (req.body.logout_date || req.body.logoutDate) ? "Closed" : "Active";
 
     try {
       if (Notification && typeof Notification.create === "function") {
         await Notification.create(
           status === "Closed" ? "warning" : "info",
           `Requisition ${status}: ${patientName}`,
-          `Requisition ${id} for ${patientName} updated.`,
+          `Requisition ${id} for ${patientName} is now ${status}.`,
           careCenterId
         );
       }
-    } catch (notifErr) {
-      // Don't crash main request if notification fails
-    }
+    } catch (notifErr) {}
 
     return res.status(200).json({ message: "Requisition updated successfully!" });
   } catch (error) {
     console.error("Update Requisition Error:", error);
-    return res.status(500).json({ message: error.sqlMessage || error.message });
+    return res.status(400).json({ message: error.sqlMessage || error.message || "Failed to update requisition" });
   }
 };
 
@@ -274,10 +270,10 @@ const getNotifications = async (req, res) => {
   }
 };
 
-module.exports = {
-  getRequisitions,
-  createRequisition,
-  updateRequisition,
-  deleteRequisition,
-  getNotifications
+module.exports = { 
+  getRequisitions, 
+  createRequisition, 
+  updateRequisition, 
+  deleteRequisition, 
+  getNotifications 
 };
