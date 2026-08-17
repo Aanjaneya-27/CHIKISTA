@@ -1851,16 +1851,16 @@ const filterActive = (list = []) => {
 };
 
 const formatForDateInput = (d) => {
-  if (!d || d === "null" || d === "undefined" || d === "0000-00-00") return "";
+  if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || d === "") return "";
   if (typeof d === "string") {
     const clean = d.split("T")[0].split(" ")[0];
-    if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(clean) && !clean.startsWith("0000")) return clean;
     const p = clean.split("-");
     if (p.length === 3 && p[2].length === 4) return `${p[2]}-${p[1]}-${p[0]}`;
   }
   try {
     const dt = new Date(d);
-    if (!isNaN(dt.getTime()) && dt.getFullYear() > 1970) return dt.toISOString().split("T")[0];
+    if (!isNaN(dt.getTime()) && dt.getFullYear() >= 2000) return dt.toISOString().split("T")[0];
   } catch {
     return "";
   }
@@ -1871,15 +1871,15 @@ const formatDisplayDate = (d) => {
   if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || d === "") return "—";
   if (typeof d === "string") {
     const clean = d.split("T")[0].split(" ")[0];
-    if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(clean) && !clean.startsWith("0000")) return clean;
   }
   try {
     const dt = new Date(d);
-    if (!isNaN(dt.getTime()) && dt.getFullYear() > 1970) return dt.toISOString().split("T")[0];
+    if (!isNaN(dt.getTime()) && dt.getFullYear() >= 2000) return dt.toISOString().split("T")[0];
   } catch {
     return "—";
   }
-  return String(d);
+  return "—";
 };
 
 const getSafeTime = (item, field) => {
@@ -1970,7 +1970,6 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
   );
 }
 
-// 🎛️ KPI Cards Section (Active vs Closed)
 function KpiCards({ logs = [] }) {
   const countActive = logs.filter((l) => {
     const s = String(l?.status || "Active").toLowerCase();
@@ -2023,7 +2022,6 @@ function KpiCards({ logs = [] }) {
   );
 }
 
-// 🧮 TOP BAR QUICK TOTAL DAYS CALCULATOR MODAL
 function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
   const isQuick = !log || log?.isQuickCalc;
   const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date || log?.loginDate) || todayISO());
@@ -2135,7 +2133,6 @@ function SectionHeading({ icon: Icon, children }) {
   );
 }
 
-// 👁️ 1. DEDICATED READ-ONLY VIEW PAGE
 function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], onBack }) {
   const eqId = log?.equipmentId || log?.equipment_id || log?.deviceModel;
   const equipmentName = equipmentCatalog.find(e => String(e?.id) === String(eqId))?.name || log?.equipmentName || log?.equipment_name || eqId || "—";
@@ -2170,7 +2167,6 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
     <div className="fade-slide-up space-y-6">
       <GlobalPolish />
       
-      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
@@ -2193,7 +2189,6 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
         </button>
       </div>
 
-      {/* 4 Cards Matrix Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         
         {/* Card 1: Logistics & Device Matrix */}
@@ -2409,7 +2404,6 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   );
 }
 
-// 📄 2. FULL EDITABLE REQUISITION FORM PAGE
 function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
   const isEdit = mode === "edit";
 
@@ -2456,7 +2450,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       const cc = careCenters.find((c) => c?.id === ccId);
 
       const parsedLogoutDate = formatForDateInput(initial.logoutDate || initial.logout_date);
-      const isRecordClosed = Boolean(parsedLogoutDate && parsedLogoutDate !== "0000-00-00");
+      const isRecordClosed = Boolean(parsedLogoutDate && parsedLogoutDate.trim() !== "" && parsedLogoutDate !== "0000-00-00");
 
       return {
         id: initial.id || null,
@@ -2590,9 +2584,8 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       careCenterName = careCenters.find((c) => c?.id === form.careCenterId)?.name || "";
     }
 
-    // 🔒 STRICT STATUS FIX: Agar real Logout Date bhari hai tabhi Closed, warna 100% 'Active'
     const cleanLogout = form.logoutDate && form.logoutDate.trim() !== "" && form.logoutDate !== "0000-00-00" ? form.logoutDate : null;
-    const finalCalculatedStatus = cleanLogout ? "Closed" : "Active";
+    const finalCalculatedStatus = cleanLogout !== null ? "Closed" : "Active";
 
     onSubmit({
       ...form, 
@@ -2746,7 +2739,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
                 </Select>
               </Field>
 
-              {/* Incharge Mobile & Alt Mobile */}
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Incharge Mobile" error={errors.inchargeMobile}>
                   <TextInput maxLength={10} value={form.inchargeMobile} error={errors.inchargeMobile} onChange={(e) => set({ inchargeMobile: e.target.value })} placeholder="10-digit number" />
@@ -2863,7 +2855,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
   );
 }
 
-// 🏢 MAIN EXPORTED PAGE
 export default function RentalMaster({ permissions = { canAdd: true, canEdit: true, canDelete: true }, careCenters = [], equipmentCatalog = [], references = [], categories = [] }) {
   const loggedUser = useMemo(() => {
     try {
@@ -2961,7 +2952,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [sortField, setSortField] = useState("startDate");
   const [sortOrder, setSortOrder] = useState("desc");
 
-  // 🔄 Navigation State
   const [viewDetailLog, setViewDetailLog] = useState(null); 
   const [pageForm, setPageForm] = useState(null); 
 
@@ -3092,7 +3082,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  // 🔄 Submit Handler
   const handleFormSubmit = async (data) => {
     try {
       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
@@ -3107,7 +3096,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         : (data.careCenterName || "");
 
       const cleanLogout = data.logoutDate && data.logoutDate.trim() !== "" && data.logoutDate !== "0000-00-00" ? data.logoutDate : null;
-      const finalStatus = cleanLogout ? "Closed" : "Active"; // 👈 Strictly Active if no logout date
+      const finalStatus = cleanLogout !== null ? "Closed" : "Active";
 
       const rentalChargeNum = data.rentalCharge !== "" && data.rentalCharge !== undefined ? Number(data.rentalCharge) : 0;
       const depositAdvanceNum = data.depositAdvance !== "" && data.depositAdvance !== undefined ? Number(data.depositAdvance) : 0;
@@ -3134,7 +3123,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         logout_date: cleanLogout,
         logoutDate: cleanLogout,
         
-        // 💳 Commercial Parameters
         billing_type: data.billingType || "Daily",
         billingType: data.billingType || "Daily",
         rental_charge: rentalChargeNum,
@@ -3144,7 +3132,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         installation_charge: installationChargeNum,
         installationCharge: installationChargeNum,
         
-        // 👤 Patient Details
         age: data.age || "",
         attendant_name: data.attendantName || "",
         attendantName: data.attendantName || "",
@@ -3155,7 +3142,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         delivery_address: data.deliveryAddress || "",
         deliveryAddress: data.deliveryAddress || "",
 
-        // 🏥 Logistics & Care Center
         incharge_mobile: data.inchargeMobile || data.phone || data.pocMobile || "",
         inchargeMobile: data.inchargeMobile || data.phone || data.pocMobile || "",
         alt_mobile: data.altMobile || "",
@@ -3237,7 +3223,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     }
   };
 
-  // 🌟 View 1: Screenshot Style Read-Only Matrix Page
   if (viewDetailLog !== null) {
     return (
       <RequisitionDetailView 
@@ -3249,7 +3234,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     );
   }
 
-  // 🌟 View 2: Full Editable Form Page for Add / Edit
   if (pageForm !== null) {
     return (
       <RequisitionFormPage 
@@ -3284,7 +3268,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       <KpiCards logs={scopedLogs} />
       
-      {/* Search & Filter Bar */}
       <div style={{ animationDelay: "80ms" }} className="rise-in rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm shadow-slate-200/40">
         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -3301,7 +3284,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
           <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400 hidden sm:block" />
 
-          {/* Care Center Dropdown */}
           <select 
             value={careCenterFilter} 
             onChange={(e) => setCareCenterFilter(e.target.value)} 
@@ -3313,7 +3295,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             ))}
           </select>
 
-          {/* Status Filter */}
           <select 
             value={statusFilter} 
             onChange={(e) => setStatusFilter(e.target.value)} 
@@ -3340,7 +3321,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
 
-          {/* 🧮 Quick Total Days Calculator Button */}
           <button 
             type="button"
             onClick={() => setCalcModal({ isQuickCalc: true })}
@@ -3350,7 +3330,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <Calculator className="h-4 w-4" />
           </button>
 
-          {/* Reset Filters Cross Button */}
           <button 
             type="button"
             onClick={() => {
@@ -3381,7 +3360,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                 <th className="px-5 py-3">Device</th>
                 <th className="px-5 py-3">Patient</th>
                 
-                {/* Clickable Header Sort: Login Date */}
                 <th 
                   onClick={() => handleSort("startDate")}
                   className="px-5 py-3 cursor-pointer hover:text-teal-700 transition select-none"
@@ -3397,7 +3375,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                   </div>
                 </th>
 
-                {/* Clickable Header Sort: Logout Date */}
                 <th 
                   onClick={() => handleSort("logoutDate")}
                   className="px-5 py-3 cursor-pointer hover:text-teal-700 transition select-none"
@@ -3499,7 +3476,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                             </IconAction>
                           )}
 
-                          {/* 👁️ VIEW ACTION */}
                           <IconAction 
                             title="View Details" 
                             tone="teal" 
@@ -3508,7 +3484,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                             <Eye className="h-4 w-4" />
                           </IconAction>
                           
-                          {/* ✏️ EDIT ACTION */}
                           {permissions.canEdit && (
                             <IconAction 
                               title="Edit Requisition" 
