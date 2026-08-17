@@ -2030,75 +2030,29 @@ function KpiCards({ logs = [] }) {
   );
 }
 
-// 🧮 TEMPORARY PREVIEW CALCULATOR MODAL (UI Matching Reference Image)
-function CalculateTotalDaysModal({ requisitions = [], onApplyTemporaryChanges, onClose }) {
-  const [selectedReqId, setSelectedReqId] = useState("");
+function CalculateTotalDaysModal({ onClose }) {
   const [tempLoginDate, setTempLoginDate] = useState(() => todayISO());
   const [tempLogoutDate, setTempLogoutDate] = useState("");
-
-  const handleSelectReq = (id) => {
-    setSelectedReqId(id);
-    const target = requisitions.find((r) => String(r.id) === String(id));
-    if (target) {
-      setTempLoginDate(formatForDateInput(target.startDate || target.start_date || target.loginDate) || todayISO());
-      setTempLogoutDate(formatForDateInput(target.logoutDate || target.logout_date) || "");
-    }
-  };
 
   const totalDaysDisplay = useMemo(() => {
     return getDynamicTotalDays(tempLoginDate, tempLogoutDate);
   }, [tempLoginDate, tempLogoutDate]);
 
-  const handleApply = () => {
-    if (selectedReqId) {
-      onApplyTemporaryChanges(selectedReqId, tempLoginDate, tempLogoutDate);
-      toast.success("Temporary preview applied to table! (Will reset on refresh)");
-    }
-    onClose();
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
-        
-        {/* Modal Header */}
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4.5">
           <div>
             <h3 className="font-display text-base font-bold text-slate-800">
               Calculate Total Days
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">Quick duration calculator &amp; temporary preview</p>
           </div>
-          <button 
-            onClick={onClose} 
-            className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
-          >
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Modal Body */}
         <div className="p-6 space-y-4">
-          {requisitions.length > 0 && (
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                Apply To Requisition (Optional)
-              </label>
-              <select
-                value={selectedReqId}
-                onChange={(e) => handleSelectReq(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
-              >
-                <option value="">-- General Calculation (No Target) --</option>
-                {requisitions.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    #{r.id} • {r.patientName || r.patient_name || "Patient"} ({r.equipmentName || "Device"})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               LOG IN DATE
@@ -2125,7 +2079,6 @@ function CalculateTotalDaysModal({ requisitions = [], onApplyTemporaryChanges, o
             <p className="text-[11px] text-slate-400 mt-1">Leave empty to calculate until today</p>
           </div>
 
-          {/* Result Box (71 / 6) */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5 text-center my-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
               TOTAL DAYS
@@ -2136,20 +2089,11 @@ function CalculateTotalDaysModal({ requisitions = [], onApplyTemporaryChanges, o
           </div>
         </div>
 
-        {/* Modal Footer */}
         <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
-          <button 
-            type="button" 
-            onClick={onClose} 
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-          >
+          <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
             Cancel
           </button>
-          <button 
-            type="button" 
-            onClick={handleApply} 
-            className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
-          >
+          <button type="button" onClick={onClose} className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer">
             Apply Changes
           </button>
         </div>
@@ -2183,10 +2127,10 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
     ? "bg-amber-50 text-amber-700 border-amber-200"
     : "bg-emerald-50 text-emerald-700 border-emerald-200";
 
-  const billingTypeVal = log?.billingType || log?.billing_type || "Daily";
-  const rentalChargeVal = log?.rentalCharge ?? log?.rental_charge ?? 0;
-  const depositAdvanceVal = log?.depositAdvance ?? log?.deposit_advance ?? 0;
-  const installationChargeVal = log?.installationCharge ?? log?.installation_charge ?? 0;
+  const billingTypeVal = log?.billingType || log?.billing_type || log?.billing || "Daily";
+  const rentalChargeVal = log?.rentalCharge ?? log?.rental_charge ?? log?.rental ?? log?.rent ?? 0;
+  const depositAdvanceVal = log?.depositAdvance ?? log?.deposit_advance ?? log?.deposit ?? log?.advance ?? 0;
+  const installationChargeVal = log?.installationCharge ?? log?.installation_charge ?? log?.installation ?? 0;
 
   const totalDaysFormatted = getDynamicTotalDays(log?.startDate || log?.start_date || log?.loginDate, cleanLogout);
 
@@ -2207,11 +2151,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
           </p>
         </div>
 
-        <button 
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer w-fit"
-        >
+        <button type="button" onClick={onBack} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer w-fit">
           <ArrowLeft className="h-4 w-4" /> Back to Listing
         </button>
       </div>
@@ -2243,7 +2183,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
 
             <div>
               <p className="text-xs font-medium text-slate-400">Mode</p>
-              <p className="font-bold text-slate-800 mt-0.5">{log?.mode || log?.paymentType || "Postpaid"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{log?.mode || log?.paymentType || log?.payment_type || "Postpaid"}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Log In Date</p>
@@ -2289,7 +2229,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             <div>
               <p className="text-xs font-medium text-slate-400">Rental Charge</p>
               <p className="font-extrabold text-slate-800 mt-0.5">
-                ₹{rentalChargeVal}/day
+                ₹{rentalChargeVal}
               </p>
             </div>
 
@@ -2709,7 +2649,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
               <option value="Monthly">Monthly</option>
             </Select>
           </Field>
-          <Field label="Rental Charge (₹/Day)">
+          <Field label="Rental Charge (₹)">
             <TextInput type="number" min={0} value={form.rentalCharge} onChange={(e) => set({ rentalCharge: e.target.value })} />
           </Field>
           <Field label="Deposit / Advance (₹)">
@@ -2944,34 +2884,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [viewDetailLog, setViewDetailLog] = useState(null); 
   const [pageForm, setPageForm] = useState(null); 
 
-  // 🧮 Calculator Modal State
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
-
-  // 🔄 TEMPORARY IN-MEMORY APPLY FUNCTION (No API Put, Reverts on refresh)
-  const handleApplyTemporaryChanges = (targetReqId, newStart, newLogout) => {
-    const today = todayISO();
-    const cleanOut = formatForDateInput(newLogout);
-    const isClosed = Boolean(cleanOut && cleanOut <= today);
-
-    setLogs((prevLogs) => 
-      prevLogs.map((item) => {
-        if (String(item.id) === String(targetReqId)) {
-          return {
-            ...item,
-            startDate: newStart,
-            start_date: newStart,
-            loginDate: newStart,
-            logoutDate: cleanOut || null,
-            logout_date: cleanOut || null,
-            status: isClosed ? "Closed" : "Active",
-            requisition_status: isClosed ? "Closed" : "Active"
-          };
-        }
-        return item;
-      })
-    );
-  };
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -3078,46 +2992,75 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       const cleanNotify = formatForDateInput(data.notifyDate);
       const today = todayISO();
 
+      const rCharge = data.rentalCharge !== "" && data.rentalCharge !== undefined ? Number(data.rentalCharge) : 0;
+      const dAdvance = data.depositAdvance !== "" && data.depositAdvance !== undefined ? Number(data.depositAdvance) : 0;
+      const iCharge = data.installationCharge !== "" && data.installationCharge !== undefined ? Number(data.installationCharge) : 0;
+      const bType = data.billingType || "Daily";
+
       const payload = {
+        id: data.id,
         careCenterId: finalCareCenterId,
+        care_center_id: finalCareCenterId,
         careCenterName: finalCareCenterName,
         equipmentId: data.equipmentId || data.deviceModel,
+        equipment_id: data.equipmentId || data.deviceModel,
         patientName: data.patientName,
+        patient_name: data.patientName,
         quantity: 1,
         startDate: cleanStart,
+        start_date: cleanStart,
         logoutDate: cleanLogout || null,
+        logout_date: cleanLogout || null,
         status: (cleanLogout && cleanLogout <= today) ? "Closed" : "Active",
         
-        billingType: data.billingType || "Daily",
-        rentalCharge: data.rentalCharge !== "" ? Number(data.rentalCharge) : 0,
-        depositAdvance: data.depositAdvance !== "" ? Number(data.depositAdvance) : 0,
-        installationCharge: data.installationCharge !== "" ? Number(data.installationCharge) : 0,
+        billingType: bType,
+        billing_type: bType,
+        rentalCharge: rCharge,
+        rental_charge: rCharge,
+        depositAdvance: dAdvance,
+        deposit_advance: dAdvance,
+        installationCharge: iCharge,
+        installation_charge: iCharge,
         
         age: data.age || "",
         attendantName: data.attendantName || "",
+        attendant_name: data.attendantName || "",
         mobileNumber: data.mobileNumber || "",
+        mobile_number: data.mobileNumber || "",
         altMobileNumber: data.altMobileNumber || "",
+        alt_mobile_number: data.altMobileNumber || "",
         deliveryAddress: data.deliveryAddress || "",
+        delivery_address: data.deliveryAddress || "",
 
         inchargeMobile: data.inchargeMobile || "",
+        incharge_mobile: data.inchargeMobile || "",
         altMobile: data.altMobile || "",
+        alt_mobile: data.altMobile || "",
         careAddress: data.careAddress || "",
+        care_address: data.careAddress || "",
         bedNo: data.bedNo || "",
+        bed_number: data.bedNo || "",
         referral: data.referral || "",
+        referral_doctor: data.referral || "",
         
         dealType: data.dealType || "B2B",
+        deal_type: data.dealType || "B2B",
         unit: data.unit || "ODCOM",
         mode: chosenMode,
+        paymentType: chosenMode,
         recordDate: cleanRecord,
+        record_date: cleanRecord,
         notifyDate: cleanNotify,
+        notify_date: cleanNotify,
         recallDate: cleanRecall,
+        recall_date: cleanRecall,
         notes: data.notes || "",
         accessory: accStr
       };
 
       if (data.id) {
         await API.put(`/rental/requisitions/${data.id}`, payload);
-        toast.success("Requisition updated!");
+        toast.success("Requisition updated successfully!");
       } else {
         await API.post("/rental/requisitions", payload);
         toast.success("Requisition created & deployed!");
@@ -3188,7 +3131,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     <div className="space-y-4 sm:space-y-5 fade-slide-up">
       <GlobalPolish />
       
-      {/* Top Title & CTA */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight text-slate-800">Rental Master Sheet</h1>
@@ -3204,7 +3146,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       <KpiCards logs={scopedLogs} />
       
-      {/* Filter Bar with Calculator Button right before Reset Filter Cross */}
+      {/* Filter Bar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -3257,7 +3199,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
 
-          {/* 🧮 TOP CALCULATOR BUTTON (Right before the X button) */}
           <button 
             type="button"
             onClick={() => setIsCalcModalOpen(true)}
@@ -3267,7 +3208,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <Calculator className="h-4 w-4" />
           </button>
 
-          {/* ❌ RESET FILTERS BUTTON */}
           <button 
             type="button"
             onClick={() => {
@@ -3279,10 +3219,10 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               setCareCenterFilter("All");
               setSortField("startDate");
               setSortOrder("desc");
-              fetchLogs(); // Reloads fresh data from DB on reset
-              toast.success("Filters and views reset to original");
+              fetchLogs();
+              toast.success("Filters reset");
             }}
-            title="Reset all filters & data"
+            title="Reset all filters"
             className="flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition cursor-pointer shrink-0"
           >
             <X className="h-4 w-4" />
@@ -3400,7 +3340,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         {actualLogoutDate ? formatDisplayDate(actualLogoutDate) : "—"}
                       </td>
                       
-                      {/* Total Days Column (e.g. 71/6) */}
                       <td className="px-5 py-3.5">
                         <span className={`font-bold px-2.5 py-1 rounded-md text-xs border shadow-xs ${
                           isClosed 
@@ -3411,7 +3350,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         </span>
                       </td>
 
-                      {/* Clean Actions: No calculator button in table rows */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1">
 
@@ -3467,11 +3405,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         </div>
       </div>
 
-      {/* Top Filter Bar Calculator Modal */}
       {isCalcModalOpen && (
         <CalculateTotalDaysModal 
-          requisitions={scopedLogs}
-          onApplyTemporaryChanges={handleApplyTemporaryChanges}
           onClose={() => setIsCalcModalOpen(false)} 
         />
       )}
