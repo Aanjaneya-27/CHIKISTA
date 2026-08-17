@@ -18,8 +18,6 @@ const {
 
 const router = express.Router();
 router.post("/login", login);
-
-// 👤 Profile Management
 router.put("/profile", updateProfile);
 router.put("/password", changePassword);
 
