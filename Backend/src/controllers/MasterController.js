@@ -677,6 +677,53 @@ const getCareCenters = async (req, res) => {
   }
 };
 
+// const addCareCenter = async (req, res) => {
+//   try {
+//     const d = req.body || {};
+//     const name = String(d.name || d.careCenterName || "").trim();
+//     if (!name) {
+//       return res.status(400).json({ message: "Care Center Name is required." });
+//     }
+
+//     const id = String(d.id || `CC-${Math.floor(1000 + Math.random() * 9000)}`).trim();
+//     const rawPhone = d.phone || d.incharge_mobile || d.inchargeMobile || d.mobile || "";
+//     const phone = cleanPhone(rawPhone) || String(rawPhone).trim();
+//     const contactPerson = String(d.contactPerson || d.contact_person || d.incharge_name || d.inchargeName || "").trim();
+//     const address = String(d.address || d.care_address || d.careAddress || "").trim();
+//     const gst = String(d.gst || d.gst_number || d.gstNumber || "").trim();
+//     const status = d.status || "Active";
+
+//     // Dynamic Safe Insert (supports multiple schema variants)
+//     try {
+//       await pool.query(
+//         `INSERT INTO care_centers (id, name, phone, incharge_mobile, contact_person, incharge_name, address, gst, status) 
+//          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//         [id, name, phone, phone, contactPerson, contactPerson, address, gst, status]
+//       );
+//     } catch (insertErr) {
+//       // Fallback for minimal table schema
+//       await pool.query(
+//         `INSERT INTO care_centers (id, name, phone, address, status) 
+//          VALUES (?, ?, ?, ?, ?)`,
+//         [id, name, phone, address, status]
+//       );
+//     }
+
+//     return res.status(201).json({
+//       message: "Care Center added successfully!",
+//       id,
+//       name,
+//       phone,
+//       contactPerson,
+//       address,
+//       status
+//     });
+//   } catch (error) {
+//     console.error("Add Care Center Error:", error);
+//     return res.status(500).json({ message: error.sqlMessage || error.message });
+//   }
+// };
+
 const addCareCenter = async (req, res) => {
   try {
     const d = req.body || {};
@@ -685,28 +732,32 @@ const addCareCenter = async (req, res) => {
       return res.status(400).json({ message: "Care Center Name is required." });
     }
 
-    const id = String(d.id || `CC-${Math.floor(1000 + Math.random() * 9000)}`).trim();
+    let id = String(d.id || `CC-${Math.floor(1000 + Math.random() * 9000)}`).trim();
     const rawPhone = d.phone || d.incharge_mobile || d.inchargeMobile || d.mobile || "";
     const phone = cleanPhone(rawPhone) || String(rawPhone).trim();
-    const contactPerson = String(d.contactPerson || d.contact_person || d.incharge_name || d.inchargeName || "").trim();
     const address = String(d.address || d.care_address || d.careAddress || "").trim();
-    const gst = String(d.gst || d.gst_number || d.gstNumber || "").trim();
-    const status = d.status || "Active";
+    const status = String(d.status || "Active").trim();
 
-    // Dynamic Safe Insert (supports multiple schema variants)
-    try {
-      await pool.query(
-        `INSERT INTO care_centers (id, name, phone, incharge_mobile, contact_person, incharge_name, address, gst, status) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, name, phone, phone, contactPerson, contactPerson, address, gst, status]
-      );
-    } catch (insertErr) {
-      // Fallback for minimal table schema
-      await pool.query(
-        `INSERT INTO care_centers (id, name, phone, address, status) 
-         VALUES (?, ?, ?, ?, ?)`,
-        [id, name, phone, address, status]
-      );
+    // 🔄 Auto-Retry Loop (Duplicate ID collision se bachne ke liye)
+    let inserted = false;
+    let attempts = 0;
+
+    while (!inserted && attempts < 5) {
+      try {
+        await pool.query(
+          "INSERT INTO care_centers (id, name, phone, address, status) VALUES (?, ?, ?, ?, ?)",
+          [id, name, phone, address, status]
+        );
+        inserted = true;
+      } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY') {
+          // Agar ID match ho gayi, toh nayi random ID banao aur loop retry karo
+          id = `CC-${Math.floor(100000 + Math.random() * 900000)}`;
+          attempts++;
+        } else {
+          throw err; // Agar koi aur SQL error hai toh throw karo
+        }
+      }
     }
 
     return res.status(201).json({
@@ -714,7 +765,6 @@ const addCareCenter = async (req, res) => {
       id,
       name,
       phone,
-      contactPerson,
       address,
       status
     });
