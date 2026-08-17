@@ -1858,7 +1858,29 @@ const formatForDateInput = (d) => {
     const p = d.split("-");
     if (p.length === 3 && p[2].length === 4) return `${p[2]}-${p[1]}-${p[0]}`;
   }
+  try {
+    const dateObj = new Date(d);
+    if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split("T")[0];
+  } catch {
+    return "";
+  }
   return "";
+};
+
+// 📅 Robust Date Formatter for Detail View (Displays clean YYYY-MM-DD)
+const formatDisplayDate = (d) => {
+  if (!d || d === "null" || d === "undefined" || d === "0000-00-00") return "—";
+  if (typeof d === "string") {
+    const clean = d.includes("T") ? d.split("T")[0] : d;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+  }
+  try {
+    const dateObj = new Date(d);
+    if (isNaN(dateObj.getTime())) return "—";
+    return dateObj.toISOString().split("T")[0];
+  } catch {
+    return "—";
+  }
 };
 
 const getSafeTime = (item, field) => {
@@ -1949,7 +1971,7 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
   );
 }
 
-// 🎛️ KPI Cards Section (Updated: "Closed" instead of "Closed / Returned")
+// 🎛️ KPI Cards Section
 function KpiCards({ logs = [] }) {
   const countActive = logs.filter((l) => String(l?.status || "Active").toLowerCase() === "active").length;
   const countClosed = logs.filter((l) => {
@@ -1960,7 +1982,7 @@ function KpiCards({ logs = [] }) {
 
   const cards = [
     { label: "Active Rentals", value: countActive, icon: Activity, tone: "teal" },
-    { label: "Closed", value: countClosed, icon: PackageCheck, tone: "slate" }, // 👈 Updated Label
+    { label: "Closed", value: countClosed, icon: PackageCheck, tone: "slate" },
     { label: "Inactive Rentals", value: countInactive, icon: AlertTriangle, tone: "rose" },
     { label: "Total Requisitions", value: logs.length, icon: Clock, tone: "amber" },
   ];
@@ -2202,25 +2224,25 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Record Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.recordDate || log?.record_date) || "—"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(log?.recordDate || log?.record_date)}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Log In Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.startDate || log?.start_date || log?.loginDate) || "—"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(log?.startDate || log?.start_date || log?.loginDate)}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Notify Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.notifyDate || log?.notify_date) || "0000-00-00"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(log?.notifyDate || log?.notify_date)}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Log Out Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.logoutDate || log?.logout_date) || "—"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(log?.logoutDate || log?.logout_date)}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Recall Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.recallDate || log?.recall_date) || "—"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(log?.recallDate || log?.recall_date)}</p>
             </div>
 
             <div className="col-span-2 pt-1">
@@ -2374,7 +2396,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   );
 }
 
-// 📄 2. FULL EDITABLE REQUISITION FORM PAGE (Status removed from top section, auto-calculated)
+// 📄 2. FULL EDITABLE REQUISITION FORM PAGE
 function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
   const isEdit = mode === "edit";
 
@@ -2555,12 +2577,15 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       careCenterName = careCenters.find((c) => c?.id === form.careCenterId)?.name || "";
     }
 
-    // Status is automatically determined: closed if logoutDate exists, else active
     const autoStatus = form.logoutDate ? "Closed" : (initial?.status || "Active");
 
     onSubmit({
       ...form, 
       id: form.id,
+      recordDate: form.recordDate || todayISO(),
+      record_date: form.recordDate || todayISO(),
+      recallDate: form.recallDate || null,
+      recall_date: form.recallDate || null,
       equipmentId: form.deviceModel, 
       equipmentName: equipment?.name || form.deviceModel, 
       category: equipment?.category || "General", 
@@ -2601,7 +2626,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         </div>
       </div>
 
-      {/* Section 1: Record Types (Status field removed) */}
+      {/* Section 1: Record Types */}
       <div style={{ animationDelay: "40ms" }} className="relative z-40 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
         <SectionHeading icon={Tag}>Record Types</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-3">
@@ -2659,7 +2684,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
             <TextInput type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
           </Field>
           
-          {/* 👈 Log Out Date (Non-mandatory & clean label) */}
           <Field label="Log Out Date">
             <TextInput type="date" value={form.logoutDate} onChange={(e) => set({ logoutDate: e.target.value })} />
           </Field>
@@ -3052,7 +3076,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  // 🔄 Submit Handler
+  // 🔄 100% Complete Submit Handler (Syncs Record Date & Recall Date on New Creation & Edit)
   const handleFormSubmit = async (data) => {
     try {
       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
@@ -3073,7 +3097,12 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       const depositAdvanceNum = data.depositAdvance !== "" && data.depositAdvance !== undefined ? Number(data.depositAdvance) : 0;
       const installationChargeNum = data.installationCharge !== "" && data.installationCharge !== undefined ? Number(data.installationCharge) : 0;
 
+      const cleanRecordDate = data.recordDate || data.record_date || todayISO();
+      const cleanRecallDate = data.recallDate || data.recall_date || null;
+      const reqId = data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
+
       const backendData = {
+        id: reqId,
         care_center_id: finalCareCenterId,
         careCenterId: finalCareCenterId,
         care_center_name: finalCareCenterName,
@@ -3130,12 +3159,12 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         dealType: data.dealType || "B2B",
         unit: data.unit || "ODCOM",
         mode: chosenMode,
-        record_date: data.recordDate || todayISO(),
-        recordDate: data.recordDate || todayISO(),
+        record_date: cleanRecordDate,
+        recordDate: cleanRecordDate,
         notify_date: data.notifyDate || null,
         notifyDate: data.notifyDate || null,
-        recall_date: data.recallDate || null,
-        recallDate: data.recallDate || null,
+        recall_date: cleanRecallDate,
+        recallDate: cleanRecallDate,
         notes: data.notes || "",
         accessory: accStr,
         accessories: accStr, 
@@ -3147,8 +3176,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         await API.put(`/rental/requisitions/${data.id}`, backendData);
         toast.success("Requisition updated successfully!");
       } else {
-        const reqId = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
-        await API.post("/rental/requisitions", { ...backendData, id: reqId });
+        await API.post("/rental/requisitions", backendData);
         toast.success("Requisition created and deployed!");
       }
 
@@ -3156,7 +3184,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         if (data.id) {
           return prev.map((l) => (String(l.id) === String(data.id) ? { ...l, ...data, ...backendData } : l));
         }
-        return [{ id: `REQ-${Date.now()}`, ...data, ...backendData }, ...prev];
+        return [{ ...data, ...backendData, id: reqId }, ...prev];
       });
 
       await fetchLogs();
@@ -3328,14 +3356,14 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         </div>
       </div>
 
-      {/* Main Table (Header: "Patient" instead of "Patient & Contact") */}
+      {/* Main Table */}
       <div style={{ animationDelay: "140ms" }} className="rise-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/40">
         <div className="smooth-scroll-x overflow-x-auto">
           <table className="w-full text-left text-sm" style={{ minWidth: 800 }}>
             <thead>
               <tr className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 text-xs font-bold uppercase tracking-wide text-slate-400 backdrop-blur">
                 <th className="px-5 py-3">Device</th>
-                <th className="px-5 py-3">Patient</th> {/* 👈 Updated Table Header */}
+                <th className="px-5 py-3">Patient</th>
                 
                 {/* Clickable Header Sort: Login Date */}
                 <th 
@@ -3455,7 +3483,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                             </IconAction>
                           )}
 
-                          {/* 👁️ VIEW ACTION: Opens Screenshot-Style Read-Only Matrix Page */}
+                          {/* 👁️ VIEW ACTION */}
                           <IconAction 
                             title="View Details" 
                             tone="teal" 
@@ -3464,7 +3492,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                             <Eye className="h-4 w-4" />
                           </IconAction>
                           
-                          {/* ✏️ EDIT ACTION: Opens Full Editable Page */}
+                          {/* ✏️ EDIT ACTION */}
                           {permissions.canEdit && (
                             <IconAction 
                               title="Edit Requisition" 
