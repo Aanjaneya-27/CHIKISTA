@@ -1851,7 +1851,7 @@ const filterActive = (list = []) => {
 };
 
 const formatForDateInput = (d) => {
-  if (!d || d === "null" || d === "undefined") return "";
+  if (!d || d === "null" || d === "undefined" || d === "0000-00-00") return "";
   if (typeof d === "string") {
     const clean = d.split("T")[0].split(" ")[0];
     if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
@@ -1860,14 +1860,13 @@ const formatForDateInput = (d) => {
   }
   try {
     const dt = new Date(d);
-    if (!isNaN(dt.getTime())) return dt.toISOString().split("T")[0];
+    if (!isNaN(dt.getTime()) && dt.getFullYear() > 1970) return dt.toISOString().split("T")[0];
   } catch {
     return "";
   }
   return "";
 };
 
-// 📅 Bulletproof Display Date Formatter
 const formatDisplayDate = (d) => {
   if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || d === "") return "—";
   if (typeof d === "string") {
@@ -1876,7 +1875,7 @@ const formatDisplayDate = (d) => {
   }
   try {
     const dt = new Date(d);
-    if (!isNaN(dt.getTime())) return dt.toISOString().split("T")[0];
+    if (!isNaN(dt.getTime()) && dt.getFullYear() > 1970) return dt.toISOString().split("T")[0];
   } catch {
     return "—";
   }
@@ -1888,7 +1887,7 @@ const getSafeTime = (item, field) => {
   const raw = field === "logoutDate" 
     ? (item.logoutDate || item.logout_date) 
     : (item.startDate || item.start_date || item.loginDate);
-  if (!raw) return 0;
+  if (!raw || raw === "0000-00-00") return 0;
   const t = new Date(raw).getTime();
   return isNaN(t) ? 0 : t;
 };
@@ -1971,13 +1970,18 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
   );
 }
 
-// 🎛️ KPI Cards Section
+// 🎛️ KPI Cards Section (Active vs Closed)
 function KpiCards({ logs = [] }) {
-  const countActive = logs.filter((l) => String(l?.status || "Active").toLowerCase() === "active").length;
+  const countActive = logs.filter((l) => {
+    const s = String(l?.status || "Active").toLowerCase();
+    return s === "active";
+  }).length;
+
   const countClosed = logs.filter((l) => {
     const s = String(l?.status || "").toLowerCase();
     return s === "closed" || s === "returned";
   }).length;
+
   const countInactive = logs.filter((l) => String(l?.status || "").toLowerCase() === "inactive").length;
 
   const cards = [
@@ -2035,7 +2039,8 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
     if (isNaN(login.getTime())) return "—";
     login.setHours(0, 0, 0, 0);
 
-    if (tempLogoutDate) {
+    const hasValidLogout = tempLogoutDate && tempLogoutDate !== "0000-00-00" && tempLogoutDate.trim() !== "";
+    if (hasValidLogout) {
       const logout = new Date(tempLogoutDate);
       if (!isNaN(logout.getTime())) {
         logout.setHours(0, 0, 0, 0);
@@ -2139,13 +2144,11 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   const careCenterName = log?.careCenterName || log?.care_center_name || careCenters.find(c => String(c?.id) === String(ccId))?.name || ccId || "—";
 
   const rawStatus = String(log?.status || log?.requisition_status || "Active").trim();
-  const statusColor = rawStatus.toLowerCase() === "active" 
+  const isCurrentlyActive = rawStatus.toLowerCase() === "active";
+  const statusColor = isCurrentlyActive
     ? "bg-amber-50 text-amber-700 border-amber-200"
-    : rawStatus.toLowerCase() === "closed" || rawStatus.toLowerCase() === "returned"
-    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-    : "bg-slate-100 text-slate-700 border-slate-200";
+    : "bg-emerald-50 text-emerald-700 border-emerald-200";
 
-  // Safe Parameter Getters
   const billingTypeVal = log?.billingType || log?.billing_type || "Daily";
   const rentalChargeVal = log?.rentalCharge !== undefined && log?.rentalCharge !== "" && log?.rentalCharge !== null ? log.rentalCharge : (log?.rental_charge ?? 0);
   const depositAdvanceVal = log?.depositAdvance !== undefined && log?.depositAdvance !== "" && log?.depositAdvance !== null ? log.depositAdvance : (log?.deposit_advance ?? 0);
@@ -2452,8 +2455,8 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       const ccId = initial.careCenterId || initial.care_center_id || "";
       const cc = careCenters.find((c) => c?.id === ccId);
 
-      let initialStatus = initial.status || initial.requisition_status || "Active";
-      if (String(initialStatus).toLowerCase() === "returned") initialStatus = "Closed";
+      const parsedLogoutDate = formatForDateInput(initial.logoutDate || initial.logout_date);
+      const isRecordClosed = Boolean(parsedLogoutDate && parsedLogoutDate !== "0000-00-00");
 
       return {
         id: initial.id || null,
@@ -2465,7 +2468,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         recordDate: formatForDateInput(initial.recordDate || initial.record_date) || todayISO(),
         loginDate: formatForDateInput(initial.startDate || initial.start_date || initial.loginDate) || todayISO(),
         notifyDate: formatForDateInput(initial.notifyDate || initial.notify_date),
-        logoutDate: formatForDateInput(initial.logoutDate || initial.logout_date),
+        logoutDate: parsedLogoutDate,
         recallDate: formatForDateInput(initial.recallDate || initial.recall_date),
         billingType: initial.billingType || initial.billing_type || "Daily",
         rentalCharge: initial.rentalCharge ?? initial.rental_charge ?? "",
@@ -2484,7 +2487,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         altMobileNumber: initial.altMobileNumber || initial.alt_mobile_number || "",
         deliveryAddress: initial.deliveryAddress || initial.delivery_address || "",
         notes: initial.notes || "",
-        status: initialStatus
+        status: isRecordClosed ? "Closed" : "Active"
       };
     }
 
@@ -2587,7 +2590,9 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       careCenterName = careCenters.find((c) => c?.id === form.careCenterId)?.name || "";
     }
 
-    const autoStatus = form.logoutDate ? "Closed" : (initial?.status || "Active");
+    // 🔒 STRICT STATUS FIX: Agar real Logout Date bhari hai tabhi Closed, warna 100% 'Active'
+    const cleanLogout = form.logoutDate && form.logoutDate.trim() !== "" && form.logoutDate !== "0000-00-00" ? form.logoutDate : null;
+    const finalCalculatedStatus = cleanLogout ? "Closed" : "Active";
 
     onSubmit({
       ...form, 
@@ -2602,10 +2607,10 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       careCenterName, 
       quantity: 1, 
       startDate: form.loginDate, 
-      logoutDate: form.logoutDate || null,
+      logoutDate: cleanLogout,
       paymentType: form.mode, 
       deliveryAddress: form.deliveryAddress, 
-      status: autoStatus, 
+      status: finalCalculatedStatus, 
       deliveryStatus: "Pending Dispatch", 
       photoCount: photos.length,
     });
@@ -2999,7 +3004,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     if (isNaN(login.getTime())) return "—";
     login.setHours(0, 0, 0, 0); 
 
-    if (logoutStr) {
+    const hasValidLogout = logoutStr && logoutStr !== "0000-00-00" && String(logoutStr).trim() !== "";
+    if (hasValidLogout) {
       const logout = new Date(logoutStr);
       if (!isNaN(logout.getTime())) {
         logout.setHours(0, 0, 0, 0);
@@ -3100,8 +3106,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         ? (matchedUserCenter?.name || loggedUser?.careCenterName || loggedUser?.name || "")
         : (data.careCenterName || "");
 
-      let finalStatus = data.status || (data.logoutDate ? "Closed" : "Active");
-      if (String(finalStatus).toLowerCase() === "returned") finalStatus = "Closed";
+      const cleanLogout = data.logoutDate && data.logoutDate.trim() !== "" && data.logoutDate !== "0000-00-00" ? data.logoutDate : null;
+      const finalStatus = cleanLogout ? "Closed" : "Active"; // 👈 Strictly Active if no logout date
 
       const rentalChargeNum = data.rentalCharge !== "" && data.rentalCharge !== undefined ? Number(data.rentalCharge) : 0;
       const depositAdvanceNum = data.depositAdvance !== "" && data.depositAdvance !== undefined ? Number(data.depositAdvance) : 0;
@@ -3125,8 +3131,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         start_date: data.startDate || data.loginDate, 
         startDate: data.startDate || data.loginDate,
         loginDate: data.startDate || data.loginDate,
-        logout_date: data.logoutDate || data.logout_date || null,
-        logoutDate: data.logoutDate || data.logout_date || null,
+        logout_date: cleanLogout,
+        logoutDate: cleanLogout,
         
         // 💳 Commercial Parameters
         billing_type: data.billingType || "Daily",
@@ -3474,7 +3480,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-slate-600 font-medium">{formatDateShort(log?.startDate || log?.start_date || log?.loginDate)}</td>
-                      <td className="px-5 py-3.5 text-slate-600">{actualLogoutDate ? formatDateShort(actualLogoutDate) : "—"}</td>
+                      <td className="px-5 py-3.5 text-slate-600">{actualLogoutDate && actualLogoutDate !== "0000-00-00" ? formatDateShort(actualLogoutDate) : "—"}</td>
                       
                       <td className="px-5 py-3.5">
                         <span className="font-semibold text-slate-700 bg-slate-50/50 border border-slate-200/60 px-2 py-1 rounded-md shadow-sm">{dynamicDays}</span>

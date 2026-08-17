@@ -1,6 +1,5 @@
 // const pool = require("../config/database");
 
-// // Ironclad Date Formatter
 // const safeDate = (val) => {
 //   const today = new Date().toISOString().slice(0, 10);
 //   if (!val || val === "" || String(val).trim().toLowerCase() === "null") return today;
@@ -12,95 +11,194 @@
 //   }
 // };
 
+// const safeOptionalDate = (val) => {
+//   if (!val || val === "" || String(val).trim().toLowerCase() === "null" || val === "undefined") {
+//     return null;
+//   }
+//   try {
+//     const d = new Date(val);
+//     return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+//   } catch (err) {
+//     return null;
+//   }
+// };
+
 // class Requisition {
 //   static async getAll() {
-//     const [rows] = await pool.query(`SELECT * FROM requisitions ORDER BY created_at DESC`);
+//     const [rows] = await pool.query(`
+//       SELECT r.*, 
+//              c.name AS careCenterName, 
+//              e.name AS equipmentName,
+//              r.bed_number AS bedNumber, 
+//              r.referral_doctor AS referralDoctor, 
+//              r.gst_number AS gstNumber,
+//              r.billing_type AS billingType,
+//              r.rental_charge AS rentalCharge,
+//              r.deposit_advance AS depositAdvance,
+//              r.installation_charge AS installationCharge,
+//              r.incharge_mobile AS inchargeMobile,
+//              r.alt_mobile AS altMobile,
+//              r.attendant_name AS attendantName,
+//              r.mobile_number AS mobileNumber,
+//              r.alt_mobile_number AS altMobileNumber,
+//              r.care_address AS careAddress,
+//              r.record_date AS recordDate,
+//              r.recall_date AS recallDate
+//       FROM requisitions r
+//       LEFT JOIN care_centers c ON r.care_center_id = c.id
+//       LEFT JOIN equipment e ON r.equipment_id = e.id
+//       ORDER BY r.created_at DESC
+//     `);
 //     return rows;
 //   }
   
 //   static async findById(id) {
-//     const [rows] = await pool.query(`SELECT * FROM requisitions WHERE id = ?`, [id]);
+//     const [rows] = await pool.query(`
+//       SELECT r.*, 
+//              c.name AS careCenterName, 
+//              e.name AS equipmentName,
+//              r.bed_number AS bedNumber, 
+//              r.referral_doctor AS referralDoctor, 
+//              r.gst_number AS gstNumber,
+//              r.billing_type AS billingType,
+//              r.rental_charge AS rentalCharge,
+//              r.deposit_advance AS depositAdvance,
+//              r.installation_charge AS installationCharge,
+//              r.incharge_mobile AS inchargeMobile,
+//              r.alt_mobile AS altMobile,
+//              r.attendant_name AS attendantName,
+//              r.mobile_number AS mobileNumber,
+//              r.alt_mobile_number AS altMobileNumber,
+//              r.care_address AS careAddress,
+//              r.record_date AS recordDate,
+//              r.recall_date AS recallDate
+//       FROM requisitions r
+//       LEFT JOIN care_centers c ON r.care_center_id = c.id
+//       LEFT JOIN equipment e ON r.equipment_id = e.id
+//       WHERE r.id = ?
+//     `, [id]);
 //     return rows[0];
 //   }
 
 //   static async create(data) {
 //     const reqId = data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
     
-//     // Strict NOT NULL columns
-//     const startDate = safeDate(data.start_date || data.startDate);
-//     const logoutDate = safeDate(data.logout_date || data.logoutDate);
+//     const startDate = safeDate(data.start_date || data.startDate || data.loginDate);
+//     const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); // 👈 Optional
+//     const notifyDate = safeOptionalDate(data.notify_date || data.notifyDate);
+//     const recordDate = safeOptionalDate(data.record_date || data.recordDate) || safeDate(null);
+//     const recallDate = safeOptionalDate(data.recall_date || data.recallDate);
 
-//     // Ensure array accessories are converted to string
 //     let accValue = data.accessories || data.accessory || "";
 //     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-//     // The query EXACTLY matches your schema columns
+//     let finalStatus = data.status || data.requisition_status || (logoutDate ? "Closed" : "Active");
+//     if (String(finalStatus).toLowerCase() === "returned") finalStatus = "Closed";
+
 //     const sql = `
 //       INSERT INTO requisitions 
-//       (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, status, delivery_status, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, accessories, referral, bed_no) 
-//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+//       (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, status, delivery_status, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, accessory, referral_doctor, bed_number, gst_number, billing_type, rental_charge, deposit_advance, installation_charge, age, attendant_name, mobile_number, alt_mobile_number, incharge_mobile, alt_mobile, care_address, record_date, recall_date) 
+//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 //     `;
 
 //     const values = [
 //       reqId,
-//       data.care_center_id || data.careCenterId || "CARE-NEW", // Must exist in care_centers if foreign key exists
-//       data.equipment_id || data.equipmentId || "EQ-NEW",       // Must exist in equipment if foreign key exists
+//       data.care_center_id || data.careCenterId || "CARE-NEW",
+//       data.equipment_id || data.equipmentId || data.deviceModel || "EQ-NEW",
 //       data.patient_name || data.patientName || "Unknown",
 //       data.quantity || 1,
 //       startDate,
 //       logoutDate,
-//       data.status || "Pending",
+//       finalStatus,
 //       data.delivery_status || data.deliveryStatus || "Pending Dispatch",
-//       data.payment_type || data.paymentType || "Cash",
-//       data.deal_type || data.dealType || "Rental",
-//       data.unit || "Unit",
-//       data.mode || "Mode",
-//       data.notify_date || data.notifyDate || null, // Allowed to be NULL
-//       data.delivery_address || data.deliveryAddress || "Not Provided",
+//       data.payment_type || data.paymentType || data.mode || "Postpaid",
+//       data.deal_type || data.dealType || "B2B",
+//       data.unit || "ODCOM",
+//       data.mode || data.paymentType || "Postpaid",
+//       notifyDate,
+//       data.delivery_address || data.deliveryAddress || "",
 //       data.notes || "",
 //       accValue,
-//       data.referral || "",
-//       data.bed_no || data.bedNo || ""
+//       data.referral_doctor || data.referral || "",
+//       data.bed_number || data.bedNo || "",
+//       data.gst_number || data.gstNo || "",
+//       data.billing_type || data.billingType || "Daily",
+//       data.rental_charge !== undefined ? data.rental_charge : (data.rentalCharge || 0),
+//       data.deposit_advance !== undefined ? data.deposit_advance : (data.depositAdvance || 0),
+//       data.installation_charge !== undefined ? data.installation_charge : (data.installationCharge || 0),
+//       data.age || "",
+//       data.attendant_name || data.attendantName || "",
+//       data.mobile_number || data.mobileNumber || "",
+//       data.alt_mobile_number || data.altMobileNumber || "",
+//       data.incharge_mobile || data.inchargeMobile || data.phone || "",
+//       data.alt_mobile || data.altMobile || "",
+//       data.care_address || data.careAddress || "",
+//       recordDate,
+//       recallDate
 //     ];
 
 //     await pool.query(sql, values);
+//     return reqId;
 //   }
 
 //   static async update(id, data) {
-//     const startDate = safeDate(data.start_date || data.startDate);
-//     const logoutDate = safeDate(data.logout_date || data.logoutDate);
+//     const startDate = safeDate(data.start_date || data.startDate || data.loginDate);
+//     const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); // 👈 Optional
+//     const notifyDate = safeOptionalDate(data.notify_date || data.notifyDate);
+//     const recordDate = safeOptionalDate(data.record_date || data.recordDate);
+//     const recallDate = safeOptionalDate(data.recall_date || data.recallDate);
 
 //     let accValue = data.accessories || data.accessory || "";
 //     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
+//     let finalStatus = data.status || data.requisition_status || data.return_status || "Active";
+//     if (String(finalStatus).toLowerCase() === "returned") finalStatus = "Closed";
+
 //     const sql = `
-//        UPDATE requisitions 
-//        SET care_center_id = ?, equipment_id = ?, patient_name = ?, quantity = ?, 
-//            start_date = ?, logout_date = ?, status = ?, delivery_status = ?, 
-//            payment_type = ?, deal_type = ?, unit = ?, mode = ?, notify_date = ?, 
-//            delivery_address = ?, notes = ?, accessories = ?, referral = ?, bed_no = ?
-//        WHERE id = ?
+//       UPDATE requisitions 
+//       SET care_center_id = ?, equipment_id = ?, patient_name = ?, quantity = ?, 
+//           start_date = ?, logout_date = ?, status = ?, delivery_status = ?, 
+//           payment_type = ?, deal_type = ?, unit = ?, mode = ?, notify_date = ?, 
+//           delivery_address = ?, notes = ?, accessory = ?, referral_doctor = ?, bed_number = ?, gst_number = ?,
+//           billing_type = ?, rental_charge = ?, deposit_advance = ?, installation_charge = ?,
+//           age = ?, attendant_name = ?, mobile_number = ?, alt_mobile_number = ?,
+//           incharge_mobile = ?, alt_mobile = ?, care_address = ?, record_date = ?, recall_date = ?
+//       WHERE id = ?
 //     `;
     
 //     const values = [
 //       data.care_center_id || data.careCenterId || "CARE-NEW", 
-//       data.equipment_id || data.equipmentId || "EQ-NEW", 
+//       data.equipment_id || data.equipmentId || data.deviceModel || "EQ-NEW", 
 //       data.patient_name || data.patientName || "Unknown", 
 //       data.quantity || 1, 
 //       startDate, 
 //       logoutDate, 
-//       data.status || "Pending", 
+//       finalStatus, 
 //       data.delivery_status || data.deliveryStatus || "Pending Dispatch", 
-//       data.payment_type || data.paymentType || "Cash", 
-//       data.deal_type || data.dealType || "Rental", 
-//       data.unit || "Unit", 
-//       data.mode || "Mode", 
-//       data.notify_date || data.notifyDate || null, 
-//       data.delivery_address || data.deliveryAddress || "Not Provided", 
+//       data.payment_type || data.paymentType || data.mode || "Postpaid", 
+//       data.deal_type || data.dealType || "B2B", 
+//       data.unit || "ODCOM", 
+//       data.mode || data.paymentType || "Postpaid", 
+//       notifyDate, 
+//       data.delivery_address || data.deliveryAddress || "", 
 //       data.notes || "", 
 //       accValue, 
-//       data.referral || "", 
-//       data.bed_no || data.bedNo || "", 
+//       data.referral_doctor || data.referral || "", 
+//       data.bed_number || data.bedNo || "", 
+//       data.gst_number || data.gstNo || "",
+//       data.billing_type || data.billingType || "Daily",
+//       data.rental_charge !== undefined ? data.rental_charge : (data.rentalCharge || 0),
+//       data.deposit_advance !== undefined ? data.deposit_advance : (data.depositAdvance || 0),
+//       data.installation_charge !== undefined ? data.installation_charge : (data.installationCharge || 0),
+//       data.age || "",
+//       data.attendant_name || data.attendantName || "",
+//       data.mobile_number || data.mobileNumber || "",
+//       data.alt_mobile_number || data.altMobileNumber || "",
+//       data.incharge_mobile || data.inchargeMobile || data.phone || "",
+//       data.alt_mobile || data.altMobile || "",
+//       data.care_address || data.careAddress || "",
+//       recordDate,
+//       recallDate,
 //       id 
 //     ];
 
@@ -116,26 +214,27 @@
 
 const pool = require("../config/database");
 
-// Mandatory Date (Defaults to today)
+// Mandatory Date (Defaults to today's YYYY-MM-DD)
 const safeDate = (val) => {
   const today = new Date().toISOString().slice(0, 10);
-  if (!val || val === "" || String(val).trim().toLowerCase() === "null") return today;
+  if (!val || val === "" || String(val).trim() === "0000-00-00" || String(val).trim().toLowerCase() === "null") {
+    return today;
+  }
   try {
     const d = new Date(val);
-    return isNaN(d.getTime()) ? today : d.toISOString().slice(0, 10);
+    return isNaN(d.getTime()) || d.getFullYear() < 1970 ? today : d.toISOString().slice(0, 10);
   } catch (err) {
     return today;
   }
 };
 
-// Optional Date (Returns NULL if not provided)
 const safeOptionalDate = (val) => {
-  if (!val || val === "" || String(val).trim().toLowerCase() === "null" || val === "undefined") {
+  if (!val || val === "" || String(val).trim() === "0000-00-00" || String(val).trim().toLowerCase() === "null" || val === "undefined") {
     return null;
   }
   try {
     const d = new Date(val);
-    return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+    return isNaN(d.getTime()) || d.getFullYear() < 1970 ? null : d.toISOString().slice(0, 10);
   } catch (err) {
     return null;
   }
@@ -145,10 +244,23 @@ class Requisition {
   static async getAll() {
     const [rows] = await pool.query(`
       SELECT r.*, 
+             DATE_FORMAT(r.record_date, '%Y-%m-%d') AS recordDate,
+             DATE_FORMAT(r.record_date, '%Y-%m-%d') AS record_date,
+             DATE_FORMAT(r.start_date, '%Y-%m-%d') AS startDate,
+             DATE_FORMAT(r.start_date, '%Y-%m-%d') AS start_date,
+             DATE_FORMAT(r.start_date, '%Y-%m-%d') AS loginDate,
+             DATE_FORMAT(r.logout_date, '%Y-%m-%d') AS logoutDate,
+             DATE_FORMAT(r.logout_date, '%Y-%m-%d') AS logout_date,
+             DATE_FORMAT(r.notify_date, '%Y-%m-%d') AS notifyDate,
+             DATE_FORMAT(r.notify_date, '%Y-%m-%d') AS notify_date,
+             DATE_FORMAT(r.recall_date, '%Y-%m-%d') AS recallDate,
+             DATE_FORMAT(r.recall_date, '%Y-%m-%d') AS recall_date,
              c.name AS careCenterName, 
              e.name AS equipmentName,
              r.bed_number AS bedNumber, 
+             r.bed_number AS bedNo,
              r.referral_doctor AS referralDoctor, 
+             r.referral_doctor AS referral,
              r.gst_number AS gstNumber,
              r.billing_type AS billingType,
              r.rental_charge AS rentalCharge,
@@ -159,9 +271,7 @@ class Requisition {
              r.attendant_name AS attendantName,
              r.mobile_number AS mobileNumber,
              r.alt_mobile_number AS altMobileNumber,
-             r.care_address AS careAddress,
-             r.record_date AS recordDate,
-             r.recall_date AS recallDate
+             r.care_address AS careAddress
       FROM requisitions r
       LEFT JOIN care_centers c ON r.care_center_id = c.id
       LEFT JOIN equipment e ON r.equipment_id = e.id
@@ -173,10 +283,23 @@ class Requisition {
   static async findById(id) {
     const [rows] = await pool.query(`
       SELECT r.*, 
+             DATE_FORMAT(r.record_date, '%Y-%m-%d') AS recordDate,
+             DATE_FORMAT(r.record_date, '%Y-%m-%d') AS record_date,
+             DATE_FORMAT(r.start_date, '%Y-%m-%d') AS startDate,
+             DATE_FORMAT(r.start_date, '%Y-%m-%d') AS start_date,
+             DATE_FORMAT(r.start_date, '%Y-%m-%d') AS loginDate,
+             DATE_FORMAT(r.logout_date, '%Y-%m-%d') AS logoutDate,
+             DATE_FORMAT(r.logout_date, '%Y-%m-%d') AS logout_date,
+             DATE_FORMAT(r.notify_date, '%Y-%m-%d') AS notifyDate,
+             DATE_FORMAT(r.notify_date, '%Y-%m-%d') AS notify_date,
+             DATE_FORMAT(r.recall_date, '%Y-%m-%d') AS recallDate,
+             DATE_FORMAT(r.recall_date, '%Y-%m-%d') AS recall_date,
              c.name AS careCenterName, 
              e.name AS equipmentName,
              r.bed_number AS bedNumber, 
+             r.bed_number AS bedNo,
              r.referral_doctor AS referralDoctor, 
+             r.referral_doctor AS referral,
              r.gst_number AS gstNumber,
              r.billing_type AS billingType,
              r.rental_charge AS rentalCharge,
@@ -187,9 +310,7 @@ class Requisition {
              r.attendant_name AS attendantName,
              r.mobile_number AS mobileNumber,
              r.alt_mobile_number AS altMobileNumber,
-             r.care_address AS careAddress,
-             r.record_date AS recordDate,
-             r.recall_date AS recallDate
+             r.care_address AS careAddress
       FROM requisitions r
       LEFT JOIN care_centers c ON r.care_center_id = c.id
       LEFT JOIN equipment e ON r.equipment_id = e.id
@@ -202,7 +323,7 @@ class Requisition {
     const reqId = data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
     
     const startDate = safeDate(data.start_date || data.startDate || data.loginDate);
-    const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); // 👈 Optional
+    const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); 
     const notifyDate = safeOptionalDate(data.notify_date || data.notifyDate);
     const recordDate = safeOptionalDate(data.record_date || data.recordDate) || safeDate(null);
     const recallDate = safeOptionalDate(data.recall_date || data.recallDate);
@@ -210,8 +331,7 @@ class Requisition {
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-    let finalStatus = data.status || data.requisition_status || (logoutDate ? "Closed" : "Active");
-    if (String(finalStatus).toLowerCase() === "returned") finalStatus = "Closed";
+    const finalStatus = logoutDate ? "Closed" : "Active";
 
     const sql = `
       INSERT INTO requisitions 
@@ -237,13 +357,13 @@ class Requisition {
       data.delivery_address || data.deliveryAddress || "",
       data.notes || "",
       accValue,
-      data.referral_doctor || data.referral || "",
-      data.bed_number || data.bedNo || "",
+      data.referral_doctor || data.referral || data.referralDoctor || "",
+      data.bed_number || data.bedNo || data.bedNumber || "",
       data.gst_number || data.gstNo || "",
       data.billing_type || data.billingType || "Daily",
-      data.rental_charge !== undefined ? data.rental_charge : (data.rentalCharge || 0),
-      data.deposit_advance !== undefined ? data.deposit_advance : (data.depositAdvance || 0),
-      data.installation_charge !== undefined ? data.installation_charge : (data.installationCharge || 0),
+      data.rental_charge !== undefined && data.rental_charge !== "" && data.rental_charge !== null ? data.rental_charge : (data.rentalCharge || 0),
+      data.deposit_advance !== undefined && data.deposit_advance !== "" && data.deposit_advance !== null ? data.deposit_advance : (data.depositAdvance || 0),
+      data.installation_charge !== undefined && data.installation_charge !== "" && data.installation_charge !== null ? data.installation_charge : (data.installationCharge || 0),
       data.age || "",
       data.attendant_name || data.attendantName || "",
       data.mobile_number || data.mobileNumber || "",
@@ -261,16 +381,19 @@ class Requisition {
 
   static async update(id, data) {
     const startDate = safeDate(data.start_date || data.startDate || data.loginDate);
-    const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); // 👈 Optional
+    const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); 
     const notifyDate = safeOptionalDate(data.notify_date || data.notifyDate);
-    const recordDate = safeOptionalDate(data.record_date || data.recordDate);
+    const recordDate = safeOptionalDate(data.record_date || data.recordDate) || safeDate(null);
     const recallDate = safeOptionalDate(data.recall_date || data.recallDate);
 
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
-
-    let finalStatus = data.status || data.requisition_status || data.return_status || "Active";
-    if (String(finalStatus).toLowerCase() === "returned") finalStatus = "Closed";
+    let finalStatus = "Active";
+    if (logoutDate) {
+      finalStatus = "Closed";
+    } else if (String(data.status).toLowerCase() === "inactive") {
+      finalStatus = "Inactive";
+    }
 
     const sql = `
       UPDATE requisitions 
@@ -301,14 +424,14 @@ class Requisition {
       data.delivery_address || data.deliveryAddress || "", 
       data.notes || "", 
       accValue, 
-      data.referral_doctor || data.referral || "", 
-      data.bed_number || data.bedNo || "", 
+      data.referral_doctor || data.referral || data.referralDoctor || "", 
+      data.bed_number || data.bedNo || data.bedNumber || "", 
       data.gst_number || data.gstNo || "",
       data.billing_type || data.billingType || "Daily",
-      data.rental_charge !== undefined ? data.rental_charge : (data.rentalCharge || 0),
-      data.deposit_advance !== undefined ? data.deposit_advance : (data.depositAdvance || 0),
-      data.installation_charge !== undefined ? data.installation_charge : (data.installationCharge || 0),
-      data.age || "",
+      data.rental_charge !== undefined && data.rental_charge !== "" && data.rental_charge !== null ? data.rental_charge : (data.rentalCharge || 0),
+      data.deposit_advance !== undefined && data.deposit_advance !== "" && data.deposit_advance !== null ? data.deposit_advance : (data.depositAdvance || 0),
+      data.installation_charge !== undefined && data.installation_charge !== "" && data.installation_charge !== null ? data.installation_charge : (data.installationCharge || 0),
+      data.age !== undefined ? data.age : "",
       data.attendant_name || data.attendantName || "",
       data.mobile_number || data.mobileNumber || "",
       data.alt_mobile_number || data.altMobileNumber || "",
@@ -323,6 +446,7 @@ class Requisition {
     await pool.query(sql, values);
   }
   
+  // 5. DELETE REQUISITION
   static async delete(id) {
     await pool.query(`DELETE FROM requisitions WHERE id = ?`, [id]);
   }
