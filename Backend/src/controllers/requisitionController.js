@@ -191,7 +191,7 @@ const getRequisitions = async (req, res) => {
     return res.status(200).json(rows);
   } catch (error) {
     console.error("Fetch Requisitions Error:", error);
-    return res.status(500).json({ message: "Server error while fetching requisitions", error: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -211,13 +211,13 @@ const createRequisition = async (req, res) => {
         );
       }
     } catch (notifErr) {
-      console.warn("Notification insert warning:", notifErr.message);
+      // Don't crash main request if notification fails
     }
 
     return res.status(201).json({ message: "Requisition created successfully!", id: reqId });
   } catch (error) {
     console.error("Create Requisition Error:", error);
-    return res.status(400).json({ message: error.sqlMessage || error.message || "Failed to create requisition" });
+    return res.status(500).json({ message: error.sqlMessage || error.message });
   }
 };
 
@@ -240,13 +240,13 @@ const updateRequisition = async (req, res) => {
         );
       }
     } catch (notifErr) {
-      console.warn("Notification update warning:", notifErr.message);
+      // Don't crash main request if notification fails
     }
 
     return res.status(200).json({ message: "Requisition updated successfully!" });
   } catch (error) {
     console.error("Update Requisition Error:", error);
-    return res.status(400).json({ message: error.sqlMessage || error.message || "Failed to update requisition" });
+    return res.status(500).json({ message: error.sqlMessage || error.message });
   }
 };
 
@@ -256,7 +256,6 @@ const deleteRequisition = async (req, res) => {
     await Requisition.delete(id);
     return res.status(200).json({ message: "Requisition deleted successfully!" });
   } catch (error) {
-    console.error("Delete Requisition Error:", error);
     return res.status(500).json({ message: error.message });
   }
 };
