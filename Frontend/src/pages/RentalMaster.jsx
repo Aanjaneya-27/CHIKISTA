@@ -1851,36 +1851,36 @@ const filterActive = (list = []) => {
 };
 
 const formatForDateInput = (d) => {
-  if (!d) return "";
+  if (!d || d === "null" || d === "undefined") return "";
   if (typeof d === "string") {
-    if (d.includes("T")) return d.split("T")[0];
-    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
-    const p = d.split("-");
+    const clean = d.split("T")[0].split(" ")[0];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+    const p = clean.split("-");
     if (p.length === 3 && p[2].length === 4) return `${p[2]}-${p[1]}-${p[0]}`;
   }
   try {
-    const dateObj = new Date(d);
-    if (!isNaN(dateObj.getTime())) return dateObj.toISOString().split("T")[0];
+    const dt = new Date(d);
+    if (!isNaN(dt.getTime())) return dt.toISOString().split("T")[0];
   } catch {
     return "";
   }
   return "";
 };
 
-// 📅 Robust Date Formatter for Detail View (Displays clean YYYY-MM-DD)
+// 📅 Bulletproof Display Date Formatter
 const formatDisplayDate = (d) => {
-  if (!d || d === "null" || d === "undefined" || d === "0000-00-00") return "—";
+  if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || d === "") return "—";
   if (typeof d === "string") {
-    const clean = d.includes("T") ? d.split("T")[0] : d;
+    const clean = d.split("T")[0].split(" ")[0];
     if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
   }
   try {
-    const dateObj = new Date(d);
-    if (isNaN(dateObj.getTime())) return "—";
-    return dateObj.toISOString().split("T")[0];
+    const dt = new Date(d);
+    if (!isNaN(dt.getTime())) return dt.toISOString().split("T")[0];
   } catch {
     return "—";
   }
+  return String(d);
 };
 
 const getSafeTime = (item, field) => {
@@ -2132,11 +2132,11 @@ function SectionHeading({ icon: Icon, children }) {
 
 // 👁️ 1. DEDICATED READ-ONLY VIEW PAGE
 function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], onBack }) {
-  const eqId = log?.equipmentId || log?.equipment_id;
-  const equipmentName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || eqId || "—";
+  const eqId = log?.equipmentId || log?.equipment_id || log?.deviceModel;
+  const equipmentName = equipmentCatalog.find(e => String(e?.id) === String(eqId))?.name || log?.equipmentName || log?.equipment_name || eqId || "—";
   
   const ccId = log?.careCenterId || log?.care_center_id;
-  const careCenterName = log?.careCenterName || log?.care_center_name || careCenters.find(c => c?.id === ccId)?.name || ccId || "—";
+  const careCenterName = log?.careCenterName || log?.care_center_name || careCenters.find(c => String(c?.id) === String(ccId))?.name || ccId || "—";
 
   const rawStatus = String(log?.status || log?.requisition_status || "Active").trim();
   const statusColor = rawStatus.toLowerCase() === "active" 
@@ -2147,14 +2147,14 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
 
   // Safe Parameter Getters
   const billingTypeVal = log?.billingType || log?.billing_type || "Daily";
-  const rentalChargeVal = log?.rentalCharge ?? log?.rental_charge ?? 0;
-  const depositAdvanceVal = log?.depositAdvance ?? log?.deposit_advance ?? 0;
-  const installationChargeVal = log?.installationCharge ?? log?.installation_charge ?? 0;
+  const rentalChargeVal = log?.rentalCharge !== undefined && log?.rentalCharge !== "" && log?.rentalCharge !== null ? log.rentalCharge : (log?.rental_charge ?? 0);
+  const depositAdvanceVal = log?.depositAdvance !== undefined && log?.depositAdvance !== "" && log?.depositAdvance !== null ? log.depositAdvance : (log?.deposit_advance ?? 0);
+  const installationChargeVal = log?.installationCharge !== undefined && log?.installationCharge !== "" && log?.installationCharge !== null ? log.installationCharge : (log?.installation_charge ?? 0);
 
   const inchargeMobileVal = log?.inchargeMobile || log?.incharge_mobile || log?.phone || log?.pocMobile || "—";
   const altMobileVal = log?.altMobile || log?.alt_mobile || "—";
   const careAddressVal = log?.careAddress || log?.care_address || log?.address || "—";
-  const bedNoVal = log?.bedNumber || log?.bed_number || log?.bedNo || "—";
+  const bedNoVal = log?.bedNumber || log?.bed_number || log?.bedNo || log?.bed_no || "—";
   const referralVal = log?.referralDoctor || log?.referral_doctor || log?.referral || "—";
 
   const ageVal = log?.age || "—";
@@ -2224,25 +2224,35 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Record Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(log?.recordDate || log?.record_date)}</p>
+              <p className="font-bold text-slate-800 mt-0.5">
+                {formatDisplayDate(log?.recordDate || log?.record_date || log?.startDate || log?.start_date)}
+              </p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Log In Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(log?.startDate || log?.start_date || log?.loginDate)}</p>
+              <p className="font-bold text-slate-800 mt-0.5">
+                {formatDisplayDate(log?.startDate || log?.start_date || log?.loginDate)}
+              </p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Notify Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(log?.notifyDate || log?.notify_date)}</p>
+              <p className="font-bold text-slate-800 mt-0.5">
+                {formatDisplayDate(log?.notifyDate || log?.notify_date)}
+              </p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Log Out Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(log?.logoutDate || log?.logout_date)}</p>
+              <p className="font-bold text-slate-800 mt-0.5">
+                {formatDisplayDate(log?.logoutDate || log?.logout_date)}
+              </p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Recall Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(log?.recallDate || log?.recall_date)}</p>
+              <p className="font-bold text-slate-800 mt-0.5">
+                {formatDisplayDate(log?.recallDate || log?.recall_date)}
+              </p>
             </div>
 
             <div className="col-span-2 pt-1">
@@ -2465,7 +2475,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || initial.pocMobile || cc?.phone || "",
         altMobile: initial.altMobile || initial.alt_mobile || "",
         careAddress: initial.careAddress || initial.care_address || initial.address || cc?.address || "",
-        bedNo: initial.bedNumber || initial.bed_number || initial.bedNo || "",
+        bedNo: initial.bedNumber || initial.bed_number || initial.bedNo || initial.bed_no || "",
         referral: initial.referralDoctor || initial.referral_doctor || initial.referral || "",
         patientName: initial.patientName || initial.patient_name || "",
         age: initial.age || "",
@@ -2527,7 +2537,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       set({ 
         careCenterId: id, 
         careAddress: cc?.address || "", 
-        inchargeMobile: cc?.phone || "",
+        inchargeMobile: cc?.phone || "", 
         altMobile: ""
       });
     }
@@ -3076,7 +3086,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  // 🔄 100% Complete Submit Handler (Syncs Record Date & Recall Date on New Creation & Edit)
+  // 🔄 Submit Handler
   const handleFormSubmit = async (data) => {
     try {
       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
