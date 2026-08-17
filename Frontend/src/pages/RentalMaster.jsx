@@ -1843,7 +1843,7 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Dynamic Total Days / Day of Month Calculator (e.g. 71 / 6)
+// 🧮 Dynamic Total Days / Day of Month Calculator
 const getDynamicTotalDays = (loginStr, logoutStr) => {
   const s = formatForDateInput(loginStr);
   if (!s) return "—";
@@ -2490,55 +2490,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     return Object.keys(e).length === 0;
   };
 
-  // const handleSubmit = () => {
-  //   if (!validate()) { 
-  //     toast.error("Please fix the validation errors before saving."); 
-  //     window.scrollTo({ top: 0, behavior: "smooth" }); 
-  //     return; 
-  //   }
-
-  //   const equipment = equipmentCatalog.find((eq) => eq?.id === form.deviceModel);
-  //   let careCenterName = isCareCenterUser ? (matchedUserCenter?.name || loggedUser?.careCenterName || loggedUser?.name || "") : "Other";
-  //   if (form.careCenterId !== "other" && !isCareCenterUser) {
-  //     careCenterName = careCenters.find((c) => c?.id === form.careCenterId)?.name || "";
-  //   }
-
-  //   const cleanLogout = formatForDateInput(form.logoutDate);
-  //   const today = todayISO();
-  //   const finalCalculatedStatus = (cleanLogout && cleanLogout <= today) ? "Closed" : "Active";
-
-  //   const rCharge = form.rentalCharge !== "" && form.rentalCharge !== undefined && form.rentalCharge !== null ? parseFloat(form.rentalCharge) : 0;
-  //   const dAdvance = form.depositAdvance !== "" && form.depositAdvance !== undefined && form.depositAdvance !== null ? parseFloat(form.depositAdvance) : 0;
-  //   const iCharge = form.installationCharge !== "" && form.installationCharge !== undefined && form.installationCharge !== null ? parseFloat(form.installationCharge) : 0;
-
-  //   onSubmit({
-  //     ...form, 
-  //     id: form.id,
-  //     recordDate: formatForDateInput(form.recordDate) || todayISO(),
-  //     startDate: formatForDateInput(form.loginDate) || todayISO(),
-  //     logoutDate: cleanLogout || null,
-  //     notifyDate: formatForDateInput(form.notifyDate) || null,
-  //     recallDate: formatForDateInput(form.recallDate) || null,
-  //     equipmentId: form.deviceModel, 
-  //     equipmentName: equipment?.name || form.deviceModel, 
-  //     category: equipment?.category || "General", 
-  //     careCenterName, 
-  //     quantity: 1, 
-  //     paymentType: form.mode, 
-  //     rentalCharge: isNaN(rCharge) ? 0 : rCharge,
-  //     depositAdvance: isNaN(dAdvance) ? 0 : dAdvance,
-  //     installationCharge: isNaN(iCharge) ? 0 : iCharge,
-  //     billingType: form.billingType || "Daily",
-  //     deliveryAddress: form.deliveryAddress, 
-  //     status: finalCalculatedStatus, 
-  //     deliveryStatus: "Pending Dispatch",
-  //     photoCount: photos.length
-  //   });
-  // };
-
-
   const handleSubmit = () => {
-      console.log("👉 FORM MEIN KYA DATA HAI:", form); 
     if (!validate()) { 
       toast.error("Please fix the validation errors before saving."); 
       window.scrollTo({ top: 0, behavior: "smooth" }); 
@@ -2557,7 +2509,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     const today = todayISO();
     const finalCalculatedStatus = (cleanLogout && cleanLogout <= today) ? "Closed" : "Active";
 
-    // 🛠️ Safe number parsing (Dono camelCase & snake_case check karega)
     const parseNum = (v1, v2) => {
       const val = (v1 !== undefined && v1 !== null && v1 !== "") ? v1 : v2;
       if (val === undefined || val === null || val === "") return 0;
@@ -2597,7 +2548,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       category: equipment?.category || "General", 
       quantity: 1, 
 
-      // 💳 Commercials (Dono keys provide kar di hain)
+      // 💳 Commercials
       billingType: form.billingType || form.billing_type || "Daily",
       billing_type: form.billingType || form.billing_type || "Daily",
       rentalCharge: rCharge,
@@ -2648,6 +2599,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       photoCount: photos.length
     });
   };
+
   return (
     <div className="fade-slide-up space-y-5">
       <GlobalPolish />
