@@ -321,7 +321,7 @@
 
 const pool = require("../config/database");
 
-// 🛠️ AUTO-CREATE 'references' TABLE IF MISSING
+// 🛠️ 1. Auto-Create `references` Table on Startup
 (async () => {
   try {
     await pool.query(`
@@ -338,8 +338,9 @@ const pool = require("../config/database");
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-  } catch (e) {
-    console.warn("References table auto-init:", e.message);
+    console.log("✅ References table checked/ready.");
+  } catch (err) {
+    console.warn("Table auto-init notice:", err.message);
   }
 })();
 
@@ -349,25 +350,47 @@ const pool = require("../config/database");
 
 const getReferences = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM `references` ORDER BY id DESC").catch(() => [[]]);
+    // 🔒 Backticks are mandatory because 'references' is an SQL reserved keyword
+    const [rows] = await pool.query("SELECT * FROM `references` ORDER BY id DESC");
     
     const formatted = (rows || []).map((r) => ({
       id: r.id,
-      name: r.doctor_name || r.doctorName || r.name || "",
-      doctorName: r.doctor_name || r.doctorName || r.name || "",
+      name: r.doctor_name || r.name || "",
+      doctorName: r.doctor_name || r.name || "",
+      doctor_name: r.doctor_name || r.name || "",
       phone: r.phone || r.contact || "",
       contact: r.contact || r.phone || "",
       hospital: r.hospital || "",
-      domain: r.specialist_domain || r.domain || r.specialistDomain || "",
-      specialistDomain: r.specialist_domain || r.domain || r.specialistDomain || "",
+      domain: r.specialist_domain || "",
+      specialist_domain: r.specialist_domain || "",
+      specialistDomain: r.specialist_domain || "",
       address: r.address || "",
       status: r.status || "Active"
     }));
 
     return res.status(200).json(formatted);
   } catch (error) {
-    console.error("Get References Notice:", error.message);
-    return res.status(200).json([]); // Returns clean empty array instead of 500 error
+    // 🔒 Bulletproof: Table na hone par auto-create karega aur 200 OK bhejega (No 500 error)
+    if (error.code === "ER_NO_SUCH_TABLE" || error.errno === 1146) {
+      try {
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS \`references\` (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            doctor_name VARCHAR(255) NULL,
+            name VARCHAR(255) NULL,
+            phone VARCHAR(50) NULL,
+            contact VARCHAR(50) NULL,
+            hospital VARCHAR(255) NULL,
+            specialist_domain VARCHAR(255) NULL,
+            address TEXT NULL,
+            status VARCHAR(50) DEFAULT 'Active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+      } catch (e) {}
+    }
+    console.error("References GET safe fallback:", error.message);
+    return res.status(200).json([]);
   }
 };
 
@@ -396,7 +419,7 @@ const addReference = async (req, res) => {
       reference: { id: result.insertId, doctorName, phone, hospital, specialistDomain: domain, address, status }
     });
   } catch (error) {
-    console.error("Add Reference Error:", error);
+    console.error("Add Reference Error:", error.message);
     return res.status(500).json({ message: "Failed to add reference: " + error.message });
   }
 };
@@ -419,7 +442,7 @@ const updateReference = async (req, res) => {
 
     return res.status(200).json({ message: "Reference updated successfully!" });
   } catch (error) {
-    console.error("Update Reference Error:", error);
+    console.error("Update Reference Error:", error.message);
     return res.status(500).json({ message: "Failed to update reference: " + error.message });
   }
 };
@@ -430,7 +453,7 @@ const deleteReference = async (req, res) => {
     await pool.query("DELETE FROM `references` WHERE id = ?", [id]);
     return res.status(200).json({ message: "Reference deleted successfully!" });
   } catch (error) {
-    console.error("Delete Reference Error:", error);
+    console.error("Delete Reference Error:", error.message);
     return res.status(500).json({ message: "Failed to delete reference: " + error.message });
   }
 };
@@ -441,7 +464,7 @@ const deleteReference = async (req, res) => {
 
 const getCareCenters = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM care_centers ORDER BY id DESC").catch(() => [[]]);
+    const [rows] = await pool.query("SELECT * FROM care_centers ORDER BY id DESC");
     return res.status(200).json(rows || []);
   } catch (error) {
     return res.status(200).json([]);
@@ -491,7 +514,7 @@ const deleteCareCenter = async (req, res) => {
 
 const getEquipment = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM equipment ORDER BY id DESC").catch(() => [[]]);
+    const [rows] = await pool.query("SELECT * FROM equipment ORDER BY id DESC");
     return res.status(200).json(rows || []);
   } catch (error) {
     return res.status(200).json([]);
@@ -541,7 +564,7 @@ const deleteEquipment = async (req, res) => {
 
 const getCategories = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM categories ORDER BY id DESC").catch(() => [[]]);
+    const [rows] = await pool.query("SELECT * FROM categories ORDER BY id DESC");
     return res.status(200).json(rows || []);
   } catch (error) {
     return res.status(200).json([]);
@@ -587,7 +610,7 @@ const deleteCategory = async (req, res) => {
 
 const getDeliveryExecutives = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM delivery_executives ORDER BY id DESC").catch(() => [[]]);
+    const [rows] = await pool.query("SELECT * FROM delivery_executives ORDER BY id DESC");
     return res.status(200).json(rows || []);
   } catch (error) {
     return res.status(200).json([]);
