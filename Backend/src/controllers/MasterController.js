@@ -653,9 +653,7 @@ const pool = require("../config/database");
 
 const cleanPhone = (num) => String(num || "").replace(/\D/g, "").slice(-10);
 
-// ==========================================
-// 🏥 1. CARE CENTERS
-// ==========================================
+
 
 const getCareCenters = async (req, res) => {
   try {
