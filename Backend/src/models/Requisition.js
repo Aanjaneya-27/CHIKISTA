@@ -751,8 +751,99 @@ class Requisition {
     return reqId;
   }
 
+  // static async update(id, data) {
+  //   await ensureColumns();
+  //   const today = new Date().toISOString().slice(0, 10);
+  //   const startDate = cleanDate(data.start_date || data.startDate) || today;
+  //   const logoutDate = cleanDate(data.logout_date || data.logoutDate);
+  //   let finalStatus = logoutDate && logoutDate <= today ? "Closed" : "Active";
+  //   if (String(data.status || data.requisition_status || "").toLowerCase() === "inactive") {
+  //     finalStatus = "Inactive";
+  //   }
+
+  //   let accValue = data.accessories || data.accessory || "";
+  //   if (Array.isArray(accValue)) accValue = accValue.join(", ");
+
+  //   const careCenterId = cleanFk(data.care_center_id || data.careCenterId);
+  //   const equipmentId = cleanFk(data.equipment_id || data.equipmentId || data.deviceModel);
+
+  //   const sql = `
+  //     UPDATE requisitions 
+  //     SET care_center_id = COALESCE(?, care_center_id), 
+  //         equipment_id = COALESCE(?, equipment_id), 
+  //         patient_name = ?, 
+  //         quantity = ?, 
+  //         start_date = ?, 
+  //         logout_date = ?, 
+  //         status = ?, 
+  //         delivery_status = ?, 
+  //         payment_type = ?, 
+  //         deal_type = ?, 
+  //         unit = ?, 
+  //         mode = ?, 
+  //         notify_date = ?, 
+  //         delivery_address = ?, 
+  //         notes = ?, 
+  //         accessory = ?, 
+  //         referral_doctor = ?, 
+  //         bed_number = ?, 
+  //         gst_number = ?, 
+  //         billing_type = ?, 
+  //         rental_charge = ?, 
+  //         deposit_advance = ?, 
+  //         installation_charge = ?, 
+  //         age = ?, 
+  //         attendant_name = ?, 
+  //         mobile_number = ?, 
+  //         alt_mobile_number = ?, 
+  //         incharge_mobile = ?, 
+  //         alt_mobile = ?, 
+  //         care_address = ?, 
+  //         record_date = ?, 
+  //         recall_date = ?
+  //     WHERE id = ?
+  //   `;
+
+  //   const values = [
+  //     careCenterId,
+  //     equipmentId,
+  //     cleanStr(data.patient_name || data.patientName, "Unknown"),
+  //     Math.max(1, cleanNum(data.quantity) || 1),
+  //     startDate,
+  //     logoutDate,
+  //     finalStatus,
+  //     cleanStr(data.delivery_status || data.deliveryStatus, "Pending Dispatch"),
+  //     cleanStr(data.payment_type || data.paymentType || data.mode, "Postpaid"),
+  //     cleanStr(data.deal_type || data.dealType, "B2B"),
+  //     cleanStr(data.unit, "ODCOM"),
+  //     cleanStr(data.mode || data.paymentType, "Postpaid"),
+  //     cleanDate(data.notify_date || data.notifyDate),
+  //     cleanStr(data.delivery_address || data.deliveryAddress),
+  //     cleanStr(data.notes),
+  //     cleanStr(accValue),
+  //     cleanStr(data.referral_doctor || data.referralDoctor || data.referral),
+  //     cleanStr(data.bed_number || data.bedNo),
+  //     cleanStr(data.gst_number || data.gstNo),
+  //     cleanStr(data.billing_type || data.billingType, "Daily"),
+  //     cleanNum(data.rental_charge, data.rentalCharge),
+  //     cleanNum(data.deposit_advance, data.depositAdvance),
+  //     cleanNum(data.installation_charge, data.installationCharge),
+  //     cleanStr(data.age),
+  //     cleanStr(data.attendant_name || data.attendantName),
+  //     cleanStr(data.mobile_number || data.mobileNumber || data.mobile),
+  //     cleanStr(data.alt_mobile_number || data.altMobileNumber),
+  //     cleanStr(data.incharge_mobile || data.inchargeMobile || data.phone),
+  //     cleanStr(data.alt_mobile || data.altMobile),
+  //     cleanStr(data.care_address || data.careAddress),
+  //     cleanDate(data.record_date || data.recordDate),
+  //     cleanDate(data.recall_date || data.recallDate),
+  //     id
+  //   ];
+
+  //   await pool.query(sql, values);
+  // }
+
   static async update(id, data) {
-    await ensureColumns();
     const today = new Date().toISOString().slice(0, 10);
     const startDate = cleanDate(data.start_date || data.startDate) || today;
     const logoutDate = cleanDate(data.logout_date || data.logoutDate);
@@ -766,6 +857,11 @@ class Requisition {
 
     const careCenterId = cleanFk(data.care_center_id || data.careCenterId);
     const equipmentId = cleanFk(data.equipment_id || data.equipmentId || data.deviceModel);
+
+    const rentalCharge = Number(data.rental_charge !== undefined ? data.rental_charge : data.rentalCharge) || 0;
+    const depositAdvance = Number(data.deposit_advance !== undefined ? data.deposit_advance : data.depositAdvance) || 0;
+    const installationCharge = Number(data.installation_charge !== undefined ? data.installation_charge : data.installationCharge) || 0;
+    const billingType = String(data.billing_type || data.billingType || "Daily").trim();
 
     const sql = `
       UPDATE requisitions 
@@ -824,10 +920,10 @@ class Requisition {
       cleanStr(data.referral_doctor || data.referralDoctor || data.referral),
       cleanStr(data.bed_number || data.bedNo),
       cleanStr(data.gst_number || data.gstNo),
-      cleanStr(data.billing_type || data.billingType, "Daily"),
-      cleanNum(data.rental_charge, data.rentalCharge),
-      cleanNum(data.deposit_advance, data.depositAdvance),
-      cleanNum(data.installation_charge, data.installationCharge),
+      billingType,
+      rentalCharge,
+      depositAdvance,
+      installationCharge,
       cleanStr(data.age),
       cleanStr(data.attendant_name || data.attendantName),
       cleanStr(data.mobile_number || data.mobileNumber || data.mobile),
