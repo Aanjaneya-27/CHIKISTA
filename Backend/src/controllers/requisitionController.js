@@ -204,7 +204,7 @@ const cleanDate = (dateVal) => {
   }
 };
 
-// Auto-align Status, Dates & Commercials (Fixes 0 charges bug)
+// Auto-align Status, Dates & Commercials
 const sanitizeRequisitionData = (data) => {
   const startDate = cleanDate(data.start_date || data.startDate) || new Date().toISOString().split("T")[0];
   const logoutDate = cleanDate(data.logout_date || data.logoutDate);
@@ -212,10 +212,8 @@ const sanitizeRequisitionData = (data) => {
   const recordDate = cleanDate(data.record_date || data.recordDate) || startDate;
   const recallDate = cleanDate(data.recall_date || data.recallDate);
 
-  // Logout date hone par hi Closed hoga, warna strictly Active
   const status = logoutDate ? "Closed" : "Active";
 
-  // 🔒 Explicit number parsing for commercial fields so they never become 0 or blank
   const rentalCharge = Number(data.rental_charge !== undefined ? data.rental_charge : data.rentalCharge) || 0;
   const depositAdvance = Number(data.deposit_advance !== undefined ? data.deposit_advance : data.depositAdvance) || 0;
   const installationCharge = Number(data.installation_charge !== undefined ? data.installation_charge : data.installationCharge) || 0;
@@ -236,7 +234,6 @@ const sanitizeRequisitionData = (data) => {
     status: status,
     requisition_status: status,
     quantity: Number(data.quantity) > 0 ? Number(data.quantity) : 1,
-    // 🔒 Sync both camelCase & snake_case for backend model
     billing_type: billingType,
     billingType: billingType,
     rental_charge: rentalCharge,
