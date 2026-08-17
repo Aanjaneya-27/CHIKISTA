@@ -1,9 +1,10 @@
-// import { useState, useEffect } from "react"; 
+// import { useState, useEffect, useMemo } from "react"; 
 // import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 // import { ShieldCheck } from "lucide-react";
 // import { Toaster, toast } from "./components/UiComponents"; 
 // import { ROLES } from "./data/MockData";
 // import { Sidebar, Topbar, NotificationsPanel, Footer } from "./components/layout/Layout";
+// import WelcomeBanner from "./components/WelcomeBanner"; 
 // import Login from "./pages/Login";
 // import AdminDashboard from "./pages/AdminDashboard";
 // import RentalMaster from "./pages/RentalMaster";
@@ -11,21 +12,27 @@
 // import UserProfile from "./pages/UserProfile"; 
 // import API from "./utils/api"; 
 
-// // 🛡️ Fail-Safe Auth Loader (Kabhi crash nahi hoga)
-// const getInitialAuth = () => {
+// const getSafeUser = () => {
 //   try {
 //     const rawUser = localStorage.getItem("user");
-//     if (!rawUser || rawUser === "undefined" || rawUser === "null") {
-//       return { isAuth: false, role: null };
-//     }
+//     if (!rawUser || rawUser === "undefined" || rawUser === "null") return {};
 //     const parsed = JSON.parse(rawUser);
-//     if (parsed && typeof parsed === "object" && parsed.role) {
-//       return { isAuth: true, role: parsed.role };
+//     return parsed && typeof parsed === "object" ? parsed : {};
+//   } catch {
+//     return {};
+//   }
+// };
+
+// const getInitialAuth = () => {
+//   try {
+//     const user = getSafeUser();
+//     if (user && user.role) {
+//       return { isAuth: true, role: user.role };
 //     }
+//     const token = localStorage.getItem("token");
+//     if (token) return { isAuth: true, role: "care_center" };
 //     return { isAuth: false, role: null };
 //   } catch {
-//     localStorage.removeItem("user");
-//     localStorage.removeItem("token");
 //     return { isAuth: false, role: null };
 //   }
 // };
@@ -42,14 +49,6 @@
 //     .smooth-scroll-x::-webkit-scrollbar { height: 6px; }
 //     .smooth-scroll-x::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 999px; }
 //     .smooth-scroll-x::-webkit-scrollbar-track { background: transparent; }
-//     @keyframes pulseDot { 0%,100% { opacity:1; } 50% { opacity:.35; } }
-//     .pulse-dot { animation: pulseDot 1.8s ease-in-out infinite; }
-//     @keyframes fadeSlideUp { from { opacity:0; transform: translate3d(0,6px,0); } to { opacity:1; transform: translate3d(0,0,0); } }
-//     .fade-slide-up { animation: fadeSlideUp .15s ease-out; will-change: transform, opacity; }
-//     @keyframes slideInRight { from { transform: translate3d(100%,0,0); } to { transform: translate3d(0,0,0); } }
-//     .slide-in-right { animation: slideInRight .2s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; }
-//     @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-//     .fade-in { animation: fadeIn .15s ease-out; }
 //   `}</style>
 // );
 
@@ -67,7 +66,7 @@
 //   );
 // }
 
-// function MainAppLayout({ role, handleLogout }) {
+// function MainAppLayout({ role, handleLogout, welcomeUser, setWelcomeUser }) {
 //   const [mobileOpen, setMobileOpen] = useState(false);
 //   const [notifOpen, setNotifOpen] = useState(false);
 //   const [careCenters, setCareCenters] = useState([]);
@@ -78,7 +77,29 @@
 //   const [logs, setLogs] = useState([]);
 //   const [notifications, setNotifications] = useState([]);
 
-//   const unreadCount = notifications.filter((n) => !n.read).length;
+//   const loggedUser = useMemo(() => getSafeUser(), []);
+//   const isCareCenter = role === "care_center" || loggedUser?.role === "care_center";
+//   const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
+//   const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
+
+//   const unreadCount = useMemo(() => {
+//     if (!notifications || notifications.length === 0) return 0;
+//     if (!isCareCenter) return notifications.filter((n) => !n.read).length;
+
+//     return notifications.filter((n) => {
+//       if (n.read) return false;
+//       const nCcId = (n.care_center_id || n.careCenterId || "").toString().trim().toLowerCase();
+//       const nCcName = (n.careCenterName || "").toLowerCase().trim();
+//       const nText = `${n.title || ""} ${n.message || ""}`.toLowerCase();
+
+//       return (
+//         (nCcId && myCenterId && (nCcId === myCenterId || nCcId.replace(/\D/g, "") === myCenterId.replace(/\D/g, ""))) ||
+//         (nCcName && myCenterName && (nCcName.includes(myCenterName) || myCenterName.includes(nCcName))) ||
+//         (myCenterName && nText.includes(myCenterName)) ||
+//         (!nCcId && !nCcName)
+//       );
+//     }).length;
+//   }, [notifications, isCareCenter, myCenterId, myCenterName]);
 
 //   const markNotifRead = (id) => setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
 //   const markAllNotifRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
@@ -164,14 +185,7 @@
 //           })));
 //         }
 
-//         // Notification fetch
-//         let userObj = {};
-//         try {
-//           userObj = JSON.parse(localStorage.getItem("user") || "{}");
-//         } catch {
-//           userObj = {};
-//         }
-
+//         const userObj = getSafeUser();
 //         const ccId = userObj?.careCenterId || userObj?.id || "";
 //         const userRole = userObj?.role || role || "";
 
@@ -203,7 +217,13 @@
 //   }, [role]);
 
 //   return (
-//     <div className="font-body flex h-screen w-full overflow-hidden bg-slate-50">
+//     <div className="font-body flex h-screen w-full overflow-hidden bg-slate-50 relative">
+      
+//       {/* 🌟 Modern Floating Welcome Banner */}
+//       {welcomeUser && (
+//         <WelcomeBanner user={welcomeUser} onClose={() => setWelcomeUser(null)} />
+//       )}
+
 //       <Sidebar 
 //         role={role} 
 //         mobileOpen={mobileOpen} 
@@ -256,17 +276,22 @@
 
 // export default function App() {
 //   const [auth, setAuth] = useState(getInitialAuth);
+//   const [welcomeUser, setWelcomeUser] = useState(null);
 
-//   const handleLogin = (selectedRole) => {
-//     setAuth({ isAuth: true, role: selectedRole });
-//     toast.success("Login Successful!"); 
+//   const handleLogin = (selectedRole, customUser = null) => {
+//     const user = customUser || getSafeUser();
+//     const effectiveRole = selectedRole || user?.role || "care_center";
+
+//     setAuth({ isAuth: true, role: effectiveRole });
+//     setWelcomeUser(user); 
 //   };
 
 //   const handleLogout = () => {
 //     setAuth({ isAuth: false, role: null });
+//     setWelcomeUser(null);
 //     localStorage.removeItem("token");
 //     localStorage.removeItem("user");
-//     toast.success("Logout Successful!"); 
+//     toast.success("Logged out securely."); 
 //   };
 
 //   return (
@@ -274,7 +299,21 @@
 //       <FontImport />
 //       <Routes>
 //         <Route path="/login" element={auth.isAuth ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} /> } />
-//         <Route path="/*" element={ auth.isAuth ? <MainAppLayout role={auth.role} handleLogout={handleLogout} /> : <Navigate to="/login" replace /> } />
+//         <Route 
+//           path="/*" 
+//           element={
+//             auth.isAuth ? (
+//               <MainAppLayout 
+//                 role={auth.role} 
+//                 handleLogout={handleLogout} 
+//                 welcomeUser={welcomeUser}
+//                 setWelcomeUser={setWelcomeUser}
+//               />
+//             ) : (
+//               <Navigate to="/login" replace />
+//             )
+//           } 
+//         />
 //       </Routes>
 //       <Toaster />
 //     </Router>
@@ -343,7 +382,7 @@ function AccessDenied({ role }) {
       </div>
       <h3 className="mt-4 font-display text-lg font-bold text-slate-700">Access Restricted</h3>
       <p className="mt-1.5 max-w-sm text-sm text-slate-400">
-        The <span className="font-semibold text-slate-600">{ROLES[role]?.label || role}</span> role does not have permission to view Master Info.
+        The <span className="font-semibold text-slate-600">{ROLES?.[role]?.label || role}</span> role does not have permission to view Master Info.
       </p>
     </div>
   );
@@ -502,7 +541,6 @@ function MainAppLayout({ role, handleLogout, welcomeUser, setWelcomeUser }) {
   return (
     <div className="font-body flex h-screen w-full overflow-hidden bg-slate-50 relative">
       
-      {/* 🌟 Modern Floating Welcome Banner */}
       {welcomeUser && (
         <WelcomeBanner user={welcomeUser} onClose={() => setWelcomeUser(null)} />
       )}
