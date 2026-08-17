@@ -16,6 +16,7 @@
 //   CreditCard, 
 //   Save, 
 //   X, 
+   
 //   ArrowLeft, 
 //   ChevronRight, 
 //   ImagePlus, 
@@ -240,7 +241,7 @@
 // // 🧮 TOP BAR QUICK TOTAL DAYS CALCULATOR MODAL
 // function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
 //   const isQuick = !log || log?.isQuickCalc;
-//   const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date) || todayISO());
+//   const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date || log?.loginDate) || todayISO());
 //   const [tempLogoutDate, setTempLogoutDate] = useState(() => formatForDateInput(log?.logoutDate || log?.logout_date) || "");
 
 //   const eqId = log?.equipmentId || log?.equipment_id;
@@ -250,17 +251,20 @@
 //   const calculatedDisplay = useMemo(() => {
 //     if (!tempLoginDate) return "—";
 //     const login = new Date(tempLoginDate);
+//     if (isNaN(login.getTime())) return "—";
 //     login.setHours(0, 0, 0, 0);
 
 //     if (tempLogoutDate) {
 //       const logout = new Date(tempLogoutDate);
-//       logout.setHours(0, 0, 0, 0);
-//       const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
-//       const endUtc = Date.UTC(logout.getFullYear(), logout.getMonth(), logout.getDate());
-//       let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
-//       if (diffDays < 0) diffDays = 0;
-//       const logoutDay = logout.getDate();
-//       return `${diffDays} / ${logoutDay}`;
+//       if (!isNaN(logout.getTime())) {
+//         logout.setHours(0, 0, 0, 0);
+//         const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
+//         const endUtc = Date.UTC(logout.getFullYear(), logout.getMonth(), logout.getDate());
+//         let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
+//         if (diffDays < 0) diffDays = 0;
+//         const logoutDay = logout.getDate();
+//         return `${diffDays} / ${logoutDay}`;
+//       }
 //     }
 
 //     const now = new Date();
@@ -345,13 +349,13 @@
 //   );
 // }
 
-// // 👁️ 1. DEDICATED READ-ONLY VIEW PAGE
+// // 👁️ 1. DEDICATED READ-ONLY VIEW PAGE (SCREENSHOT UI RESTORED)
 // function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], onBack }) {
 //   const eqId = log?.equipmentId || log?.equipment_id;
 //   const equipmentName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || eqId || "—";
   
 //   const ccId = log?.careCenterId || log?.care_center_id;
-//   const careCenterName = log?.careCenterName || careCenters.find(c => c?.id === ccId)?.name || ccId || "—";
+//   const careCenterName = log?.careCenterName || log?.care_center_name || careCenters.find(c => c?.id === ccId)?.name || ccId || "—";
 
 //   const rawStatus = String(log?.status || log?.requisition_status || "Active").trim();
 //   const statusColor = rawStatus.toLowerCase() === "active" 
@@ -359,6 +363,24 @@
 //     : rawStatus.toLowerCase() === "closed" || rawStatus.toLowerCase() === "returned"
 //     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
 //     : "bg-slate-100 text-slate-700 border-slate-200";
+
+//   // Safe Parameter Getters
+//   const billingTypeVal = log?.billingType || log?.billing_type || "Daily";
+//   const rentalChargeVal = log?.rentalCharge ?? log?.rental_charge ?? 0;
+//   const depositAdvanceVal = log?.depositAdvance ?? log?.deposit_advance ?? 0;
+//   const installationChargeVal = log?.installationCharge ?? log?.installation_charge ?? 0;
+
+//   const inchargeMobileVal = log?.inchargeMobile || log?.incharge_mobile || log?.phone || log?.pocMobile || "—";
+//   const altMobileVal = log?.altMobile || log?.alt_mobile || "—";
+//   const careAddressVal = log?.careAddress || log?.care_address || log?.address || "—";
+//   const bedNoVal = log?.bedNumber || log?.bed_number || log?.bedNo || "—";
+//   const referralVal = log?.referralDoctor || log?.referral_doctor || log?.referral || "—";
+
+//   const ageVal = log?.age || "—";
+//   const mobileVal = log?.mobileNumber || log?.mobile_number || "—";
+//   const altMobilePatientVal = log?.altMobileNumber || log?.alt_mobile_number || "—";
+//   const attendantVal = log?.attendantName || log?.attendant_name || "—";
+//   const deliveryAddressVal = log?.deliveryAddress || log?.delivery_address || "—";
 
 //   return (
 //     <div className="fade-slide-up space-y-6">
@@ -421,25 +443,25 @@
 //             </div>
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Record Date</p>
-//               <p className="font-bold text-slate-800 mt-0.5">{log?.recordDate || log?.record_date || "—"}</p>
+//               <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.recordDate || log?.record_date) || "—"}</p>
 //             </div>
 
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Log In Date</p>
-//               <p className="font-bold text-slate-800 mt-0.5">{log?.startDate || log?.start_date || log?.loginDate || "—"}</p>
+//               <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.startDate || log?.start_date || log?.loginDate) || "—"}</p>
 //             </div>
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Notify Date</p>
-//               <p className="font-bold text-slate-800 mt-0.5">{log?.notifyDate || log?.notify_date || "0000-00-00"}</p>
+//               <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.notifyDate || log?.notify_date) || "0000-00-00"}</p>
 //             </div>
 
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Log Out Date</p>
-//               <p className="font-bold text-slate-800 mt-0.5">{log?.logoutDate || log?.logout_date || "—"}</p>
+//               <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.logoutDate || log?.logout_date) || "—"}</p>
 //             </div>
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Recall Date</p>
-//               <p className="font-bold text-slate-800 mt-0.5">{log?.recallDate || log?.recall_date || "—"}</p>
+//               <p className="font-bold text-slate-800 mt-0.5">{formatDateShort(log?.recallDate || log?.recall_date) || "—"}</p>
 //             </div>
 
 //             <div className="col-span-2 pt-1">
@@ -460,20 +482,28 @@
 //           <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Billing Type</p>
-//               <p className="font-extrabold text-teal-600 uppercase mt-0.5">{log?.billingType || log?.billing_type || "MONTHLY"}</p>
+//               <p className="font-extrabold text-teal-600 uppercase mt-0.5">
+//                 {billingTypeVal}
+//               </p>
 //             </div>
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Rental Charge</p>
-//               <p className="font-extrabold text-slate-800 mt-0.5">₹{log?.rentalCharge || log?.rental_charge || "0"}</p>
+//               <p className="font-extrabold text-slate-800 mt-0.5">
+//                 ₹{rentalChargeVal}
+//               </p>
 //             </div>
 
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Deposit / Advance</p>
-//               <p className="font-extrabold text-slate-800 mt-0.5">₹{log?.depositAdvance || log?.deposit_advance || "0"}</p>
+//               <p className="font-extrabold text-slate-800 mt-0.5">
+//                 ₹{depositAdvanceVal}
+//               </p>
 //             </div>
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Installation Charge</p>
-//               <p className="font-extrabold text-slate-800 mt-0.5">₹{log?.installationCharge || log?.installation_charge || "0"}</p>
+//               <p className="font-extrabold text-slate-800 mt-0.5">
+//                 ₹{installationChargeVal}
+//               </p>
 //             </div>
 //           </div>
 //         </div>
@@ -496,34 +526,34 @@
 //               <p className="text-xs font-medium text-slate-400">Age:</p>
 //             </div>
 //             <div>
-//               <p className="font-bold text-slate-800">{log?.age || "—"}</p>
+//               <p className="font-bold text-slate-800">{ageVal}</p>
 //             </div>
 
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Mobile:</p>
 //             </div>
 //             <div>
-//               <p className="font-bold text-slate-800">{log?.mobileNumber || log?.mobile_number || "—"}</p>
+//               <p className="font-bold text-slate-800">{mobileVal}</p>
 //             </div>
 
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Alt Mobile:</p>
 //             </div>
 //             <div>
-//               <p className="font-bold text-slate-800">{log?.altMobileNumber || log?.alt_mobile_number || "—"}</p>
+//               <p className="font-bold text-slate-800">{altMobilePatientVal}</p>
 //             </div>
 
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Attendant:</p>
 //             </div>
 //             <div>
-//               <p className="font-bold text-slate-800">{log?.attendantName || log?.attendant_name || "—"}</p>
+//               <p className="font-bold text-slate-800">{attendantVal}</p>
 //             </div>
 
 //             <div className="col-span-2 pt-2">
 //               <p className="text-xs font-medium text-slate-400 mb-1.5">Delivery Address:</p>
 //               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
-//                 {log?.deliveryAddress || log?.delivery_address || "—"}
+//                 {deliveryAddressVal}
 //               </div>
 //             </div>
 //           </div>
@@ -547,34 +577,34 @@
 //               <p className="text-xs font-medium text-slate-400">Incharge Mobile:</p>
 //             </div>
 //             <div>
-//               <p className="font-bold text-slate-800">{log?.inchargeMobile || log?.incharge_mobile || log?.phone || "—"}</p>
+//               <p className="font-bold text-slate-800">{inchargeMobileVal}</p>
 //             </div>
 
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Alt Mobile:</p>
 //             </div>
 //             <div>
-//               <p className="font-bold text-slate-800">{log?.altMobile || log?.alt_mobile || "—"}</p>
+//               <p className="font-bold text-slate-800">{altMobileVal}</p>
 //             </div>
 
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Bed No:</p>
 //             </div>
 //             <div>
-//               <p className="font-bold text-slate-800">{log?.bedNo || log?.bed_number || "—"}</p>
+//               <p className="font-bold text-slate-800">{bedNoVal}</p>
 //             </div>
 
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Referral:</p>
 //             </div>
 //             <div>
-//               <p className="font-bold text-slate-800">{log?.referral || log?.referral_doctor || "—"}</p>
+//               <p className="font-bold text-slate-800">{referralVal}</p>
 //             </div>
 
 //             <div className="col-span-2 pt-2">
 //               <p className="text-xs font-medium text-slate-400 mb-1.5">Care Address:</p>
 //               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
-//                 {log?.careAddress || log?.address || "—"}
+//                 {careAddressVal}
 //               </div>
 //             </div>
 //           </div>
@@ -585,7 +615,7 @@
 //   );
 // }
 
-// // 📄 2. EDITABLE FULL FORM PAGE (USED FOR ADD & EDIT ACTIONS)
+// // 📄 2. FULL EDITABLE REQUISITION FORM PAGE
 // function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
 //   const isEdit = mode === "edit";
 
@@ -647,15 +677,15 @@
 //         logoutDate: formatForDateInput(initial.logoutDate || initial.logout_date),
 //         recallDate: formatForDateInput(initial.recallDate || initial.recall_date),
 //         billingType: initial.billingType || initial.billing_type || "Daily",
-//         rentalCharge: initial.rentalCharge || initial.rental_charge || "",
-//         depositAdvance: initial.depositAdvance || initial.deposit_advance || "",
-//         installationCharge: initial.installationCharge || initial.installation_charge || "",
+//         rentalCharge: initial.rentalCharge ?? initial.rental_charge ?? "",
+//         depositAdvance: initial.depositAdvance ?? initial.deposit_advance ?? "",
+//         installationCharge: initial.installationCharge ?? initial.installation_charge ?? "",
 //         careCenterId: ccId || matchedUserCenter?.id || "",
 //         inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || initial.pocMobile || cc?.phone || "",
-//         altMobile: initial.altMobile || initial.alt_mobile || initial.altPocMobile || initial.altMobileNumber || "",
-//         careAddress: initial.careAddress || initial.address || cc?.address || "",
-//         bedNo: initial.bedNo || initial.bed_no || initial.bed_number || "",
-//         referral: initial.referral || initial.referral_doctor || initial.referralDoctor || "",
+//         altMobile: initial.altMobile || initial.alt_mobile || "",
+//         careAddress: initial.careAddress || initial.care_address || initial.address || cc?.address || "",
+//         bedNo: initial.bedNumber || initial.bed_number || initial.bedNo || "",
+//         referral: initial.referralDoctor || initial.referral_doctor || initial.referral || "",
 //         patientName: initial.patientName || initial.patient_name || "",
 //         age: initial.age || "",
 //         attendantName: initial.attendantName || initial.attendant_name || "",
@@ -921,7 +951,7 @@
 //                 </Select>
 //               </Field>
 
-//               {/* 🔄 Incharge Mobile & Alt Mobile */}
+//               {/* Incharge Mobile & Alt Mobile */}
 //               <div className="grid grid-cols-2 gap-4">
 //                 <Field label="Incharge Mobile" error={errors.inchargeMobile}>
 //                   <TextInput maxLength={10} value={form.inchargeMobile} error={errors.inchargeMobile} onChange={(e) => set({ inchargeMobile: e.target.value })} placeholder="10-digit number" />
@@ -1137,8 +1167,8 @@
 //   const [sortOrder, setSortOrder] = useState("desc");
 
 //   // 🔄 Navigation State
-//   const [viewDetailLog, setViewDetailLog] = useState(null); // For Screenshot-style View Page
-//   const [pageForm, setPageForm] = useState(null); // { mode: "add" | "edit", data: log }
+//   const [viewDetailLog, setViewDetailLog] = useState(null); // Screenshot View Page
+//   const [pageForm, setPageForm] = useState(null); // Full Page Add/Edit Form
 
 //   const [calcModal, setCalcModal] = useState(null);
 //   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -1176,20 +1206,23 @@
 //     if (!loginStr) return "—";
 
 //     const login = new Date(loginStr);
+//     if (isNaN(login.getTime())) return "—";
 //     login.setHours(0, 0, 0, 0); 
 
 //     if (logoutStr) {
 //       const logout = new Date(logoutStr);
-//       logout.setHours(0, 0, 0, 0);
+//       if (!isNaN(logout.getTime())) {
+//         logout.setHours(0, 0, 0, 0);
 
-//       const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
-//       const endUtc = Date.UTC(logout.getFullYear(), logout.getMonth(), logout.getDate());
+//         const startUtc = Date.UTC(login.getFullYear(), login.getMonth(), login.getDate());
+//         const endUtc = Date.UTC(logout.getFullYear(), logout.getMonth(), logout.getDate());
 
-//       let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1; 
-//       if (diffDays < 0) diffDays = 0; 
+//         let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1; 
+//         if (diffDays < 0) diffDays = 0; 
 
-//       const logoutDay = logout.getDate();
-//       return `${diffDays}/${logoutDay}`;
+//         const logoutDay = logout.getDate();
+//         return `${diffDays}/${logoutDay}`;
+//       }
 //     }
 
 //     const now = new Date();
@@ -1224,7 +1257,7 @@
 
 //         const patient = String(l.patientName || l.patient_name || "");
 //         const inchargeMobile = String(l.inchargeMobile || l.incharge_mobile || l.phone || l.pocMobile || "");
-//         const altMobile = String(l.altMobile || l.alt_mobile || l.altPocMobile || l.altMobileNumber || "");
+//         const altMobile = String(l.altMobile || l.alt_mobile || "");
 //         const logId = String(l.id || "");
 
 //         const matchesSearch = !q || 
@@ -1263,6 +1296,7 @@
 //       });
 //   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
+//   // 🔄 100% COMPLETE PARAMETERS SUBMIT HANDLER (DUAL-KEY SYNC)
 //   const handleFormSubmit = async (data) => {
 //     try {
 //       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
@@ -1279,25 +1313,73 @@
 //       let finalStatus = data.status || (data.logoutDate ? "Closed" : "Active");
 //       if (String(finalStatus).toLowerCase() === "returned") finalStatus = "Closed";
 
+//       const rentalChargeNum = data.rentalCharge !== "" && data.rentalCharge !== undefined ? Number(data.rentalCharge) : 0;
+//       const depositAdvanceNum = data.depositAdvance !== "" && data.depositAdvance !== undefined ? Number(data.depositAdvance) : 0;
+//       const installationChargeNum = data.installationCharge !== "" && data.installationCharge !== undefined ? Number(data.installationCharge) : 0;
+
 //       const backendData = {
 //         care_center_id: finalCareCenterId,
+//         careCenterId: finalCareCenterId,
 //         care_center_name: finalCareCenterName,
+//         careCenterName: finalCareCenterName,
 //         equipment_id: data.equipmentId || data.deviceModel,
+//         equipmentId: data.equipmentId || data.deviceModel,
 //         patient_name: data.patientName,
+//         patientName: data.patientName,
 //         quantity: data.quantity || 1,
 //         start_date: data.startDate || data.loginDate, 
+//         startDate: data.startDate || data.loginDate,
+//         loginDate: data.startDate || data.loginDate,
 //         logout_date: data.logoutDate || data.logout_date || null,
+//         logoutDate: data.logoutDate || data.logout_date || null,
+        
+//         // 💳 Commercial Parameters (Both Keys Sent)
+//         billing_type: data.billingType || "Daily",
+//         billingType: data.billingType || "Daily",
+//         rental_charge: rentalChargeNum,
+//         rentalCharge: rentalChargeNum,
+//         deposit_advance: depositAdvanceNum,
+//         depositAdvance: depositAdvanceNum,
+//         installation_charge: installationChargeNum,
+//         installationCharge: installationChargeNum,
+        
+//         // 👤 Patient Details
+//         age: data.age || "",
+//         attendant_name: data.attendantName || "",
+//         attendantName: data.attendantName || "",
+//         mobile_number: data.mobileNumber || "",
+//         mobileNumber: data.mobileNumber || "",
+//         alt_mobile_number: data.altMobileNumber || "",
+//         altMobileNumber: data.altMobileNumber || "",
+//         delivery_address: data.deliveryAddress || "",
+//         deliveryAddress: data.deliveryAddress || "",
+
+//         // 🏥 Logistics & Care Center
 //         incharge_mobile: data.inchargeMobile || data.phone || data.pocMobile || "",
-//         alt_mobile: data.altMobile || data.altMobileNumber || "",
+//         inchargeMobile: data.inchargeMobile || data.phone || data.pocMobile || "",
+//         alt_mobile: data.altMobile || "",
+//         altMobile: data.altMobile || "",
+//         care_address: data.careAddress || "",
+//         careAddress: data.careAddress || "",
 //         bed_number: data.bedNo || data.bed_number || "", 
+//         bedNumber: data.bedNo || data.bed_number || "",
+//         bedNo: data.bedNo || data.bed_number || "",
 //         referral_doctor: data.referral || data.referralDoctor || data.referral_doctor || "",         
+//         referralDoctor: data.referral || data.referralDoctor || data.referral_doctor || "",         
+//         referral: data.referral || data.referralDoctor || data.referral_doctor || "",         
 //         gst_number: data.gstNo || data.gstNumber || data.gst_number || "",
 //         payment_type: chosenMode,
-//         deal_type: data.dealType,
-//         unit: data.unit,
+//         paymentType: chosenMode,
+//         deal_type: data.dealType || "B2B",
+//         dealType: data.dealType || "B2B",
+//         unit: data.unit || "ODCOM",
 //         mode: chosenMode,
+//         record_date: data.recordDate || todayISO(),
+//         recordDate: data.recordDate || todayISO(),
 //         notify_date: data.notifyDate || null,
-//         delivery_address: data.deliveryAddress,
+//         notifyDate: data.notifyDate || null,
+//         recall_date: data.recallDate || null,
+//         recallDate: data.recallDate || null,
 //         notes: data.notes || "",
 //         accessory: accStr,
 //         accessories: accStr, 
@@ -1306,15 +1388,21 @@
 //       };
 
 //       if (data.id) {
-//         // 🔄 UPDATE
 //         await API.put(`/rental/requisitions/${data.id}`, backendData);
 //         toast.success("Requisition updated successfully!");
 //       } else {
-//         // ➕ CREATE NEW
 //         const reqId = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
 //         await API.post("/rental/requisitions", { ...backendData, id: reqId });
 //         toast.success("Requisition created and deployed!");
 //       }
+
+//       // Safe state update matching string IDs
+//       setLogs((prev) => {
+//         if (data.id) {
+//           return prev.map((l) => (String(l.id) === String(data.id) ? { ...l, ...data, ...backendData } : l));
+//         }
+//         return [{ id: `REQ-${Date.now()}`, ...data, ...backendData }, ...prev];
+//       });
 
 //       await fetchLogs();
 //       setPageForm(null);
@@ -1553,7 +1641,7 @@
 //               ) : (
 //                 filtered.map((log, i) => {
 //                   const actualLogoutDate = log?.logoutDate || log?.logout_date;
-//                   const dynamicDays = getDynamicTotalDays(log?.startDate || log?.start_date, actualLogoutDate);
+//                   const dynamicDays = getDynamicTotalDays(log?.startDate || log?.start_date || log?.loginDate, actualLogoutDate);
 //                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
 
 //                   const rowColor = currentMode === "Prepaid" 
@@ -1569,7 +1657,7 @@
 //                   if (catMatch) actualDevice = catMatch.name;
 
 //                   const inchargePhone = log?.inchargeMobile || log?.incharge_mobile || log?.phone || log?.pocMobile || "";
-//                   const altPhone = log?.altMobile || log?.alt_mobile || log?.altPocMobile || log?.altMobileNumber || "";
+//                   const altPhone = log?.altMobile || log?.alt_mobile || "";
                   
 //                   const s = String(log?.status || "").toLowerCase();
 //                   const isClosed = s === "closed" || s === "returned";
@@ -1592,7 +1680,7 @@
 //                           </p>
 //                         )}
 //                       </td>
-//                       <td className="px-5 py-3.5 text-slate-600 font-medium">{formatDateShort(log?.startDate || log?.start_date)}</td>
+//                       <td className="px-5 py-3.5 text-slate-600 font-medium">{formatDateShort(log?.startDate || log?.start_date || log?.loginDate)}</td>
 //                       <td className="px-5 py-3.5 text-slate-600">{actualLogoutDate ? formatDateShort(actualLogoutDate) : "—"}</td>
                       
 //                       <td className="px-5 py-3.5">
@@ -1668,6 +1756,7 @@
 //     </div>
 //   );
 // }
+
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { 
   Search, 
@@ -1686,7 +1775,6 @@ import {
   CreditCard, 
   Save, 
   X, 
-   
   ArrowLeft, 
   ChevronRight, 
   ImagePlus, 
@@ -1861,6 +1949,7 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
   );
 }
 
+// 🎛️ KPI Cards Section (Updated: "Closed" instead of "Closed / Returned")
 function KpiCards({ logs = [] }) {
   const countActive = logs.filter((l) => String(l?.status || "Active").toLowerCase() === "active").length;
   const countClosed = logs.filter((l) => {
@@ -1871,7 +1960,7 @@ function KpiCards({ logs = [] }) {
 
   const cards = [
     { label: "Active Rentals", value: countActive, icon: Activity, tone: "teal" },
-    { label: "Closed / Returned", value: countClosed, icon: PackageCheck, tone: "slate" },
+    { label: "Closed", value: countClosed, icon: PackageCheck, tone: "slate" }, // 👈 Updated Label
     { label: "Inactive Rentals", value: countInactive, icon: AlertTriangle, tone: "rose" },
     { label: "Total Requisitions", value: logs.length, icon: Clock, tone: "amber" },
   ];
@@ -1977,7 +2066,7 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
 
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Log Out Date (Return / Optional)
+              Log Out Date
             </label>
             <input 
               type="date" 
@@ -2019,7 +2108,7 @@ function SectionHeading({ icon: Icon, children }) {
   );
 }
 
-// 👁️ 1. DEDICATED READ-ONLY VIEW PAGE (SCREENSHOT UI RESTORED)
+// 👁️ 1. DEDICATED READ-ONLY VIEW PAGE
 function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], onBack }) {
   const eqId = log?.equipmentId || log?.equipment_id;
   const equipmentName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || eqId || "—";
@@ -2285,7 +2374,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   );
 }
 
-// 📄 2. FULL EDITABLE REQUISITION FORM PAGE
+// 📄 2. FULL EDITABLE REQUISITION FORM PAGE (Status removed from top section, auto-calculated)
 function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
   const isEdit = mode === "edit";
 
@@ -2466,6 +2555,9 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       careCenterName = careCenters.find((c) => c?.id === form.careCenterId)?.name || "";
     }
 
+    // Status is automatically determined: closed if logoutDate exists, else active
+    const autoStatus = form.logoutDate ? "Closed" : (initial?.status || "Active");
+
     onSubmit({
       ...form, 
       id: form.id,
@@ -2478,7 +2570,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       logoutDate: form.logoutDate || null,
       paymentType: form.mode, 
       deliveryAddress: form.deliveryAddress, 
-      status: form.status || (form.logoutDate ? "Closed" : "Active"), 
+      status: autoStatus, 
       deliveryStatus: "Pending Dispatch", 
       photoCount: photos.length,
     });
@@ -2509,10 +2601,10 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         </div>
       </div>
 
-      {/* Section 1: Record Types */}
+      {/* Section 1: Record Types (Status field removed) */}
       <div style={{ animationDelay: "40ms" }} className="relative z-40 rise-in rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40 transition-shadow hover:shadow-md hover:shadow-slate-200/50">
-        <SectionHeading icon={Tag}>Record Types &amp; Status</SectionHeading>
-        <div className="grid gap-4 sm:grid-cols-4">
+        <SectionHeading icon={Tag}>Record Types</SectionHeading>
+        <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Deal Type" required error={errors.dealType}>
             <Select value={form.dealType} error={errors.dealType} onChange={(e) => set({ dealType: e.target.value })}>
               <option value="">--- Select ---</option>
@@ -2529,13 +2621,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
             <Select value={form.mode} error={errors.mode} onChange={(e) => set({ mode: e.target.value, paymentType: e.target.value })}>
               <option value="">--- Select ---</option>
               {MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
-            </Select>
-          </Field>
-          <Field label="Status">
-            <Select value={form.status || "Active"} onChange={(e) => set({ status: e.target.value })}>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-              <option value="Closed">Closed (Returned)</option>
             </Select>
           </Field>
         </div>
@@ -2574,7 +2659,8 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
             <TextInput type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
           </Field>
           
-          <Field label="Log Out Date (Optional)">
+          {/* 👈 Log Out Date (Non-mandatory & clean label) */}
+          <Field label="Log Out Date">
             <TextInput type="date" value={form.logoutDate} onChange={(e) => set({ logoutDate: e.target.value })} />
           </Field>
 
@@ -2837,8 +2923,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [sortOrder, setSortOrder] = useState("desc");
 
   // 🔄 Navigation State
-  const [viewDetailLog, setViewDetailLog] = useState(null); // Screenshot View Page
-  const [pageForm, setPageForm] = useState(null); // Full Page Add/Edit Form
+  const [viewDetailLog, setViewDetailLog] = useState(null); 
+  const [pageForm, setPageForm] = useState(null); 
 
   const [calcModal, setCalcModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -2966,7 +3052,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  // 🔄 100% COMPLETE PARAMETERS SUBMIT HANDLER (DUAL-KEY SYNC)
+  // 🔄 Submit Handler
   const handleFormSubmit = async (data) => {
     try {
       const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
@@ -3003,7 +3089,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         logout_date: data.logoutDate || data.logout_date || null,
         logoutDate: data.logoutDate || data.logout_date || null,
         
-        // 💳 Commercial Parameters (Both Keys Sent)
+        // 💳 Commercial Parameters
         billing_type: data.billingType || "Daily",
         billingType: data.billingType || "Daily",
         rental_charge: rentalChargeNum,
@@ -3066,7 +3152,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         toast.success("Requisition created and deployed!");
       }
 
-      // Safe state update matching string IDs
       setLogs((prev) => {
         if (data.id) {
           return prev.map((l) => (String(l.id) === String(data.id) ? { ...l, ...data, ...backendData } : l));
@@ -3184,7 +3269,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             ))}
           </select>
 
-          {/* Status Filter: Both, Active, Inactive, Closed */}
+          {/* Status Filter */}
           <select 
             value={statusFilter} 
             onChange={(e) => setStatusFilter(e.target.value)} 
@@ -3193,7 +3278,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <option value="Both">Status: Both</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
-            <option value="Closed">Closed (Returned)</option>
+            <option value="Closed">Closed</option>
           </select>
           
           <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[110px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
@@ -3243,14 +3328,14 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         </div>
       </div>
 
-      {/* Main Table with Direct Header Sort */}
+      {/* Main Table (Header: "Patient" instead of "Patient & Contact") */}
       <div style={{ animationDelay: "140ms" }} className="rise-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/40">
         <div className="smooth-scroll-x overflow-x-auto">
           <table className="w-full text-left text-sm" style={{ minWidth: 800 }}>
             <thead>
               <tr className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 text-xs font-bold uppercase tracking-wide text-slate-400 backdrop-blur">
                 <th className="px-5 py-3">Device</th>
-                <th className="px-5 py-3">Patient &amp; Contact</th>
+                <th className="px-5 py-3">Patient</th> {/* 👈 Updated Table Header */}
                 
                 {/* Clickable Header Sort: Login Date */}
                 <th 
@@ -3362,7 +3447,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
                           {!isClosed && (
                             <IconAction 
-                              title="Mark as Closed (Returned)" 
+                              title="Mark as Closed" 
                               tone="teal" 
                               onClick={() => handleFastClose(log)}
                             >
