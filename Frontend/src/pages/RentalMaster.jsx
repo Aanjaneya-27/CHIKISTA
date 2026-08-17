@@ -99,7 +99,6 @@
 //   return `${day}/${m}/${y}`;
 // };
 
-// // ⏭️ Next Day Calculator (YYYY-MM-DD)
 // const getNextDayISO = (dateStr) => {
 //   const clean = formatForDateInput(dateStr);
 //   if (!clean) return "";
@@ -108,7 +107,6 @@
 //   return dt.toISOString().split("T")[0];
 // };
 
-// // 🧮 Inclusive Total Days Formula
 // const calculateDaysCount = (startStr, endStr) => {
 //   const s = formatForDateInput(startStr);
 //   if (!s) return 0;
@@ -234,14 +232,15 @@
 // }
 
 // function KpiCards({ logs = [] }) {
+//   const today = todayISO();
 //   const countActive = logs.filter((l) => {
 //     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date);
-//     return !cleanOut;
+//     return !cleanOut || cleanOut > today;
 //   }).length;
 
 //   const countClosed = logs.filter((l) => {
 //     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date);
-//     return Boolean(cleanOut);
+//     return Boolean(cleanOut && cleanOut <= today);
 //   }).length;
 
 //   const countInactive = logs.filter((l) => String(l?.status || "").toLowerCase() === "inactive").length;
@@ -446,7 +445,8 @@
 //   const careCenterName = log?.careCenterName || log?.care_center_name || careCenters.find(c => String(c?.id) === String(ccId))?.name || ccId || "—";
 
 //   const cleanLogout = formatForDateInput(log?.logoutDate || log?.logout_date);
-//   const isCurrentlyActive = !cleanLogout;
+//   const today = todayISO();
+//   const isCurrentlyActive = !cleanLogout || cleanLogout > today;
 //   const statusLabel = isCurrentlyActive ? "Active" : "Closed";
 
 //   const statusColor = isCurrentlyActive
@@ -747,8 +747,6 @@
 //   const activeReferrals = useMemo(() => filterActive(references), [references]);
 //   const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
 
-//   // 🔒 Dynamic Minimum Date for Recall Date:
-//   // Strictly after Log Out Date if Log Out Date exists. Otherwise unrestricted.
 //   const minRecallDateAllowed = useMemo(() => {
 //     if (form.logoutDate && form.logoutDate.trim() !== "") {
 //       return getNextDayISO(form.logoutDate);
@@ -805,12 +803,10 @@
 //     const cleanLogOut = formatForDateInput(form.logoutDate);
 //     const cleanRecall = formatForDateInput(form.recallDate);
 
-//     // Only validate if user actually entered a Log Out Date
 //     if (cleanLogIn && cleanLogOut && cleanLogOut < cleanLogIn) {
 //       e.logoutDate = `Log Out Date cannot be before Log In Date (${formatDisplayDate(cleanLogIn)}).`;
 //     }
 
-//     // 🔒 Boss's Rule: Recall Date MUST be strictly after Log Out Date (if logout date is given)
 //     if (cleanLogOut && cleanRecall && cleanRecall <= cleanLogOut) {
 //       e.recallDate = `Recall Date must be after Log Out Date (at least ${formatDisplayDate(getNextDayISO(cleanLogOut))}).`;
 //     }
@@ -833,14 +829,16 @@
 //     }
 
 //     const cleanLogout = formatForDateInput(form.logoutDate);
-//     const finalCalculatedStatus = cleanLogout ? "Closed" : "Active";
+//     const today = todayISO();
+//     // 🔒 Status is Closed ONLY if logoutDate is entered AND <= today
+//     const finalCalculatedStatus = (cleanLogout && cleanLogout <= today) ? "Closed" : "Active";
 
 //     onSubmit({
 //       ...form, 
 //       id: form.id,
 //       recordDate: formatForDateInput(form.recordDate) || todayISO(),
 //       startDate: formatForDateInput(form.loginDate) || todayISO(),
-//       logoutDate: cleanLogout || null, // 👈 Optional: null if empty
+//       logoutDate: cleanLogout || null,
 //       notifyDate: formatForDateInput(form.notifyDate) || null,
 //       recallDate: formatForDateInput(form.recallDate) || null,
 //       equipmentId: form.deviceModel, 
@@ -944,7 +942,6 @@
 //             <TextInput type="date" value={form.notifyDate || ""} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
 //           </Field>
           
-//           {/* 100% Optional Logout Date */}
 //           <Field label="Log Out Date (Optional)" error={errors.logoutDate}>
 //             <TextInput 
 //               type="date" 
@@ -955,7 +952,6 @@
 //             />
 //           </Field>
 
-//           {/* 🔒 Recall Date: Min locked only when logoutDate is entered */}
 //           <Field label="Recall Date (Optional)" error={errors.recallDate}>
 //             <TextInput 
 //               type="date" 
@@ -1254,6 +1250,7 @@
 //   const filtered = useMemo(() => {
 //     const q = String(search || "").toLowerCase().trim();
 //     const sFilter = String(statusFilter || "Both").trim().toLowerCase();
+//     const today = todayISO();
 
 //     return (scopedLogs || [])
 //       .filter((l) => {
@@ -1279,7 +1276,8 @@
 //           inchargeMobile.includes(q);
           
 //         const cleanLogout = formatForDateInput(l.logoutDate || l.logout_date);
-//         const computedStatus = cleanLogout ? "closed" : "active";
+//         const isClosed = Boolean(cleanLogout && cleanLogout <= today);
+//         const computedStatus = isClosed ? "closed" : "active";
         
 //         const isStatusMatch = (sFilter === "both" || sFilter === "all")
 //           ? true
@@ -1323,6 +1321,7 @@
 //       const cleanStart = formatForDateInput(data.startDate || data.loginDate) || todayISO();
 //       const cleanRecall = formatForDateInput(data.recallDate);
 //       const cleanNotify = formatForDateInput(data.notifyDate);
+//       const today = todayISO();
 
 //       const payload = {
 //         careCenterId: finalCareCenterId,
@@ -1332,7 +1331,7 @@
 //         quantity: 1,
 //         startDate: cleanStart,
 //         logoutDate: cleanLogout || null,
-//         status: cleanLogout ? "Closed" : "Active",
+//         status: (cleanLogout && cleanLogout <= today) ? "Closed" : "Active",
         
 //         billingType: data.billingType || "Daily",
 //         rentalCharge: data.rentalCharge !== "" ? Number(data.rentalCharge) : 0,
@@ -1598,7 +1597,9 @@
 //               ) : (
 //                 filtered.map((log, i) => {
 //                   const actualLogoutDate = formatForDateInput(log?.logoutDate || log?.logout_date);
-//                   const isClosed = Boolean(actualLogoutDate);
+//                   const today = todayISO();
+//                   // 🔒 Row status is closed ONLY if actualLogoutDate <= today
+//                   const isClosed = Boolean(actualLogoutDate && actualLogoutDate <= today);
 //                   const dynamicDays = calculateDaysCount(log?.startDate || log?.start_date || log?.loginDate, actualLogoutDate);
 //                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
 
@@ -1778,7 +1779,7 @@ import {
   MODE_OPTIONS, 
   UNIT_OPTIONS 
 } from "../data/MockData";
-import { todayISO } from "../utils/Helper";
+import {todayISO } from "../utils/Helper";
 import API from "../utils/api";
 
 function GlobalPolish() {
@@ -1842,20 +1843,30 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-const calculateDaysCount = (startStr, endStr) => {
-  const s = formatForDateInput(startStr);
-  if (!s) return 0;
-  const e = formatForDateInput(endStr) || formatForDateInput(new Date());
-  if (!e) return 0;
+// 🧮 Exact Total Days / Day of Month Calculator (e.g. 71/6)
+const getDynamicTotalDays = (loginStr, logoutStr) => {
+  const s = formatForDateInput(loginStr);
+  if (!s) return "—";
 
   const [sY, sM, sD] = s.split("-").map(Number);
-  const [eY, eM, eD] = e.split("-").map(Number);
-
   const startUtc = Date.UTC(sY, sM - 1, sD);
-  const endUtc = Date.UTC(eY, eM - 1, eD);
 
-  const diff = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
-  return diff > 0 ? diff : 1;
+  const cleanOut = formatForDateInput(logoutStr);
+  if (cleanOut) {
+    const [eY, eM, eD] = cleanOut.split("-").map(Number);
+    const endUtc = Date.UTC(eY, eM - 1, eD);
+    let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) diffDays = 0;
+    const logoutDay = eD;
+    return `${diffDays} / ${logoutDay}`;
+  } else {
+    const now = new Date();
+    const endUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) diffDays = 0;
+    const currentDay = now.getDate();
+    return `${diffDays} / ${currentDay}`;
+  }
 };
 
 const getOptionLabel = (item) => {
@@ -2019,133 +2030,101 @@ function KpiCards({ logs = [] }) {
   );
 }
 
-function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
+// 🧮 EXACT MODAL AS PER REFERENCE IMAGE
+function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose, onSaveSuccess }) {
   const isQuick = !log || log?.isQuickCalc;
   const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date || log?.loginDate) || todayISO());
   const [tempLogoutDate, setTempLogoutDate] = useState(() => formatForDateInput(log?.logoutDate || log?.logout_date) || "");
-  const [dailyRate, setDailyRate] = useState(() => Number(log?.rentalCharge ?? log?.rental_charge ?? 0));
-  const [installation, setInstallation] = useState(() => Number(log?.installationCharge ?? log?.installation_charge ?? 0));
-  const [deposit, setDeposit] = useState(() => Number(log?.depositAdvance ?? log?.deposit_advance ?? 0));
+  const [saving, setSaving] = useState(false);
 
   const eqId = log?.equipmentId || log?.equipment_id;
-  const eqName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || (isQuick ? "Live Estimator" : "Medical Device");
-  const patientName = log?.patientName || log?.patient_name || (isQuick ? "Instant Calculation" : "Patient");
+  const eqName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || (isQuick ? "Asset" : "Device");
+  const categoryName = log?.category || "General";
 
-  const totalDays = useMemo(() => {
-    return calculateDaysCount(tempLoginDate, tempLogoutDate);
+  const totalDaysDisplay = useMemo(() => {
+    return getDynamicTotalDays(tempLoginDate, tempLogoutDate);
   }, [tempLoginDate, tempLogoutDate]);
 
-  const baseRental = useMemo(() => totalDays * Number(dailyRate || 0), [totalDays, dailyRate]);
-  const grandTotal = useMemo(() => baseRental + Number(installation || 0) - Number(deposit || 0), [baseRental, installation, deposit]);
+  const handleApplyChanges = async () => {
+    if (isQuick || !log?.id) {
+      onClose();
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const today = todayISO();
+      const cleanLogout = formatForDateInput(tempLogoutDate);
+      const isClosed = Boolean(cleanLogout && cleanLogout <= today);
+
+      await API.put(`/rental/requisitions/${log.id}`, {
+        ...log,
+        startDate: tempLoginDate,
+        start_date: tempLoginDate,
+        logoutDate: cleanLogout || null,
+        logout_date: cleanLogout || null,
+        status: isClosed ? "Closed" : "Active",
+        requisition_status: isClosed ? "Closed" : "Active"
+      });
+
+      toast.success("Dates and total days updated successfully!");
+      if (onSaveSuccess) onSaveSuccess();
+      onClose();
+    } catch (err) {
+      toast.error("Failed to update: " + (err.response?.data?.message || err.message));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-      <div className="fade-slide-up w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
-        <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/50">
+      <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
+        <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div>
-            <h3 className="font-display text-base font-bold text-slate-800 flex items-center gap-2">
-              <Calculator className="h-4.5 w-4.5 text-teal-600" />
-              {isQuick ? "Live Rental & Days Calculator" : "Requisition Commercial Calculator"}
+            <h3 className="font-display text-base font-bold text-slate-800">
+              Calculate Total Days
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">{patientName} • {eqName}</p>
+            <p className="text-xs text-slate-400 mt-0.5">{categoryName} • {eqName}</p>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                Log In Date (Start)
-              </label>
-              <input 
-                type="date" 
-                value={tempLoginDate} 
-                onChange={(e) => setTempLoginDate(e.target.value)} 
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                Log Out Date (End - Optional)
-              </label>
-              <input 
-                type="date" 
-                value={tempLogoutDate} 
-                min={tempLoginDate}
-                onChange={(e) => setTempLogoutDate(e.target.value)} 
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
-              />
-            </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              LOG IN DATE
+            </label>
+            <input 
+              type="date" 
+              value={tempLoginDate} 
+              onChange={(e) => setTempLoginDate(e.target.value)} 
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
+            />
           </div>
 
-          <div className="grid grid-cols-3 gap-3 pt-2">
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                Daily Rate (₹)
-              </label>
-              <input 
-                type="number" 
-                min={0}
-                value={dailyRate} 
-                onChange={(e) => setDailyRate(e.target.value)} 
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-teal-500" 
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                Install Fee (₹)
-              </label>
-              <input 
-                type="number" 
-                min={0}
-                value={installation} 
-                onChange={(e) => setInstallation(e.target.value)} 
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-teal-500" 
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                Advance Dep (₹)
-              </label>
-              <input 
-                type="number" 
-                min={0}
-                value={deposit} 
-                onChange={(e) => setDeposit(e.target.value)} 
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-teal-500" 
-              />
-            </div>
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              LOG OUT DATE
+            </label>
+            <input 
+              type="date" 
+              value={tempLogoutDate} 
+              min={tempLoginDate}
+              onChange={(e) => setTempLogoutDate(e.target.value)} 
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
+            />
+            <p className="text-[11px] text-slate-400 mt-1">Leave empty to calculate until today</p>
           </div>
 
-          <div className="rounded-2xl border border-teal-100 bg-teal-50/50 p-4 space-y-2.5">
-            <div className="flex items-center justify-between text-xs text-slate-600 font-medium">
-              <span>Total Billable Days:</span>
-              <span className="font-bold text-teal-800 text-sm">{totalDays} Days</span>
-            </div>
-            <div className="flex items-center justify-between text-xs text-slate-600 font-medium">
-              <span>Base Rent ({totalDays} × ₹{dailyRate}):</span>
-              <span>₹{baseRental}</span>
-            </div>
-            {Number(installation) > 0 && (
-              <div className="flex items-center justify-between text-xs text-slate-600 font-medium">
-                <span>Installation Fee (+):</span>
-                <span>+₹{installation}</span>
-              </div>
-            )}
-            {Number(deposit) > 0 && (
-              <div className="flex items-center justify-between text-xs text-emerald-700 font-medium">
-                <span>Advance Deposit Paid (-):</span>
-                <span>-₹{deposit}</span>
-              </div>
-            )}
-            <div className="border-t border-teal-200/80 pt-2 flex items-center justify-between font-bold text-slate-800 text-base">
-              <span>Estimated Net Balance:</span>
-              <span className="text-teal-700">₹{grandTotal}</span>
-            </div>
+          {/* Result Box exact as Image 2 */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5 text-center my-3">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS</span>
+            <p className="mt-1 font-display text-3xl font-extrabold text-teal-800">
+              {totalDaysDisplay}
+            </p>
           </div>
         </div>
 
@@ -2153,9 +2132,17 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
           <button 
             type="button" 
             onClick={onClose} 
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            disabled={saving}
+            onClick={handleApplyChanges} 
             className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
           >
-            Close Calculator
+            {saving ? "Applying..." : "Apply Changes"}
           </button>
         </div>
       </div>
@@ -2193,7 +2180,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   const depositAdvanceVal = log?.depositAdvance ?? log?.deposit_advance ?? 0;
   const installationChargeVal = log?.installationCharge ?? log?.installation_charge ?? 0;
 
-  const totalDays = calculateDaysCount(log?.startDate || log?.start_date || log?.loginDate, cleanLogout);
+  const totalDaysFormatted = getDynamicTotalDays(log?.startDate || log?.start_date || log?.loginDate, cleanLogout);
 
   return (
     <div className="fade-slide-up space-y-6">
@@ -2208,7 +2195,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             </h1>
           </div>
           <p className="text-xs font-bold tracking-wider text-slate-400 mt-1 uppercase">
-            STATUS: <span className="text-teal-600">{statusLabel}</span> • DURATION: {totalDays} DAYS
+            STATUS: <span className="text-teal-600">{statusLabel}</span> • TOTAL DAYS: {totalDaysFormatted}
           </p>
         </div>
 
@@ -2264,9 +2251,9 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
               </p>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-400">Recall Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">
-                {formatDisplayDate(log?.recallDate || log?.recall_date)}
+              <p className="text-xs font-medium text-slate-400">Total Days</p>
+              <p className="font-bold text-teal-700 mt-0.5">
+                {totalDaysFormatted}
               </p>
             </div>
 
@@ -2565,7 +2552,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
 
     const cleanLogout = formatForDateInput(form.logoutDate);
     const today = todayISO();
-    // 🔒 Status is Closed ONLY if logoutDate is entered AND <= today
     const finalCalculatedStatus = (cleanLogout && cleanLogout <= today) ? "Closed" : "Active";
 
     onSubmit({
@@ -3238,15 +3224,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
           <button 
             type="button"
-            onClick={() => setCalcModal({ isQuickCalc: true })}
-            title="Open Quick Total Days & Billing Calculator"
-            className="flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-300 transition cursor-pointer shrink-0 shadow-2xs"
-          >
-            <Calculator className="h-4 w-4" />
-          </button>
-
-          <button 
-            type="button"
             onClick={() => {
               setSearch("");
               setStatusFilter("Both");
@@ -3333,9 +3310,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                 filtered.map((log, i) => {
                   const actualLogoutDate = formatForDateInput(log?.logoutDate || log?.logout_date);
                   const today = todayISO();
-                  // 🔒 Row status is closed ONLY if actualLogoutDate <= today
                   const isClosed = Boolean(actualLogoutDate && actualLogoutDate <= today);
-                  const dynamicDays = calculateDaysCount(log?.startDate || log?.start_date || log?.loginDate, actualLogoutDate);
+                  const dynamicDaysFormatted = getDynamicTotalDays(log?.startDate || log?.start_date || log?.loginDate, actualLogoutDate);
                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
 
                   const rowColor = currentMode === "Prepaid" 
@@ -3377,13 +3353,14 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         {actualLogoutDate ? formatDisplayDate(actualLogoutDate) : "—"}
                       </td>
                       
+                      {/* 🧮 Exact Total Days Column (e.g. 71/6 or 1/17) */}
                       <td className="px-5 py-3.5">
-                        <span className={`font-semibold px-2.5 py-1 rounded-md text-xs border shadow-xs ${
+                        <span className={`font-bold px-2.5 py-1 rounded-md text-xs border shadow-xs ${
                           isClosed 
                             ? "bg-slate-100 text-slate-700 border-slate-200" 
                             : "bg-teal-50 text-teal-800 border-teal-200"
                         }`}>
-                          {dynamicDays} {dynamicDays === 1 ? "Day" : "Days"} {isClosed ? "(Closed)" : "(Active)"}
+                          {dynamicDaysFormatted}
                         </span>
                       </td>
 
@@ -3392,7 +3369,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
                           {!isClosed && (
                             <IconAction 
-                              title="Mark as Closed (Return Device)" 
+                              title="Mark as Closed" 
                               tone="teal" 
                               onClick={() => handleFastClose(log)}
                             >
@@ -3401,7 +3378,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                           )}
 
                           <IconAction 
-                            title="Calculate Balance & Days" 
+                            title="Calculate Total Days" 
                             tone="teal" 
                             onClick={() => setCalcModal(log)}
                           >
@@ -3455,6 +3432,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
           log={calcModal} 
           equipmentCatalog={equipmentCatalog}
           onClose={() => setCalcModal(null)} 
+          onSaveSuccess={fetchLogs}
         />
       )}
 
