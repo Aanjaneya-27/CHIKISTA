@@ -222,34 +222,39 @@ const cleanDate = (val) => {
 
 class Requisition {
   static async getAll() {
-    const [rows] = await pool.query(`
-      SELECT r.*, 
-             DATE_FORMAT(r.record_date, '%Y-%m-%d') AS recordDate,
-             DATE_FORMAT(r.start_date, '%Y-%m-%d') AS startDate,
-             DATE_FORMAT(r.start_date, '%Y-%m-%d') AS loginDate,
-             DATE_FORMAT(r.logout_date, '%Y-%m-%d') AS logoutDate,
-             DATE_FORMAT(r.notify_date, '%Y-%m-%d') AS notifyDate,
-             DATE_FORMAT(r.recall_date, '%Y-%m-%d') AS recallDate,
-             c.name AS careCenterName, 
-             e.name AS equipmentName,
-             r.bed_number AS bedNo,
-             r.referral_doctor AS referral,
-             r.billing_type AS billingType,
-             r.rental_charge AS rentalCharge,
-             r.deposit_advance AS depositAdvance,
-             r.installation_charge AS installationCharge,
-             r.incharge_mobile AS inchargeMobile,
-             r.alt_mobile AS altMobile,
-             r.attendant_name AS attendantName,
-             r.mobile_number AS mobileNumber,
-             r.alt_mobile_number AS altMobileNumber,
-             r.care_address AS careAddress
-      FROM requisitions r
-      LEFT JOIN care_centers c ON r.care_center_id = c.id
-      LEFT JOIN equipment e ON r.equipment_id = e.id
-      ORDER BY r.created_at DESC
-    `);
-    return rows;
+    try {
+      const [rows] = await pool.query(`
+        SELECT r.*, 
+               DATE_FORMAT(r.record_date, '%Y-%m-%d') AS recordDate,
+               DATE_FORMAT(r.start_date, '%Y-%m-%d') AS startDate,
+               DATE_FORMAT(r.start_date, '%Y-%m-%d') AS loginDate,
+               DATE_FORMAT(r.logout_date, '%Y-%m-%d') AS logoutDate,
+               DATE_FORMAT(r.notify_date, '%Y-%m-%d') AS notifyDate,
+               DATE_FORMAT(r.recall_date, '%Y-%m-%d') AS recallDate,
+               c.name AS careCenterName, 
+               e.name AS equipmentName,
+               r.bed_number AS bedNo,
+               r.referral_doctor AS referral,
+               r.billing_type AS billingType,
+               r.rental_charge AS rentalCharge,
+               r.deposit_advance AS depositAdvance,
+               r.installation_charge AS installationCharge,
+               r.incharge_mobile AS inchargeMobile,
+               r.alt_mobile AS altMobile,
+               r.attendant_name AS attendantName,
+               r.mobile_number AS mobileNumber,
+               r.alt_mobile_number AS altMobileNumber,
+               r.care_address AS careAddress
+        FROM requisitions r
+        LEFT JOIN care_centers c ON r.care_center_id = c.id
+        LEFT JOIN equipment e ON r.equipment_id = e.id
+        ORDER BY r.created_at DESC
+      `);
+      return rows;
+    } catch (err) {
+      console.error("SQL Error in getAll:", err.message);
+      throw err;
+    }
   }
 
   static async create(data) {
@@ -260,19 +265,14 @@ class Requisition {
     const notifyDate = cleanDate(data.notifyDate || data.notify_date);
     const recallDate = cleanDate(data.recallDate || data.recall_date);
 
-    // 🔒 100% FORCE ACTIVE UNLESS LOGOUT DATE HAS A REAL VALUE
-    let finalStatus = "Active";
-    if (logoutDate !== null && logoutDate !== "" && logoutDate !== "0000-00-00") {
-      finalStatus = "Closed";
-    }
-
+    const finalStatus = logoutDate !== null ? "Closed" : "Active";
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
     const sql = `
       INSERT INTO requisitions 
-      (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, status, delivery_status, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, accessory, referral_doctor, bed_number, gst_number, billing_type, rental_charge, deposit_advance, installation_charge, age, attendant_name, mobile_number, alt_mobile_number, incharge_mobile, alt_mobile, care_address, record_date, recall_date) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, status, delivery_status, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, accessory, referral_doctor, bed_number, billing_type, rental_charge, deposit_advance, installation_charge, age, attendant_name, mobile_number, alt_mobile_number, incharge_mobile, alt_mobile, care_address, record_date, recall_date) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -283,7 +283,7 @@ class Requisition {
       1,
       startDate,
       logoutDate,
-      finalStatus, // 👈 Forced Active / Closed
+      finalStatus,
       "Pending Dispatch",
       data.paymentType || data.mode || "Postpaid",
       data.dealType || data.deal_type || "B2B",
@@ -295,7 +295,6 @@ class Requisition {
       accValue,
       data.referral || data.referral_doctor || "",
       data.bedNo || data.bed_number || "",
-      data.gstNo || data.gst_number || "",
       data.billingType || data.billing_type || "Daily",
       Number(data.rentalCharge ?? data.rental_charge) || 0,
       Number(data.depositAdvance ?? data.deposit_advance) || 0,
@@ -311,8 +310,13 @@ class Requisition {
       recallDate
     ];
 
-    await pool.query(sql, values);
-    return reqId;
+    try {
+      await pool.query(sql, values);
+      return reqId;
+    } catch (err) {
+      console.error("SQL Error in create:", err.message);
+      throw err;
+    }
   }
 
   static async update(id, data) {
@@ -323,7 +327,7 @@ class Requisition {
     const recallDate = cleanDate(data.recallDate || data.recall_date);
 
     let finalStatus = "Active";
-    if (logoutDate !== null && logoutDate !== "" && logoutDate !== "0000-00-00") {
+    if (logoutDate !== null) {
       finalStatus = "Closed";
     } else if (String(data.status).toLowerCase() === "inactive") {
       finalStatus = "Inactive";
@@ -376,7 +380,12 @@ class Requisition {
       id
     ];
 
-    await pool.query(sql, values);
+    try {
+      await pool.query(sql, values);
+    } catch (err) {
+      console.error("SQL Error in update:", err.message);
+      throw err;
+    }
   }
 
   static async delete(id) {
