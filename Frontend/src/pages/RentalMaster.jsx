@@ -1886,7 +1886,7 @@ import {
   MODE_OPTIONS, 
   UNIT_OPTIONS 
 } from "../data/MockData";
-import { todayISO } from "../utils/Helper";
+import {  todayISO } from "../utils/Helper";
 import API from "../utils/api";
 
 function GlobalPolish() {
@@ -1942,7 +1942,16 @@ const formatDisplayDate = (d) => {
   return `${day}/${m}/${y}`;
 };
 
-// 🧮 Inclusive Total Days Calculator Formula
+// ⏭️ Returns the Day Immediately Following the Given Date (YYYY-MM-DD)
+const getNextDayISO = (dateStr) => {
+  const clean = formatForDateInput(dateStr);
+  if (!clean) return "";
+  const [y, m, d] = clean.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + 1));
+  return dt.toISOString().split("T")[0];
+};
+
+// 🧮 Inclusive Total Days Calculation Formula
 const calculateDaysCount = (startStr, endStr) => {
   const s = formatForDateInput(startStr);
   if (!s) return 0;
@@ -2176,6 +2185,7 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
               <input 
                 type="date" 
                 value={tempLogoutDate} 
+                min={tempLoginDate}
                 onChange={(e) => setTempLogoutDate(e.target.value)} 
                 className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
               />
@@ -2364,9 +2374,9 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
               </p>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-400">Total Duration</p>
-              <p className="font-bold text-teal-700 mt-0.5">
-                {totalDays} Days
+              <p className="text-xs font-medium text-slate-400">Recall Date</p>
+              <p className="font-bold text-slate-800 mt-0.5">
+                {formatDisplayDate(log?.recallDate || log?.recall_date)}
               </p>
             </div>
 
@@ -2582,6 +2592,15 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
   const activeReferrals = useMemo(() => filterActive(references), [references]);
   const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
 
+  // 🔒 Dynamic Minimum Date for Recall Date:
+  // Must be strictly after Logout Date (logout_date + 1 day) if Logout Date is given, otherwise at least Login Date
+  const minRecallDateAllowed = useMemo(() => {
+    if (form.logoutDate) {
+      return getNextDayISO(form.logoutDate);
+    }
+    return formatForDateInput(form.loginDate) || todayISO();
+  }, [form.logoutDate, form.loginDate]);
+
   const handleCareCenterChange = (id) => {
     if (id === "other") {
       set({ careCenterId: "other", careAddress: "", inchargeMobile: "", altMobile: "" });
@@ -2618,22 +2637,40 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     if (!form.loginDate) e.loginDate = "Log in date is required.";
     if (!form.billingType) e.billingType = "Please select a billing type.";
     if (!form.patientName) e.patientName = "Patient name is required.";
+    
     if (form.mode === "Prepaid" && !form.notifyDate) {
       e.notifyDate = "Notify Date is mandatory for Prepaid!";
     }
+
     if (form.inchargeMobile && !/^\d{10}$/.test(String(form.inchargeMobile).trim())) {
       e.inchargeMobile = "Enter a valid 10-digit mobile number.";
     }
+
+    // 🔒 Validation: Log Out Date cannot be earlier than Log In Date
+    const cleanLogIn = formatForDateInput(form.loginDate);
+    const cleanLogOut = formatForDateInput(form.logoutDate);
+    const cleanRecall = formatForDateInput(form.recallDate);
+
+    if (cleanLogIn && cleanLogOut && cleanLogOut < cleanLogIn) {
+      e.logoutDate = `Log Out Date cannot be before Log In Date (${formatDisplayDate(cleanLogIn)}).`;
+    }
+
+    // 🔒 Boss's Rule Validation: Recall Date MUST be strictly after Log Out Date
+    if (cleanLogOut && cleanRecall && cleanRecall <= cleanLogOut) {
+      e.recallDate = `Recall Date must be after Log Out Date (at least ${formatDisplayDate(getNextDayISO(cleanLogOut))}).`;
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = () => {
     if (!validate()) { 
-      toast.error("Please fill all required fields correctly."); 
+      toast.error("Please fix the validation errors before saving."); 
       window.scrollTo({ top: 0, behavior: "smooth" }); 
       return; 
     }
+
     const equipment = equipmentCatalog.find((eq) => eq?.id === form.deviceModel);
     let careCenterName = isCareCenterUser ? (matchedUserCenter?.name || loggedUser?.careCenterName || loggedUser?.name || "") : "Other";
     if (form.careCenterId !== "other" && !isCareCenterUser) {
@@ -2740,19 +2777,42 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
           </Field>
 
           <Field label="Log In Date" required error={errors.loginDate}>
-            <TextInput type="date" value={form.loginDate} error={errors.loginDate} onChange={(e) => set({ loginDate: e.target.value })} />
+            <TextInput 
+              type="date" 
+              value={form.loginDate} 
+              error={errors.loginDate} 
+              onChange={(e) => set({ loginDate: e.target.value })} 
+            />
           </Field>
           
           <Field label="Notify Date" required={form.mode === "Prepaid"} error={errors.notifyDate}>
             <TextInput type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
           </Field>
           
-          <Field label="Log Out Date">
-            <TextInput type="date" value={form.logoutDate} onChange={(e) => set({ logoutDate: e.target.value })} />
+          <Field label="Log Out Date (Optional)" error={errors.logoutDate}>
+            <TextInput 
+              type="date" 
+              value={form.logoutDate} 
+              min={formatForDateInput(form.loginDate)}
+              error={errors.logoutDate}
+              onChange={(e) => set({ logoutDate: e.target.value })} 
+            />
           </Field>
 
-          <Field label="Recall Date">
-            <TextInput type="date" value={form.recallDate} onChange={(e) => set({ recallDate: e.target.value })} />
+          {/* 🔒 Locked to after Logout Date */}
+          <Field label="Recall Date (Optional)" error={errors.recallDate}>
+            <TextInput 
+              type="date" 
+              value={form.recallDate} 
+              min={minRecallDateAllowed}
+              error={errors.recallDate}
+              onChange={(e) => set({ recallDate: e.target.value })} 
+            />
+            {form.logoutDate && (
+              <p className="mt-1 text-[11px] font-medium text-amber-600">
+                Must be on or after {formatDisplayDate(minRecallDateAllowed)} (Post-Logout)
+              </p>
+            )}
           </Field>
         </div>
       </div>
