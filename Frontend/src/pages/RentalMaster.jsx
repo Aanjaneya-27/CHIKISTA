@@ -43,7 +43,7 @@
 //   MODE_OPTIONS, 
 //   UNIT_OPTIONS 
 // } from "../data/MockData";
-// import {  todayISO } from "../utils/Helper";
+// import { todayISO } from "../utils/Helper";
 // import API from "../utils/api";
 
 // function GlobalPolish() {
@@ -99,7 +99,7 @@
 //   return `${day}/${m}/${y}`;
 // };
 
-// // ⏭️ Returns the Day Immediately Following the Given Date (YYYY-MM-DD)
+// // ⏭️ Next Day Calculator (YYYY-MM-DD)
 // const getNextDayISO = (dateStr) => {
 //   const clean = formatForDateInput(dateStr);
 //   if (!clean) return "";
@@ -108,7 +108,7 @@
 //   return dt.toISOString().split("T")[0];
 // };
 
-// // 🧮 Inclusive Total Days Calculation Formula
+// // 🧮 Inclusive Total Days Formula
 // const calculateDaysCount = (startStr, endStr) => {
 //   const s = formatForDateInput(startStr);
 //   if (!s) return 0;
@@ -285,7 +285,6 @@
 //   );
 // }
 
-// // 🧮 LIVE CALCULATOR MODAL
 // function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose }) {
 //   const isQuick = !log || log?.isQuickCalc;
 //   const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date || log?.loginDate) || todayISO());
@@ -337,7 +336,7 @@
 
 //             <div>
 //               <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-//                 Log Out Date (End)
+//                 Log Out Date (End - Optional)
 //               </label>
 //               <input 
 //                 type="date" 
@@ -388,7 +387,6 @@
 //             </div>
 //           </div>
 
-//           {/* Breakdown Card */}
 //           <div className="rounded-2xl border border-teal-100 bg-teal-50/50 p-4 space-y-2.5">
 //             <div className="flex items-center justify-between text-xs text-slate-600 font-medium">
 //               <span>Total Billable Days:</span>
@@ -687,9 +685,9 @@
 //         accessory: parsedAcc,
 //         recordDate: formatForDateInput(initial.recordDate || initial.record_date) || todayISO(),
 //         loginDate: formatForDateInput(initial.startDate || initial.start_date || initial.loginDate) || todayISO(),
-//         notifyDate: formatForDateInput(initial.notifyDate || initial.notify_date),
-//         logoutDate: parsedLogoutDate,
-//         recallDate: formatForDateInput(initial.recallDate || initial.recall_date),
+//         notifyDate: formatForDateInput(initial.notifyDate || initial.notify_date) || "",
+//         logoutDate: parsedLogoutDate || "",
+//         recallDate: formatForDateInput(initial.recallDate || initial.recall_date) || "",
 //         billingType: initial.billingType || initial.billing_type || "Daily",
 //         rentalCharge: initial.rentalCharge ?? initial.rental_charge ?? "",
 //         depositAdvance: initial.depositAdvance ?? initial.deposit_advance ?? "",
@@ -750,13 +748,13 @@
 //   const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
 
 //   // 🔒 Dynamic Minimum Date for Recall Date:
-//   // Must be strictly after Logout Date (logout_date + 1 day) if Logout Date is given, otherwise at least Login Date
+//   // Strictly after Log Out Date if Log Out Date exists. Otherwise unrestricted.
 //   const minRecallDateAllowed = useMemo(() => {
-//     if (form.logoutDate) {
+//     if (form.logoutDate && form.logoutDate.trim() !== "") {
 //       return getNextDayISO(form.logoutDate);
 //     }
-//     return formatForDateInput(form.loginDate) || todayISO();
-//   }, [form.logoutDate, form.loginDate]);
+//     return "";
+//   }, [form.logoutDate]);
 
 //   const handleCareCenterChange = (id) => {
 //     if (id === "other") {
@@ -803,16 +801,16 @@
 //       e.inchargeMobile = "Enter a valid 10-digit mobile number.";
 //     }
 
-//     // 🔒 Validation: Log Out Date cannot be earlier than Log In Date
 //     const cleanLogIn = formatForDateInput(form.loginDate);
 //     const cleanLogOut = formatForDateInput(form.logoutDate);
 //     const cleanRecall = formatForDateInput(form.recallDate);
 
+//     // Only validate if user actually entered a Log Out Date
 //     if (cleanLogIn && cleanLogOut && cleanLogOut < cleanLogIn) {
 //       e.logoutDate = `Log Out Date cannot be before Log In Date (${formatDisplayDate(cleanLogIn)}).`;
 //     }
 
-//     // 🔒 Boss's Rule Validation: Recall Date MUST be strictly after Log Out Date
+//     // 🔒 Boss's Rule: Recall Date MUST be strictly after Log Out Date (if logout date is given)
 //     if (cleanLogOut && cleanRecall && cleanRecall <= cleanLogOut) {
 //       e.recallDate = `Recall Date must be after Log Out Date (at least ${formatDisplayDate(getNextDayISO(cleanLogOut))}).`;
 //     }
@@ -842,7 +840,7 @@
 //       id: form.id,
 //       recordDate: formatForDateInput(form.recordDate) || todayISO(),
 //       startDate: formatForDateInput(form.loginDate) || todayISO(),
-//       logoutDate: cleanLogout || null,
+//       logoutDate: cleanLogout || null, // 👈 Optional: null if empty
 //       notifyDate: formatForDateInput(form.notifyDate) || null,
 //       recallDate: formatForDateInput(form.recallDate) || null,
 //       equipmentId: form.deviceModel, 
@@ -930,44 +928,45 @@
 //           </Field>
 
 //           <Field label="Record Date">
-//             <TextInput type="date" value={form.recordDate} onChange={(e) => set({ recordDate: e.target.value })} />
+//             <TextInput type="date" value={form.recordDate || ""} onChange={(e) => set({ recordDate: e.target.value })} />
 //           </Field>
 
 //           <Field label="Log In Date" required error={errors.loginDate}>
 //             <TextInput 
 //               type="date" 
-//               value={form.loginDate} 
+//               value={form.loginDate || ""} 
 //               error={errors.loginDate} 
 //               onChange={(e) => set({ loginDate: e.target.value })} 
 //             />
 //           </Field>
           
 //           <Field label="Notify Date" required={form.mode === "Prepaid"} error={errors.notifyDate}>
-//             <TextInput type="date" value={form.notifyDate} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
+//             <TextInput type="date" value={form.notifyDate || ""} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
 //           </Field>
           
+//           {/* 100% Optional Logout Date */}
 //           <Field label="Log Out Date (Optional)" error={errors.logoutDate}>
 //             <TextInput 
 //               type="date" 
-//               value={form.logoutDate} 
+//               value={form.logoutDate || ""} 
 //               min={formatForDateInput(form.loginDate)}
 //               error={errors.logoutDate}
 //               onChange={(e) => set({ logoutDate: e.target.value })} 
 //             />
 //           </Field>
 
-//           {/* 🔒 Locked to after Logout Date */}
+//           {/* 🔒 Recall Date: Min locked only when logoutDate is entered */}
 //           <Field label="Recall Date (Optional)" error={errors.recallDate}>
 //             <TextInput 
 //               type="date" 
-//               value={form.recallDate} 
-//               min={minRecallDateAllowed}
+//               value={form.recallDate || ""} 
+//               min={minRecallDateAllowed || undefined}
 //               error={errors.recallDate}
 //               onChange={(e) => set({ recallDate: e.target.value })} 
 //             />
 //             {form.logoutDate && (
 //               <p className="mt-1 text-[11px] font-medium text-amber-600">
-//                 Must be on or after {formatDisplayDate(minRecallDateAllowed)} (Post-Logout)
+//                 Must be on or after {formatDisplayDate(minRecallDateAllowed)}
 //               </p>
 //             )}
 //           </Field>
@@ -1835,7 +1834,6 @@ const formatDisplayDate = (d) => {
   return `${day}/${m}/${y}`;
 };
 
-// ⏭️ Next Day Calculator (YYYY-MM-DD)
 const getNextDayISO = (dateStr) => {
   const clean = formatForDateInput(dateStr);
   if (!clean) return "";
@@ -1844,7 +1842,6 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Inclusive Total Days Formula
 const calculateDaysCount = (startStr, endStr) => {
   const s = formatForDateInput(startStr);
   if (!s) return 0;
@@ -1970,14 +1967,15 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
 }
 
 function KpiCards({ logs = [] }) {
+  const today = todayISO();
   const countActive = logs.filter((l) => {
     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date);
-    return !cleanOut;
+    return !cleanOut || cleanOut > today;
   }).length;
 
   const countClosed = logs.filter((l) => {
     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date);
-    return Boolean(cleanOut);
+    return Boolean(cleanOut && cleanOut <= today);
   }).length;
 
   const countInactive = logs.filter((l) => String(l?.status || "").toLowerCase() === "inactive").length;
@@ -2182,7 +2180,8 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   const careCenterName = log?.careCenterName || log?.care_center_name || careCenters.find(c => String(c?.id) === String(ccId))?.name || ccId || "—";
 
   const cleanLogout = formatForDateInput(log?.logoutDate || log?.logout_date);
-  const isCurrentlyActive = !cleanLogout;
+  const today = todayISO();
+  const isCurrentlyActive = !cleanLogout || cleanLogout > today;
   const statusLabel = isCurrentlyActive ? "Active" : "Closed";
 
   const statusColor = isCurrentlyActive
@@ -2483,8 +2482,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
   const activeReferrals = useMemo(() => filterActive(references), [references]);
   const activeCategories = useMemo(() => filterActive(categories).map(getOptionLabel).filter(Boolean), [categories]);
 
-  // 🔒 Dynamic Minimum Date for Recall Date:
-  // Strictly after Log Out Date if Log Out Date exists. Otherwise unrestricted.
   const minRecallDateAllowed = useMemo(() => {
     if (form.logoutDate && form.logoutDate.trim() !== "") {
       return getNextDayISO(form.logoutDate);
@@ -2541,12 +2538,10 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     const cleanLogOut = formatForDateInput(form.logoutDate);
     const cleanRecall = formatForDateInput(form.recallDate);
 
-    // Only validate if user actually entered a Log Out Date
     if (cleanLogIn && cleanLogOut && cleanLogOut < cleanLogIn) {
       e.logoutDate = `Log Out Date cannot be before Log In Date (${formatDisplayDate(cleanLogIn)}).`;
     }
 
-    // 🔒 Boss's Rule: Recall Date MUST be strictly after Log Out Date (if logout date is given)
     if (cleanLogOut && cleanRecall && cleanRecall <= cleanLogOut) {
       e.recallDate = `Recall Date must be after Log Out Date (at least ${formatDisplayDate(getNextDayISO(cleanLogOut))}).`;
     }
@@ -2569,14 +2564,16 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     }
 
     const cleanLogout = formatForDateInput(form.logoutDate);
-    const finalCalculatedStatus = cleanLogout ? "Closed" : "Active";
+    const today = todayISO();
+    // 🔒 Status is Closed ONLY if logoutDate is entered AND <= today
+    const finalCalculatedStatus = (cleanLogout && cleanLogout <= today) ? "Closed" : "Active";
 
     onSubmit({
       ...form, 
       id: form.id,
       recordDate: formatForDateInput(form.recordDate) || todayISO(),
       startDate: formatForDateInput(form.loginDate) || todayISO(),
-      logoutDate: cleanLogout || null, // 👈 Optional: null if empty
+      logoutDate: cleanLogout || null,
       notifyDate: formatForDateInput(form.notifyDate) || null,
       recallDate: formatForDateInput(form.recallDate) || null,
       equipmentId: form.deviceModel, 
@@ -2680,7 +2677,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
             <TextInput type="date" value={form.notifyDate || ""} error={errors.notifyDate} onChange={(e) => set({ notifyDate: e.target.value })} />
           </Field>
           
-          {/* 100% Optional Logout Date */}
           <Field label="Log Out Date (Optional)" error={errors.logoutDate}>
             <TextInput 
               type="date" 
@@ -2691,7 +2687,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
             />
           </Field>
 
-          {/* 🔒 Recall Date: Min locked only when logoutDate is entered */}
           <Field label="Recall Date (Optional)" error={errors.recallDate}>
             <TextInput 
               type="date" 
@@ -2990,6 +2985,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const filtered = useMemo(() => {
     const q = String(search || "").toLowerCase().trim();
     const sFilter = String(statusFilter || "Both").trim().toLowerCase();
+    const today = todayISO();
 
     return (scopedLogs || [])
       .filter((l) => {
@@ -3015,7 +3011,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
           inchargeMobile.includes(q);
           
         const cleanLogout = formatForDateInput(l.logoutDate || l.logout_date);
-        const computedStatus = cleanLogout ? "closed" : "active";
+        const isClosed = Boolean(cleanLogout && cleanLogout <= today);
+        const computedStatus = isClosed ? "closed" : "active";
         
         const isStatusMatch = (sFilter === "both" || sFilter === "all")
           ? true
@@ -3059,6 +3056,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       const cleanStart = formatForDateInput(data.startDate || data.loginDate) || todayISO();
       const cleanRecall = formatForDateInput(data.recallDate);
       const cleanNotify = formatForDateInput(data.notifyDate);
+      const today = todayISO();
 
       const payload = {
         careCenterId: finalCareCenterId,
@@ -3068,7 +3066,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         quantity: 1,
         startDate: cleanStart,
         logoutDate: cleanLogout || null,
-        status: cleanLogout ? "Closed" : "Active",
+        status: (cleanLogout && cleanLogout <= today) ? "Closed" : "Active",
         
         billingType: data.billingType || "Daily",
         rentalCharge: data.rentalCharge !== "" ? Number(data.rentalCharge) : 0,
@@ -3334,7 +3332,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               ) : (
                 filtered.map((log, i) => {
                   const actualLogoutDate = formatForDateInput(log?.logoutDate || log?.logout_date);
-                  const isClosed = Boolean(actualLogoutDate);
+                  const today = todayISO();
+                  // 🔒 Row status is closed ONLY if actualLogoutDate <= today
+                  const isClosed = Boolean(actualLogoutDate && actualLogoutDate <= today);
                   const dynamicDays = calculateDaysCount(log?.startDate || log?.start_date || log?.loginDate, actualLogoutDate);
                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
 

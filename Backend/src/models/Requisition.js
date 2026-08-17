@@ -1,5 +1,18 @@
 // const pool = require("../config/database");
 
+// // 🛠️ Auto-ensure database columns allow NULL for optional dates
+// (async () => {
+//   try {
+//     await pool.query("ALTER TABLE requisitions MODIFY COLUMN logout_date DATE NULL");
+//     await pool.query("ALTER TABLE requisitions MODIFY COLUMN recall_date DATE NULL");
+//     await pool.query("ALTER TABLE requisitions MODIFY COLUMN notify_date DATE NULL");
+//     await pool.query("ALTER TABLE requisitions MODIFY COLUMN record_date DATE NULL");
+//   } catch (e) {
+//     // Column alter fail hone par runtime crash na ho
+//   }
+// })();
+
+// // 📅 Required Date Parser (Defaults to Today if missing)
 // const safeDate = (val) => {
 //   if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined") {
 //     const now = new Date();
@@ -24,8 +37,9 @@
 //   }
 // };
 
+// // 📅 Optional Date Parser (Returns pure null if empty/missing)
 // const safeOptionalDate = (val) => {
-//   if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined") {
+//   if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined" || String(val).trim() === "0000-00-00") {
 //     return null;
 //   }
 
@@ -113,7 +127,8 @@
 //     let accValue = data.accessories || data.accessory || "";
 //     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-//     const finalStatus = (logoutDate && logoutDate !== "null") ? "Closed" : "Active";
+//     // 🔒 Logout Date agar NULL hai toh strictly Active rahega
+//     const finalStatus = (logoutDate !== null) ? "Closed" : "Active";
 
 //     const sql = `
 //       INSERT INTO requisitions 
@@ -172,7 +187,7 @@
 //     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
 //     let finalStatus = "Active";
-//     if (logoutDate && logoutDate !== "null") {
+//     if (logoutDate !== null) {
 //       finalStatus = "Closed";
 //     } else if (String(data.status || data.requisition_status || "").toLowerCase() === "inactive") {
 //       finalStatus = "Inactive";
@@ -235,22 +250,19 @@
 // }
 
 // module.exports = Requisition;
-
 const pool = require("../config/database");
 
-// 🛠️ Auto-ensure database columns allow NULL for optional dates
+// 🛠️ Auto-ensure database allows NULL dates
 (async () => {
   try {
     await pool.query("ALTER TABLE requisitions MODIFY COLUMN logout_date DATE NULL");
     await pool.query("ALTER TABLE requisitions MODIFY COLUMN recall_date DATE NULL");
     await pool.query("ALTER TABLE requisitions MODIFY COLUMN notify_date DATE NULL");
     await pool.query("ALTER TABLE requisitions MODIFY COLUMN record_date DATE NULL");
-  } catch (e) {
-    // Column alter fail hone par runtime crash na ho
-  }
+  } catch (e) {}
 })();
 
-// 📅 Required Date Parser (Defaults to Today if missing)
+// 📅 Required Date Parser
 const safeDate = (val) => {
   if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined") {
     const now = new Date();
@@ -355,6 +367,7 @@ class Requisition {
 
   static async create(data) {
     const reqId = data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
+    const today = new Date().toISOString().slice(0, 10);
     
     const startDate = safeDate(data.start_date || data.startDate || data.loginDate);
     const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); 
@@ -365,8 +378,8 @@ class Requisition {
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-    // 🔒 Logout Date agar NULL hai toh strictly Active rahega
-    const finalStatus = (logoutDate !== null) ? "Closed" : "Active";
+    // 🔒 Status Lock: Logout Date aaj ya purani ho tabhi Closed, warna Active
+    const finalStatus = (logoutDate && logoutDate <= today) ? "Closed" : "Active";
 
     const sql = `
       INSERT INTO requisitions 
@@ -415,6 +428,7 @@ class Requisition {
   }
 
   static async update(id, data) {
+    const today = new Date().toISOString().slice(0, 10);
     const startDate = safeDate(data.start_date || data.startDate || data.loginDate);
     const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); 
     const notifyDate = safeOptionalDate(data.notify_date || data.notifyDate);
@@ -424,10 +438,9 @@ class Requisition {
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-    let finalStatus = "Active";
-    if (logoutDate !== null) {
-      finalStatus = "Closed";
-    } else if (String(data.status || data.requisition_status || "").toLowerCase() === "inactive") {
+    // 🔒 Status Lock: Logout Date aaj ya purani ho tabhi Closed, warna Active
+    let finalStatus = (logoutDate && logoutDate <= today) ? "Closed" : "Active";
+    if (String(data.status || data.requisition_status || "").toLowerCase() === "inactive") {
       finalStatus = "Inactive";
     }
 
