@@ -84,7 +84,7 @@
 //     const reqId = data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
     
 //     const startDate = safeDate(data.start_date || data.startDate || data.loginDate);
-//     const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); // 👈 Optional
+//     const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); 
 //     const notifyDate = safeOptionalDate(data.notify_date || data.notifyDate);
 //     const recordDate = safeOptionalDate(data.record_date || data.recordDate) || safeDate(null);
 //     const recallDate = safeOptionalDate(data.recall_date || data.recallDate);
@@ -92,8 +92,8 @@
 //     let accValue = data.accessories || data.accessory || "";
 //     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-//     let finalStatus = data.status || data.requisition_status || (logoutDate ? "Closed" : "Active");
-//     if (String(finalStatus).toLowerCase() === "returned") finalStatus = "Closed";
+//     // 🔒 Strictly Active unless logout date exists
+//     const finalStatus = logoutDate ? "Closed" : "Active";
 
 //     const sql = `
 //       INSERT INTO requisitions 
@@ -103,8 +103,8 @@
 
 //     const values = [
 //       reqId,
-//       data.care_center_id || data.careCenterId || "CARE-NEW",
-//       data.equipment_id || data.equipmentId || data.deviceModel || "EQ-NEW",
+//       data.care_center_id || data.careCenterId || null,
+//       data.equipment_id || data.equipmentId || data.deviceModel || null,
 //       data.patient_name || data.patientName || "Unknown",
 //       data.quantity || 1,
 //       startDate,
@@ -123,9 +123,9 @@
 //       data.bed_number || data.bedNo || "",
 //       data.gst_number || data.gstNo || "",
 //       data.billing_type || data.billingType || "Daily",
-//       data.rental_charge !== undefined ? data.rental_charge : (data.rentalCharge || 0),
-//       data.deposit_advance !== undefined ? data.deposit_advance : (data.depositAdvance || 0),
-//       data.installation_charge !== undefined ? data.installation_charge : (data.installationCharge || 0),
+//       data.rental_charge !== undefined && data.rental_charge !== "" ? data.rental_charge : (data.rentalCharge || 0),
+//       data.deposit_advance !== undefined && data.deposit_advance !== "" ? data.deposit_advance : (data.depositAdvance || 0),
+//       data.installation_charge !== undefined && data.installation_charge !== "" ? data.installation_charge : (data.installationCharge || 0),
 //       data.age || "",
 //       data.attendant_name || data.attendantName || "",
 //       data.mobile_number || data.mobileNumber || "",
@@ -143,7 +143,7 @@
 
 //   static async update(id, data) {
 //     const startDate = safeDate(data.start_date || data.startDate || data.loginDate);
-//     const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); // 👈 Optional
+//     const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); 
 //     const notifyDate = safeOptionalDate(data.notify_date || data.notifyDate);
 //     const recordDate = safeOptionalDate(data.record_date || data.recordDate);
 //     const recallDate = safeOptionalDate(data.recall_date || data.recallDate);
@@ -151,8 +151,12 @@
 //     let accValue = data.accessories || data.accessory || "";
 //     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-//     let finalStatus = data.status || data.requisition_status || data.return_status || "Active";
-//     if (String(finalStatus).toLowerCase() === "returned") finalStatus = "Closed";
+//     let finalStatus = "Active";
+//     if (logoutDate) {
+//       finalStatus = "Closed";
+//     } else if (String(data.status || data.requisition_status || "").toLowerCase() === "inactive") {
+//       finalStatus = "Inactive";
+//     }
 
 //     const sql = `
 //       UPDATE requisitions 
@@ -167,8 +171,8 @@
 //     `;
     
 //     const values = [
-//       data.care_center_id || data.careCenterId || "CARE-NEW", 
-//       data.equipment_id || data.equipmentId || data.deviceModel || "EQ-NEW", 
+//       data.care_center_id || data.careCenterId || null, 
+//       data.equipment_id || data.equipmentId || data.deviceModel || null, 
 //       data.patient_name || data.patientName || "Unknown", 
 //       data.quantity || 1, 
 //       startDate, 
@@ -187,9 +191,9 @@
 //       data.bed_number || data.bedNo || "", 
 //       data.gst_number || data.gstNo || "",
 //       data.billing_type || data.billingType || "Daily",
-//       data.rental_charge !== undefined ? data.rental_charge : (data.rentalCharge || 0),
-//       data.deposit_advance !== undefined ? data.deposit_advance : (data.depositAdvance || 0),
-//       data.installation_charge !== undefined ? data.installation_charge : (data.installationCharge || 0),
+//       data.rental_charge !== undefined && data.rental_charge !== "" ? data.rental_charge : (data.rentalCharge || 0),
+//       data.deposit_advance !== undefined && data.deposit_advance !== "" ? data.deposit_advance : (data.depositAdvance || 0),
+//       data.installation_charge !== undefined && data.installation_charge !== "" ? data.installation_charge : (data.installationCharge || 0),
 //       data.age || "",
 //       data.attendant_name || data.attendantName || "",
 //       data.mobile_number || data.mobileNumber || "",
@@ -215,23 +219,44 @@
 const pool = require("../config/database");
 
 const safeDate = (val) => {
-  const today = new Date().toISOString().slice(0, 10);
-  if (!val || val === "" || String(val).trim().toLowerCase() === "null") return today;
+  if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined") {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  const str = String(val).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
   try {
     const d = new Date(val);
-    return isNaN(d.getTime()) ? today : d.toISOString().slice(0, 10);
+    if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   } catch (err) {
-    return today;
+    return new Date().toISOString().slice(0, 10);
   }
 };
 
 const safeOptionalDate = (val) => {
-  if (!val || val === "" || String(val).trim().toLowerCase() === "null" || val === "undefined") {
+  if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined") {
     return null;
   }
+
+  const str = String(val).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
   try {
     const d = new Date(val);
-    return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+    if (isNaN(d.getTime())) return null;
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   } catch (err) {
     return null;
   }
@@ -306,8 +331,7 @@ class Requisition {
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-    // 🔒 Strictly Active unless logout date exists
-    const finalStatus = logoutDate ? "Closed" : "Active";
+    const finalStatus = (logoutDate && logoutDate !== "null") ? "Closed" : "Active";
 
     const sql = `
       INSERT INTO requisitions 
@@ -319,8 +343,8 @@ class Requisition {
       reqId,
       data.care_center_id || data.careCenterId || null,
       data.equipment_id || data.equipmentId || data.deviceModel || null,
-      data.patient_name || data.patientName || "Unknown",
-      data.quantity || 1,
+      (data.patient_name || data.patientName || "Unknown").trim(),
+      Number(data.quantity) > 0 ? Number(data.quantity) : 1,
       startDate,
       logoutDate,
       finalStatus,
@@ -337,9 +361,9 @@ class Requisition {
       data.bed_number || data.bedNo || "",
       data.gst_number || data.gstNo || "",
       data.billing_type || data.billingType || "Daily",
-      data.rental_charge !== undefined && data.rental_charge !== "" ? data.rental_charge : (data.rentalCharge || 0),
-      data.deposit_advance !== undefined && data.deposit_advance !== "" ? data.deposit_advance : (data.depositAdvance || 0),
-      data.installation_charge !== undefined && data.installation_charge !== "" ? data.installation_charge : (data.installationCharge || 0),
+      Number(data.rental_charge ?? data.rentalCharge ?? 0),
+      Number(data.deposit_advance ?? data.depositAdvance ?? 0),
+      Number(data.installation_charge ?? data.installationCharge ?? 0),
       data.age || "",
       data.attendant_name || data.attendantName || "",
       data.mobile_number || data.mobileNumber || "",
@@ -366,7 +390,7 @@ class Requisition {
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
     let finalStatus = "Active";
-    if (logoutDate) {
+    if (logoutDate && logoutDate !== "null") {
       finalStatus = "Closed";
     } else if (String(data.status || data.requisition_status || "").toLowerCase() === "inactive") {
       finalStatus = "Inactive";
@@ -387,8 +411,8 @@ class Requisition {
     const values = [
       data.care_center_id || data.careCenterId || null, 
       data.equipment_id || data.equipmentId || data.deviceModel || null, 
-      data.patient_name || data.patientName || "Unknown", 
-      data.quantity || 1, 
+      (data.patient_name || data.patientName || "Unknown").trim(), 
+      Number(data.quantity) > 0 ? Number(data.quantity) : 1, 
       startDate, 
       logoutDate, 
       finalStatus, 
@@ -405,9 +429,9 @@ class Requisition {
       data.bed_number || data.bedNo || "", 
       data.gst_number || data.gstNo || "",
       data.billing_type || data.billingType || "Daily",
-      data.rental_charge !== undefined && data.rental_charge !== "" ? data.rental_charge : (data.rentalCharge || 0),
-      data.deposit_advance !== undefined && data.deposit_advance !== "" ? data.deposit_advance : (data.depositAdvance || 0),
-      data.installation_charge !== undefined && data.installation_charge !== "" ? data.installation_charge : (data.installationCharge || 0),
+      Number(data.rental_charge ?? data.rentalCharge ?? 0),
+      Number(data.deposit_advance ?? data.depositAdvance ?? 0),
+      Number(data.installation_charge ?? data.installationCharge ?? 0),
       data.age || "",
       data.attendant_name || data.attendantName || "",
       data.mobile_number || data.mobileNumber || "",
