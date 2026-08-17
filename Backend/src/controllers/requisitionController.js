@@ -311,7 +311,6 @@
 // };
 
 const pool = require("../config/database");
-const Notification = require("../models/Notification");
 
 const cleanDate = (val) => {
   if (!val || val === "" || val === "null" || val === "undefined" || val === "0000-00-00") return null;
@@ -336,7 +335,7 @@ const cleanFk = (val) => {
   return String(val).trim();
 };
 
-// 1. GET ALL
+// 1. GET ALL REQUISITIONS
 const getRequisitions = async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -397,10 +396,12 @@ const getRequisitions = async (req, res) => {
   }
 };
 
-// 2. CREATE
+// 2. CREATE REQUISITION (Direct Full Insert)
 const createRequisition = async (req, res) => {
+  const data = req.body;
+  console.log("👉 [CREATE REQUISITION PAYLOAD]:", data);
+
   try {
-    const data = req.body;
     const reqId = cleanStr(data.id) || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
     const today = new Date().toISOString().slice(0, 10);
     const startDate = cleanDate(data.start_date || data.startDate) || today;
@@ -410,6 +411,13 @@ const createRequisition = async (req, res) => {
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
+    const careCenterId = cleanFk(data.care_center_id || data.careCenterId);
+    const equipmentId = cleanFk(data.equipment_id || data.equipmentId || data.deviceModel);
+    const billingType = String(data.billing_type || data.billingType || "Daily").trim();
+    const rentalCharge = cleanNum(data.rental_charge, data.rentalCharge);
+    const depositAdvance = cleanNum(data.deposit_advance, data.depositAdvance);
+    const installationCharge = cleanNum(data.installation_charge, data.installationCharge);
+
     const sql = `
       INSERT INTO requisitions 
       (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, status, delivery_status, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, accessory, referral_doctor, bed_number, gst_number, billing_type, rental_charge, deposit_advance, installation_charge, age, attendant_name, mobile_number, alt_mobile_number, incharge_mobile, alt_mobile, care_address, record_date, recall_date) 
@@ -418,8 +426,8 @@ const createRequisition = async (req, res) => {
 
     const values = [
       reqId,
-      cleanFk(data.care_center_id || data.careCenterId),
-      cleanFk(data.equipment_id || data.equipmentId || data.deviceModel),
+      careCenterId,
+      equipmentId,
       cleanStr(data.patient_name || data.patientName, "Unknown"),
       Math.max(1, cleanNum(data.quantity) || 1),
       startDate,
@@ -437,10 +445,10 @@ const createRequisition = async (req, res) => {
       cleanStr(data.referral_doctor || data.referralDoctor || data.referral),
       cleanStr(data.bed_number || data.bedNo),
       cleanStr(data.gst_number || data.gstNo),
-      cleanStr(data.billing_type || data.billingType, "Daily"),
-      cleanNum(data.rental_charge, data.rentalCharge),
-      cleanNum(data.deposit_advance, data.depositAdvance),
-      cleanNum(data.installation_charge, data.installationCharge),
+      billingType,
+      rentalCharge,
+      depositAdvance,
+      installationCharge,
       cleanStr(data.age),
       cleanStr(data.attendant_name || data.attendantName),
       cleanStr(data.mobile_number || data.mobileNumber || data.mobile),
@@ -460,10 +468,11 @@ const createRequisition = async (req, res) => {
   }
 };
 
-// 3. UPDATE (Direct explicit SQL Update)
+// 3. UPDATE REQUISITION (Direct Full Update)
 const updateRequisition = async (req, res) => {
   const { id } = req.params;
   const data = req.body;
+  console.log(`👉 [UPDATE REQUISITION PAYLOAD ${id}]:`, data);
 
   try {
     const today = new Date().toISOString().slice(0, 10);
@@ -565,6 +574,7 @@ const updateRequisition = async (req, res) => {
   }
 };
 
+// 4. DELETE REQUISITION
 const deleteRequisition = async (req, res) => {
   const { id } = req.params;
   try {
@@ -575,15 +585,10 @@ const deleteRequisition = async (req, res) => {
   }
 };
 
+// 5. NOTIFICATIONS
 const getNotifications = async (req, res) => {
   try {
-    const careCenterId = req.query.careCenterId || req.user?.careCenterId || req.user?.id || null;
-    const role = req.query.role || req.user?.role || null;
-    let data = [];
-    if (Notification && typeof Notification.getAll === "function") {
-      data = await Notification.getAll(careCenterId, role);
-    }
-    return res.status(200).json(data);
+    return res.status(200).json([]);
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
