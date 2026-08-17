@@ -1864,15 +1864,15 @@ const getDynamicTotalDays = (loginStr, logoutStr) => {
     let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
     if (diffDays < 0) diffDays = 0;
 
-    // Agar logout ho chuka hai (past or today), second number 0 aayega
+    // Past logout date -> 9 / 0
     if (cleanOut <= todayClean) {
       return `${diffDays} / 0`;
     } else {
-      // Future logout date ke liye logout date ka day of month
+      // Future logout date -> 6 / 15
       return `${diffDays} / ${eD}`;
     }
   } else {
-    // Agar logout date nahi hai: calculate till today (inclusive) aur second number aaj ki date
+    // Active till today -> diff / todayDate
     let diffDays = Math.floor((todayUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
     if (diffDays < 0) diffDays = 0;
     const currentDay = tD;
@@ -3328,17 +3328,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
 
-          {tempCalculatedDays && (
-            <span className="flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-800 animate-in fade-in">
-              🧮 {tempCalculatedDays}
-              <X 
-                className="h-3.5 w-3.5 cursor-pointer hover:text-rose-600 transition" 
-                onClick={() => setTempCalculatedDays(null)} 
-                title="Clear temporary calculation"
-              />
-            </span>
-          )}
-
           <button 
             type="button"
             onClick={() => setIsCalcModalOpen(true)}
@@ -3481,13 +3470,14 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         {actualLogoutDate ? formatDisplayDate(actualLogoutDate) : "—"}
                       </td>
                       
+                      {/* 🧮 TOTAL DAYS COLUMN: Calculator Apply Changes se temporary update hoga */}
                       <td className="px-5 py-3.5">
                         <span className={`font-bold px-2.5 py-1 rounded-md text-xs border shadow-xs ${
                           isClosed 
                             ? "bg-slate-100 text-slate-700 border-slate-200" 
                             : "bg-teal-50 text-teal-800 border-teal-200"
                         }`}>
-                          {dynamicDaysFormatted}
+                          {tempCalculatedDays !== null ? tempCalculatedDays : dynamicDaysFormatted}
                         </span>
                       </td>
 
