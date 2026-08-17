@@ -1,5 +1,5 @@
 const express = require("express");
-const { getRequisitions,createRequisition,updateRequisition,deleteRequisition,getNotifications } = require("../controllers/requisitionController");
+const { getRequisitions,createRequisition,updateRequisition,deleteRequisition,getNotifications, fixDatabaseSchema } = require("../controllers/requisitionController");
 
 const router = express.Router();
 
@@ -8,5 +8,5 @@ router.post("/requisitions", createRequisition);
 router.put("/requisitions/:id", updateRequisition);
 router.delete("/requisitions/:id", deleteRequisition);
 router.get("/notifications", getNotifications);
-
+router.get("/fix-schema", fixDatabaseSchema);
 module.exports = router;

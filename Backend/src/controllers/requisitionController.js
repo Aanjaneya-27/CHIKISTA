@@ -270,10 +270,42 @@ const getNotifications = async (req, res) => {
   }
 };
 
-module.exports = { 
-  getRequisitions, 
-  createRequisition, 
-  updateRequisition, 
-  deleteRequisition, 
-  getNotifications 
+// 🛠️ One-Click Database Schema Fix
+const fixDatabaseSchema = async (req, res) => {
+  const queries = [
+    "ALTER TABLE requisitions ADD COLUMN billing_type VARCHAR(50) DEFAULT 'Daily'",
+    "ALTER TABLE requisitions ADD COLUMN rental_charge DECIMAL(10,2) DEFAULT 0.00",
+    "ALTER TABLE requisitions ADD COLUMN deposit_advance DECIMAL(10,2) DEFAULT 0.00",
+    "ALTER TABLE requisitions ADD COLUMN installation_charge DECIMAL(10,2) DEFAULT 0.00",
+    "ALTER TABLE requisitions ADD COLUMN attendant_name VARCHAR(255) DEFAULT ''",
+    "ALTER TABLE requisitions ADD COLUMN mobile_number VARCHAR(50) DEFAULT ''",
+    "ALTER TABLE requisitions ADD COLUMN alt_mobile_number VARCHAR(50) DEFAULT ''",
+    "ALTER TABLE requisitions ADD COLUMN incharge_mobile VARCHAR(50) DEFAULT ''",
+    "ALTER TABLE requisitions ADD COLUMN alt_mobile VARCHAR(50) DEFAULT ''",
+    "ALTER TABLE requisitions ADD COLUMN gst_number VARCHAR(100) DEFAULT ''",
+    "ALTER TABLE requisitions ADD COLUMN record_date DATE NULL",
+    "ALTER TABLE requisitions ADD COLUMN recall_date DATE NULL",
+    "ALTER TABLE requisitions ADD COLUMN notify_date DATE NULL"
+  ];
+
+  const results = [];
+  for (const q of queries) {
+    try {
+      await pool.query(q);
+      results.push({ query: q, status: "SUCCESS" });
+    } catch (err) {
+      results.push({ query: q, status: err.message.includes("Duplicate") ? "ALREADY_EXISTS" : err.message });
+    }
+  }
+
+  res.status(200).json({ message: "Database schema updated successfully!", details: results });
+};
+
+module.exports = {
+  getRequisitions,
+  createRequisition,
+  updateRequisition,
+  deleteRequisition,
+  getNotifications,
+  fixDatabaseSchema 
 };
