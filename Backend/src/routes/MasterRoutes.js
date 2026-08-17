@@ -48,7 +48,7 @@ const {
   getCategories, addCategory, deleteCategory, updateCategory,
   getReferences, addReference, deleteReference, updateReference,
   getDeliveryExecutives, addDeliveryExecutive, deleteDeliveryExecutive, updateDeliveryExecutive
-} = require("../controllers/masterController"); // Linux/Render case-sensitivity safe
+} = require("../controllers/MasterController");
 
 const router = express.Router();
 
