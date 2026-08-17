@@ -2116,7 +2116,8 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   const equipmentName = equipmentCatalog.find(e => String(e?.id) === String(eqId))?.name || log?.equipmentName || log?.equipment_name || eqId || "—";
   
   const ccId = log?.careCenterId || log?.care_center_id;
-  const careCenterName = log?.careCenterName || log?.care_center_name || careCenters.find(c => String(c?.id) === String(ccId))?.name || ccId || "—";
+  const careCenterObj = careCenters.find(c => String(c?.id) === String(ccId));
+  const careCenterName = log?.careCenterName || log?.care_center_name || careCenterObj?.name || ccId || "—";
 
   const cleanLogout = formatForDateInput(log?.logoutDate || log?.logout_date);
   const today = todayISO();
@@ -2128,9 +2129,9 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
     : "bg-emerald-50 text-emerald-700 border-emerald-200";
 
   const billingTypeVal = log?.billingType || log?.billing_type || log?.billing || "Daily";
-  const rentalChargeVal = log?.rentalCharge ?? log?.rental_charge ?? log?.rental ?? log?.rent ?? 0;
-  const depositAdvanceVal = log?.depositAdvance ?? log?.deposit_advance ?? log?.deposit ?? log?.advance ?? 0;
-  const installationChargeVal = log?.installationCharge ?? log?.installation_charge ?? log?.installation ?? 0;
+  const rentalChargeVal = Number(log?.rentalCharge ?? log?.rental_charge ?? log?.rental ?? log?.rent ?? 0).toFixed(2);
+  const depositAdvanceVal = Number(log?.depositAdvance ?? log?.deposit_advance ?? log?.deposit ?? log?.advance ?? 0).toFixed(2);
+  const installationChargeVal = Number(log?.installationCharge ?? log?.installation_charge ?? log?.installation ?? 0).toFixed(2);
 
   const totalDaysFormatted = getDynamicTotalDays(log?.startDate || log?.start_date || log?.loginDate, cleanLogout);
 
@@ -2258,7 +2259,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             <div><p className="font-bold text-slate-800">{log?.patientName || log?.patient_name || "—"}</p></div>
 
             <div><p className="text-xs font-medium text-slate-400">Mobile:</p></div>
-            <div><p className="font-bold text-slate-800">{log?.mobileNumber || log?.mobile_number || "—"}</p></div>
+            <div><p className="font-bold text-slate-800">{log?.mobileNumber || log?.mobile_number || log?.mobile || "—"}</p></div>
 
             <div><p className="text-xs font-medium text-slate-400">Attendant:</p></div>
             <div><p className="font-bold text-slate-800">{log?.attendantName || log?.attendant_name || "—"}</p></div>
@@ -2282,7 +2283,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             <div><p className="font-bold text-slate-800">{careCenterName}</p></div>
 
             <div><p className="text-xs font-medium text-slate-400">Incharge Mobile:</p></div>
-            <div><p className="font-bold text-slate-800">{log?.inchargeMobile || log?.incharge_mobile || log?.phone || "—"}</p></div>
+            <div><p className="font-bold text-slate-800">{log?.inchargeMobile || log?.incharge_mobile || log?.phone || careCenterObj?.phone || careCenterObj?.incharge_mobile || "—"}</p></div>
 
             <div><p className="text-xs font-medium text-slate-400">Bed No:</p></div>
             <div><p className="font-bold text-slate-800">{log?.bedNumber || log?.bed_number || log?.bedNo || "—"}</p></div>
@@ -2290,7 +2291,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             <div className="col-span-2 pt-2">
               <p className="text-xs font-medium text-slate-400 mb-1.5">Care Address:</p>
               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
-                {log?.careAddress || log?.care_address || log?.address || "—"}
+                {log?.careAddress || log?.care_address || log?.address || careCenterObj?.address || "—"}
               </div>
             </div>
           </div>
@@ -2346,6 +2347,10 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       const cc = careCenters.find((c) => c?.id === ccId);
       const parsedLogoutDate = formatForDateInput(initial.logoutDate || initial.logout_date);
 
+      const rCharge = initial.rentalCharge !== undefined && initial.rentalCharge !== null ? initial.rentalCharge : (initial.rental_charge !== undefined ? initial.rental_charge : "");
+      const dAdvance = initial.depositAdvance !== undefined && initial.depositAdvance !== null ? initial.depositAdvance : (initial.deposit_advance !== undefined ? initial.deposit_advance : "");
+      const iCharge = initial.installationCharge !== undefined && initial.installationCharge !== null ? initial.installationCharge : (initial.installation_charge !== undefined ? initial.installation_charge : "");
+
       return {
         id: initial.id || null,
         dealType: initial.dealType || initial.deal_type || "B2B",
@@ -2359,9 +2364,9 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         logoutDate: parsedLogoutDate || "",
         recallDate: formatForDateInput(initial.recallDate || initial.recall_date) || "",
         billingType: initial.billingType || initial.billing_type || "Daily",
-        rentalCharge: initial.rentalCharge ?? initial.rental_charge ?? "",
-        depositAdvance: initial.depositAdvance ?? initial.deposit_advance ?? "",
-        installationCharge: initial.installationCharge ?? initial.installation_charge ?? "",
+        rentalCharge: rCharge,
+        depositAdvance: dAdvance,
+        installationCharge: iCharge,
         careCenterId: ccId || matchedUserCenter?.id || "",
         inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || cc?.phone || "",
         altMobile: initial.altMobile || initial.alt_mobile || "",
@@ -2371,7 +2376,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         patientName: initial.patientName || initial.patient_name || "",
         age: initial.age || "",
         attendantName: initial.attendantName || initial.attendant_name || "",
-        mobileNumber: initial.mobileNumber || initial.mobile_number || "",
+        mobileNumber: initial.mobileNumber || initial.mobile_number || initial.mobile || "",
         altMobileNumber: initial.altMobileNumber || initial.alt_mobile_number || "",
         deliveryAddress: initial.deliveryAddress || initial.delivery_address || "",
         notes: initial.notes || ""
@@ -2502,6 +2507,10 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     const today = todayISO();
     const finalCalculatedStatus = (cleanLogout && cleanLogout <= today) ? "Closed" : "Active";
 
+    const rCharge = form.rentalCharge !== "" && form.rentalCharge !== undefined && form.rentalCharge !== null ? parseFloat(form.rentalCharge) : 0;
+    const dAdvance = form.depositAdvance !== "" && form.depositAdvance !== undefined && form.depositAdvance !== null ? parseFloat(form.depositAdvance) : 0;
+    const iCharge = form.installationCharge !== "" && form.installationCharge !== undefined && form.installationCharge !== null ? parseFloat(form.installationCharge) : 0;
+
     onSubmit({
       ...form, 
       id: form.id,
@@ -2516,6 +2525,10 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       careCenterName, 
       quantity: 1, 
       paymentType: form.mode, 
+      rentalCharge: isNaN(rCharge) ? 0 : rCharge,
+      depositAdvance: isNaN(dAdvance) ? 0 : dAdvance,
+      installationCharge: isNaN(iCharge) ? 0 : iCharge,
+      billingType: form.billingType || "Daily",
       deliveryAddress: form.deliveryAddress, 
       status: finalCalculatedStatus, 
       deliveryStatus: "Pending Dispatch",
@@ -2972,121 +2985,108 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  // const handleFormSubmit = async (data) => {
-  //   try {
-  //     const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
-  //     const chosenMode = data.mode || data.paymentType || "Postpaid";
-      
-  //     const finalCareCenterId = isCareCenterUser 
-  //       ? (matchedUserCenter?.id || loggedUser?.careCenterId || loggedUser?.id || "CC-ME")
-  //       : (data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id));
-
-  //     const finalCareCenterName = isCareCenterUser
-  //       ? (matchedUserCenter?.name || loggedUser?.careCenterName || loggedUser?.name || "")
-  //       : (data.careCenterName || "");
-
-  //     const cleanLogout = formatForDateInput(data.logoutDate);
-  //     const cleanRecord = formatForDateInput(data.recordDate) || todayISO();
-  //     const cleanStart = formatForDateInput(data.startDate || data.loginDate) || todayISO();
-  //     const cleanRecall = formatForDateInput(data.recallDate);
-  //     const cleanNotify = formatForDateInput(data.notifyDate);
-  //     const today = todayISO();
-
-  //     const rCharge = data.rentalCharge !== "" && data.rentalCharge !== undefined ? Number(data.rentalCharge) : 0;
-  //     const dAdvance = data.depositAdvance !== "" && data.depositAdvance !== undefined ? Number(data.depositAdvance) : 0;
-  //     const iCharge = data.installationCharge !== "" && data.installationCharge !== undefined ? Number(data.installationCharge) : 0;
-  //     const bType = data.billingType || "Daily";
-
-  //     const payload = {
-  //       id: data.id,
-  //       careCenterId: finalCareCenterId,
-  //       care_center_id: finalCareCenterId,
-  //       careCenterName: finalCareCenterName,
-  //       equipmentId: data.equipmentId || data.deviceModel,
-  //       equipment_id: data.equipmentId || data.deviceModel,
-  //       patientName: data.patientName,
-  //       patient_name: data.patientName,
-  //       quantity: 1,
-  //       startDate: cleanStart,
-  //       start_date: cleanStart,
-  //       logoutDate: cleanLogout || null,
-  //       logout_date: cleanLogout || null,
-  //       status: (cleanLogout && cleanLogout <= today) ? "Closed" : "Active",
-        
-  //       billingType: bType,
-  //       billing_type: bType,
-  //       rentalCharge: rCharge,
-  //       rental_charge: rCharge,
-  //       depositAdvance: dAdvance,
-  //       deposit_advance: dAdvance,
-  //       installationCharge: iCharge,
-  //       installation_charge: iCharge,
-        
-  //       age: data.age || "",
-  //       attendantName: data.attendantName || "",
-  //       attendant_name: data.attendantName || "",
-  //       mobileNumber: data.mobileNumber || "",
-  //       mobile_number: data.mobileNumber || "",
-  //       altMobileNumber: data.altMobileNumber || "",
-  //       alt_mobile_number: data.altMobileNumber || "",
-  //       deliveryAddress: data.deliveryAddress || "",
-  //       delivery_address: data.deliveryAddress || "",
-
-  //       inchargeMobile: data.inchargeMobile || "",
-  //       incharge_mobile: data.inchargeMobile || "",
-  //       altMobile: data.altMobile || "",
-  //       alt_mobile: data.altMobile || "",
-  //       careAddress: data.careAddress || "",
-  //       care_address: data.careAddress || "",
-  //       bedNo: data.bedNo || "",
-  //       bed_number: data.bedNo || "",
-  //       referral: data.referral || "",
-  //       referral_doctor: data.referral || "",
-        
-  //       dealType: data.dealType || "B2B",
-  //       deal_type: data.dealType || "B2B",
-  //       unit: data.unit || "ODCOM",
-  //       mode: chosenMode,
-  //       paymentType: chosenMode,
-  //       recordDate: cleanRecord,
-  //       record_date: cleanRecord,
-  //       notifyDate: cleanNotify,
-  //       notify_date: cleanNotify,
-  //       recallDate: cleanRecall,
-  //       recall_date: cleanRecall,
-  //       notes: data.notes || "",
-  //       accessory: accStr
-  //     };
-
-  //     if (data.id) {
-  //       await API.put(`/rental/requisitions/${data.id}`, payload);
-  //       toast.success("Requisition updated successfully!");
-  //     } else {
-  //       await API.post("/rental/requisitions", payload);
-  //       toast.success("Requisition created & deployed!");
-  //     }
-
-  //     await fetchLogs();
-  //     setPageForm(null);
-  //   } catch (err) {
-  //     toast.error("Error: " + (err.response?.data?.message || err.message)); 
-  //   }
-  // };
-
   const handleFormSubmit = async (data) => {
     try {
-      const cleanLogout = formatForDateInput(data.logoutDate);
-      const cleanStart = formatForDateInput(data.startDate || data.loginDate) || todayISO();
+      let accStr = data.accessory || data.accessories || "";
+      if (Array.isArray(accStr)) accStr = accStr.join(", ");
+
+      const chosenMode = data.mode || data.paymentType || data.payment_type || "Postpaid";
       
+      const rawCenterId = data.careCenterId || data.care_center_id || data.centerId || "";
+      const finalCareCenterId = isCareCenterUser 
+        ? (matchedUserCenter?.id || loggedUser?.careCenterId || loggedUser?.id || null)
+        : (rawCenterId === "other" || rawCenterId === "NEW" ? null : rawCenterId || null);
+
+      const finalCareCenterName = isCareCenterUser
+        ? (matchedUserCenter?.name || loggedUser?.careCenterName || loggedUser?.name || "")
+        : (data.careCenterName || data.care_center_name || "");
+
+      const cleanLogout = formatForDateInput(data.logoutDate || data.logout_date);
+      const cleanRecord = formatForDateInput(data.recordDate || data.record_date) || todayISO();
+      const cleanStart = formatForDateInput(data.startDate || data.start_date || data.loginDate) || todayISO();
+      const cleanRecall = formatForDateInput(data.recallDate || data.recall_date);
+      const cleanNotify = formatForDateInput(data.notifyDate || data.notify_date);
+      const today = todayISO();
+
+      const parseVal = (v1, v2) => {
+        const val = (v1 !== undefined && v1 !== null && v1 !== "") ? v1 : v2;
+        if (val === undefined || val === null || val === "") return 0;
+        const n = parseFloat(val);
+        return isNaN(n) ? 0 : n;
+      };
+
+      const rCharge = parseVal(data.rentalCharge, data.rental_charge);
+      const dAdvance = parseVal(data.depositAdvance, data.deposit_advance);
+      const iCharge = parseVal(data.installationCharge, data.installation_charge);
+      const bType = data.billingType || data.billing_type || "Daily";
+
       const payload = {
         id: data.id,
-        patient_name: data.patientName || data.patient_name,
+        care_center_id: finalCareCenterId,
+        careCenterId: finalCareCenterId,
+        care_center_name: finalCareCenterName,
+        careCenterName: finalCareCenterName,
+
+        equipment_id: data.equipmentId || data.equipment_id || data.deviceModel || null,
+        equipmentId: data.equipmentId || data.equipment_id || data.deviceModel || null,
+        
+        patient_name: String(data.patientName || data.patient_name || "").trim(),
+        patientName: String(data.patientName || data.patient_name || "").trim(),
+        quantity: 1,
+        
         start_date: cleanStart,
+        startDate: cleanStart,
         logout_date: cleanLogout || null,
-        billing_type: data.billingType || data.billing_type || "Daily",
-        rental_charge: Number(data.rentalCharge ?? data.rental_charge ?? 0),
-        deposit_advance: Number(data.depositAdvance ?? data.deposit_advance ?? 0),
-        installation_charge: Number(data.installationCharge ?? data.installation_charge ?? 0)
+        logoutDate: cleanLogout || null,
+        status: (cleanLogout && cleanLogout <= today) ? "Closed" : "Active",
+        
+        billing_type: bType,
+        billingType: bType,
+        rental_charge: rCharge,
+        rentalCharge: rCharge,
+        deposit_advance: dAdvance,
+        depositAdvance: dAdvance,
+        installation_charge: iCharge,
+        installationCharge: iCharge,
+        
+        age: String(data.age || "").trim(),
+        attendant_name: String(data.attendantName || data.attendant_name || "").trim(),
+        attendantName: String(data.attendantName || data.attendant_name || "").trim(),
+        mobile_number: String(data.mobileNumber || data.mobile_number || data.mobile || "").trim(),
+        mobileNumber: String(data.mobileNumber || data.mobile_number || data.mobile || "").trim(),
+        alt_mobile_number: String(data.altMobileNumber || data.alt_mobile_number || "").trim(),
+        altMobileNumber: String(data.altMobileNumber || data.alt_mobile_number || "").trim(),
+        delivery_address: String(data.deliveryAddress || data.delivery_address || "").trim(),
+        deliveryAddress: String(data.deliveryAddress || data.delivery_address || "").trim(),
+
+        incharge_mobile: String(data.inchargeMobile || data.incharge_mobile || data.phone || "").trim(),
+        inchargeMobile: String(data.inchargeMobile || data.incharge_mobile || data.phone || "").trim(),
+        alt_mobile: String(data.altMobile || data.alt_mobile || "").trim(),
+        altMobile: String(data.altMobile || data.alt_mobile || "").trim(),
+        care_address: String(data.careAddress || data.care_address || "").trim(),
+        careAddress: String(data.careAddress || data.care_address || "").trim(),
+        bed_number: String(data.bedNo || data.bedNumber || data.bed_number || "").trim(),
+        bedNo: String(data.bedNo || data.bedNumber || data.bed_number || "").trim(),
+        referral_doctor: String(data.referral || data.referralDoctor || data.referral_doctor || "").trim(),
+        referral: String(data.referral || data.referralDoctor || data.referral_doctor || "").trim(),
+        gst_number: String(data.gstNo || data.gstNumber || data.gst_number || "").trim(),
+        gstNo: String(data.gstNo || data.gstNumber || data.gst_number || "").trim(),
+        
+        deal_type: data.dealType || data.deal_type || "B2B",
+        dealType: data.dealType || data.deal_type || "B2B",
+        unit: data.unit || "ODCOM",
+        mode: chosenMode,
+        payment_type: chosenMode,
+        paymentType: chosenMode,
+        record_date: cleanRecord,
+        recordDate: cleanRecord,
+        notify_date: cleanNotify,
+        notifyDate: cleanNotify,
+        recall_date: cleanRecall,
+        recallDate: cleanRecall,
+        notes: data.notes || "",
+        accessory: accStr,
+        accessories: accStr
       };
 
       if (data.id) {
@@ -3103,6 +3103,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       toast.error("Error: " + (err.response?.data?.message || err.message)); 
     }
   };
+  
   const handleFastClose = async (log) => {
     try {
       const today = todayISO();
