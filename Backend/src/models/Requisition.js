@@ -1,23 +1,44 @@
 // const pool = require("../config/database");
 
 // const safeDate = (val) => {
-//   const today = new Date().toISOString().slice(0, 10);
-//   if (!val || val === "" || String(val).trim().toLowerCase() === "null") return today;
+//   if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined") {
+//     const now = new Date();
+//     const y = now.getFullYear();
+//     const m = String(now.getMonth() + 1).padStart(2, "0");
+//     const d = String(now.getDate()).padStart(2, "0");
+//     return `${y}-${m}-${d}`;
+//   }
+
+//   const str = String(val).trim();
+//   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
 //   try {
 //     const d = new Date(val);
-//     return isNaN(d.getTime()) ? today : d.toISOString().slice(0, 10);
+//     if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
+//     const year = d.getFullYear();
+//     const month = String(d.getMonth() + 1).padStart(2, "0");
+//     const day = String(d.getDate()).padStart(2, "0");
+//     return `${year}-${month}-${day}`;
 //   } catch (err) {
-//     return today;
+//     return new Date().toISOString().slice(0, 10);
 //   }
 // };
 
 // const safeOptionalDate = (val) => {
-//   if (!val || val === "" || String(val).trim().toLowerCase() === "null" || val === "undefined") {
+//   if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined") {
 //     return null;
 //   }
+
+//   const str = String(val).trim();
+//   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
 //   try {
 //     const d = new Date(val);
-//     return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+//     if (isNaN(d.getTime())) return null;
+//     const year = d.getFullYear();
+//     const month = String(d.getMonth() + 1).padStart(2, "0");
+//     const day = String(d.getDate()).padStart(2, "0");
+//     return `${year}-${month}-${day}`;
 //   } catch (err) {
 //     return null;
 //   }
@@ -92,8 +113,7 @@
 //     let accValue = data.accessories || data.accessory || "";
 //     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-//     // 🔒 Strictly Active unless logout date exists
-//     const finalStatus = logoutDate ? "Closed" : "Active";
+//     const finalStatus = (logoutDate && logoutDate !== "null") ? "Closed" : "Active";
 
 //     const sql = `
 //       INSERT INTO requisitions 
@@ -105,8 +125,8 @@
 //       reqId,
 //       data.care_center_id || data.careCenterId || null,
 //       data.equipment_id || data.equipmentId || data.deviceModel || null,
-//       data.patient_name || data.patientName || "Unknown",
-//       data.quantity || 1,
+//       (data.patient_name || data.patientName || "Unknown").trim(),
+//       Number(data.quantity) > 0 ? Number(data.quantity) : 1,
 //       startDate,
 //       logoutDate,
 //       finalStatus,
@@ -123,9 +143,9 @@
 //       data.bed_number || data.bedNo || "",
 //       data.gst_number || data.gstNo || "",
 //       data.billing_type || data.billingType || "Daily",
-//       data.rental_charge !== undefined && data.rental_charge !== "" ? data.rental_charge : (data.rentalCharge || 0),
-//       data.deposit_advance !== undefined && data.deposit_advance !== "" ? data.deposit_advance : (data.depositAdvance || 0),
-//       data.installation_charge !== undefined && data.installation_charge !== "" ? data.installation_charge : (data.installationCharge || 0),
+//       Number(data.rental_charge ?? data.rentalCharge ?? 0),
+//       Number(data.deposit_advance ?? data.depositAdvance ?? 0),
+//       Number(data.installation_charge ?? data.installationCharge ?? 0),
 //       data.age || "",
 //       data.attendant_name || data.attendantName || "",
 //       data.mobile_number || data.mobileNumber || "",
@@ -152,7 +172,7 @@
 //     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
 //     let finalStatus = "Active";
-//     if (logoutDate) {
+//     if (logoutDate && logoutDate !== "null") {
 //       finalStatus = "Closed";
 //     } else if (String(data.status || data.requisition_status || "").toLowerCase() === "inactive") {
 //       finalStatus = "Inactive";
@@ -173,8 +193,8 @@
 //     const values = [
 //       data.care_center_id || data.careCenterId || null, 
 //       data.equipment_id || data.equipmentId || data.deviceModel || null, 
-//       data.patient_name || data.patientName || "Unknown", 
-//       data.quantity || 1, 
+//       (data.patient_name || data.patientName || "Unknown").trim(), 
+//       Number(data.quantity) > 0 ? Number(data.quantity) : 1, 
 //       startDate, 
 //       logoutDate, 
 //       finalStatus, 
@@ -191,9 +211,9 @@
 //       data.bed_number || data.bedNo || "", 
 //       data.gst_number || data.gstNo || "",
 //       data.billing_type || data.billingType || "Daily",
-//       data.rental_charge !== undefined && data.rental_charge !== "" ? data.rental_charge : (data.rentalCharge || 0),
-//       data.deposit_advance !== undefined && data.deposit_advance !== "" ? data.deposit_advance : (data.depositAdvance || 0),
-//       data.installation_charge !== undefined && data.installation_charge !== "" ? data.installation_charge : (data.installationCharge || 0),
+//       Number(data.rental_charge ?? data.rentalCharge ?? 0),
+//       Number(data.deposit_advance ?? data.depositAdvance ?? 0),
+//       Number(data.installation_charge ?? data.installationCharge ?? 0),
 //       data.age || "",
 //       data.attendant_name || data.attendantName || "",
 //       data.mobile_number || data.mobileNumber || "",
@@ -218,6 +238,19 @@
 
 const pool = require("../config/database");
 
+// 🛠️ Auto-ensure database columns allow NULL for optional dates
+(async () => {
+  try {
+    await pool.query("ALTER TABLE requisitions MODIFY COLUMN logout_date DATE NULL");
+    await pool.query("ALTER TABLE requisitions MODIFY COLUMN recall_date DATE NULL");
+    await pool.query("ALTER TABLE requisitions MODIFY COLUMN notify_date DATE NULL");
+    await pool.query("ALTER TABLE requisitions MODIFY COLUMN record_date DATE NULL");
+  } catch (e) {
+    // Column alter fail hone par runtime crash na ho
+  }
+})();
+
+// 📅 Required Date Parser (Defaults to Today if missing)
 const safeDate = (val) => {
   if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined") {
     const now = new Date();
@@ -242,8 +275,9 @@ const safeDate = (val) => {
   }
 };
 
+// 📅 Optional Date Parser (Returns pure null if empty/missing)
 const safeOptionalDate = (val) => {
-  if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined") {
+  if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined" || String(val).trim() === "0000-00-00") {
     return null;
   }
 
@@ -331,7 +365,8 @@ class Requisition {
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-    const finalStatus = (logoutDate && logoutDate !== "null") ? "Closed" : "Active";
+    // 🔒 Logout Date agar NULL hai toh strictly Active rahega
+    const finalStatus = (logoutDate !== null) ? "Closed" : "Active";
 
     const sql = `
       INSERT INTO requisitions 
@@ -390,7 +425,7 @@ class Requisition {
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
     let finalStatus = "Active";
-    if (logoutDate && logoutDate !== "null") {
+    if (logoutDate !== null) {
       finalStatus = "Closed";
     } else if (String(data.status || data.requisition_status || "").toLowerCase() === "inactive") {
       finalStatus = "Inactive";
