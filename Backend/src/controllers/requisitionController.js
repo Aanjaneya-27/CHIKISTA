@@ -185,7 +185,6 @@
 const Requisition = require("../models/Requisition");
 const Notification = require("../models/Notification");
 
-// Clean YYYY-MM-DD Date Formatter (Prevents 1-day shift timezone bug)
 const cleanDate = (dateVal) => {
   if (!dateVal || dateVal === "null" || dateVal === "undefined" || String(dateVal).trim() === "") {
     return null;
@@ -204,7 +203,6 @@ const cleanDate = (dateVal) => {
   }
 };
 
-// Auto-align Status, Dates & Commercials
 const sanitizeRequisitionData = (data) => {
   const startDate = cleanDate(data.start_date || data.startDate) || new Date().toISOString().split("T")[0];
   const logoutDate = cleanDate(data.logout_date || data.logoutDate);
@@ -245,18 +243,16 @@ const sanitizeRequisitionData = (data) => {
   };
 };
 
-// 1. GET ALL REQUISITIONS
 const getRequisitions = async (req, res) => {
   try {
     const rows = await Requisition.getAll();
-    res.status(200).json(rows);
+    return res.status(200).json(rows);
   } catch (error) { 
     console.error("Fetch Requisitions Error:", error);
-    res.status(500).json({ message: "Server error while fetching requisitions", error: error.message }); 
+    return res.status(500).json({ message: "Server error while fetching requisitions", error: error.message }); 
   }
 };
 
-// 2. CREATE REQUISITION
 const createRequisition = async (req, res) => {
   try {
     const sanitizedData = sanitizeRequisitionData(req.body);
@@ -280,14 +276,13 @@ const createRequisition = async (req, res) => {
       console.warn("Notification insert warning:", notifErr.message);
     }
 
-    res.status(201).json({ message: "Requisition created successfully!", id: reqId, status: sanitizedData.status });
+    return res.status(201).json({ message: "Requisition created successfully!", id: reqId, status: sanitizedData.status });
   } catch (error) {
     console.error("Create Requisition Error:", error);
-    res.status(400).json({ message: error.sqlMessage || error.message || "Failed to create requisition" });
+    return res.status(500).json({ message: error.sqlMessage || error.message || "Failed to create requisition" });
   }
 };
 
-// 3. UPDATE REQUISITION
 const updateRequisition = async (req, res) => {
   const { id } = req.params;
   try {
@@ -311,14 +306,13 @@ const updateRequisition = async (req, res) => {
       console.warn("Notification update warning:", notifErr.message);
     }
 
-    res.status(200).json({ message: "Requisition updated successfully!", status });
+    return res.status(200).json({ message: "Requisition updated successfully!", status });
   } catch (error) {
     console.error("Update Requisition Error:", error);
-    res.status(400).json({ message: error.sqlMessage || error.message || "Failed to update requisition" });
+    return res.status(500).json({ message: error.sqlMessage || error.message || "Failed to update requisition" });
   }
 };
 
-// 4. DELETE REQUISITION
 const deleteRequisition = async (req, res) => {
   const { id } = req.params;
   try {
@@ -337,14 +331,13 @@ const deleteRequisition = async (req, res) => {
       console.warn("Notification delete warning:", notifErr.message);
     }
 
-    res.status(200).json({ message: "Requisition deleted successfully!" });
+    return res.status(200).json({ message: "Requisition deleted successfully!" });
   } catch (error) {
     console.error("Delete Requisition Error:", error);
-    res.status(500).json({ message: "Server error while deleting requisition", error: error.message });
+    return res.status(500).json({ message: "Server error while deleting requisition", error: error.message });
   }
 };
 
-// 5. GET NOTIFICATIONS
 const getNotifications = async (req, res) => {
   try {
     const careCenterId = req.query.careCenterId || req.user?.careCenterId || req.user?.id || null;
@@ -354,10 +347,10 @@ const getNotifications = async (req, res) => {
     if (Notification && typeof Notification.getAll === "function") {
       data = await Notification.getAll(careCenterId, role);
     }
-    res.status(200).json(data);
+    return res.status(200).json(data);
   } catch (error) {
     console.error("Get Notifications Error:", error);
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
