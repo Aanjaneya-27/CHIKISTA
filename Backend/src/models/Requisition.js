@@ -1,16 +1,18 @@
 // const pool = require("../config/database");
 
-// // 🛠️ Auto-ensure database allows NULL dates
 // (async () => {
 //   try {
+//     await pool.query("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS billing_type VARCHAR(50) DEFAULT 'Daily'");
+//     await pool.query("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS rental_charge DECIMAL(10,2) DEFAULT 0.00");
+//     await pool.query("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS deposit_advance DECIMAL(10,2) DEFAULT 0.00");
+//     await pool.query("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS installation_charge DECIMAL(10,2) DEFAULT 0.00");
 //     await pool.query("ALTER TABLE requisitions MODIFY COLUMN logout_date DATE NULL");
 //     await pool.query("ALTER TABLE requisitions MODIFY COLUMN recall_date DATE NULL");
-//     await pool.query("ALTER TABLE requisitions MODIFY COLUMN notify_date DATE NULL");
-//     await pool.query("ALTER TABLE requisitions MODIFY COLUMN record_date DATE NULL");
-//   } catch (e) {}
+//   } catch (e) {
+//     // Ignore alter errors if already present
+//   }
 // })();
 
-// // 📅 Required Date Parser
 // const safeDate = (val) => {
 //   if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined") {
 //     const now = new Date();
@@ -19,10 +21,8 @@
 //     const d = String(now.getDate()).padStart(2, "0");
 //     return `${y}-${m}-${d}`;
 //   }
-
 //   const str = String(val).trim();
 //   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-
 //   try {
 //     const d = new Date(val);
 //     if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
@@ -35,15 +35,12 @@
 //   }
 // };
 
-// // 📅 Optional Date Parser (Returns pure null if empty/missing)
 // const safeOptionalDate = (val) => {
 //   if (!val || val === "" || String(val).trim().toLowerCase() === "null" || String(val).trim().toLowerCase() === "undefined" || String(val).trim() === "0000-00-00") {
 //     return null;
 //   }
-
 //   const str = String(val).trim();
 //   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-
 //   try {
 //     const d = new Date(val);
 //     if (isNaN(d.getTime())) return null;
@@ -56,6 +53,13 @@
 //   }
 // };
 
+// // Safe Number parser (fixes 0 bug)
+// const getNum = (v1, v2) => {
+//   if (v1 !== undefined && v1 !== null && v1 !== "") return Number(v1);
+//   if (v2 !== undefined && v2 !== null && v2 !== "") return Number(v2);
+//   return 0;
+// };
+
 // class Requisition {
 //   static async getAll() {
 //     const [rows] = await pool.query(`
@@ -65,10 +69,10 @@
 //              r.bed_number AS bedNumber, 
 //              r.referral_doctor AS referralDoctor, 
 //              r.gst_number AS gstNumber,
-//              r.billing_type AS billingType,
-//              r.rental_charge AS rentalCharge,
-//              r.deposit_advance AS depositAdvance,
-//              r.installation_charge AS installationCharge,
+//              COALESCE(r.billing_type, 'Daily') AS billingType,
+//              COALESCE(r.rental_charge, 0) AS rentalCharge,
+//              COALESCE(r.deposit_advance, 0) AS depositAdvance,
+//              COALESCE(r.installation_charge, 0) AS installationCharge,
 //              r.incharge_mobile AS inchargeMobile,
 //              r.alt_mobile AS altMobile,
 //              r.attendant_name AS attendantName,
@@ -93,10 +97,10 @@
 //              r.bed_number AS bedNumber, 
 //              r.referral_doctor AS referralDoctor, 
 //              r.gst_number AS gstNumber,
-//              r.billing_type AS billingType,
-//              r.rental_charge AS rentalCharge,
-//              r.deposit_advance AS depositAdvance,
-//              r.installation_charge AS installationCharge,
+//              COALESCE(r.billing_type, 'Daily') AS billingType,
+//              COALESCE(r.rental_charge, 0) AS rentalCharge,
+//              COALESCE(r.deposit_advance, 0) AS depositAdvance,
+//              COALESCE(r.installation_charge, 0) AS installationCharge,
 //              r.incharge_mobile AS inchargeMobile,
 //              r.alt_mobile AS altMobile,
 //              r.attendant_name AS attendantName,
@@ -126,8 +130,12 @@
 //     let accValue = data.accessories || data.accessory || "";
 //     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-//     // 🔒 Status Lock: Logout Date aaj ya purani ho tabhi Closed, warna Active
 //     const finalStatus = (logoutDate && logoutDate <= today) ? "Closed" : "Active";
+
+//     const billingType = data.billing_type || data.billingType || "Daily";
+//     const rentalCharge = getNum(data.rental_charge, data.rentalCharge);
+//     const depositAdvance = getNum(data.deposit_advance, data.depositAdvance);
+//     const installationCharge = getNum(data.installation_charge, data.installationCharge);
 
 //     const sql = `
 //       INSERT INTO requisitions 
@@ -156,10 +164,10 @@
 //       data.referral_doctor || data.referral || "",
 //       data.bed_number || data.bedNo || "",
 //       data.gst_number || data.gstNo || "",
-//       data.billing_type || data.billingType || "Daily",
-//       Number(data.rental_charge ?? data.rentalCharge ?? 0),
-//       Number(data.deposit_advance ?? data.depositAdvance ?? 0),
-//       Number(data.installation_charge ?? data.installationCharge ?? 0),
+//       billingType,
+//       rentalCharge,
+//       depositAdvance,
+//       installationCharge,
 //       data.age || "",
 //       data.attendant_name || data.attendantName || "",
 //       data.mobile_number || data.mobileNumber || "",
@@ -186,11 +194,15 @@
 //     let accValue = data.accessories || data.accessory || "";
 //     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-//     // 🔒 Status Lock: Logout Date aaj ya purani ho tabhi Closed, warna Active
 //     let finalStatus = (logoutDate && logoutDate <= today) ? "Closed" : "Active";
 //     if (String(data.status || data.requisition_status || "").toLowerCase() === "inactive") {
 //       finalStatus = "Inactive";
 //     }
+
+//     const billingType = data.billing_type || data.billingType || "Daily";
+//     const rentalCharge = getNum(data.rental_charge, data.rentalCharge);
+//     const depositAdvance = getNum(data.deposit_advance, data.depositAdvance);
+//     const installationCharge = getNum(data.installation_charge, data.installationCharge);
 
 //     const sql = `
 //       UPDATE requisitions 
@@ -224,10 +236,10 @@
 //       data.referral_doctor || data.referral || "", 
 //       data.bed_number || data.bedNo || "", 
 //       data.gst_number || data.gstNo || "",
-//       data.billing_type || data.billingType || "Daily",
-//       Number(data.rental_charge ?? data.rentalCharge ?? 0),
-//       Number(data.deposit_advance ?? data.depositAdvance ?? 0),
-//       Number(data.installation_charge ?? data.installationCharge ?? 0),
+//       billingType,
+//       rentalCharge,
+//       depositAdvance,
+//       installationCharge,
 //       data.age || "",
 //       data.attendant_name || data.attendantName || "",
 //       data.mobile_number || data.mobileNumber || "",
@@ -252,7 +264,7 @@
 
 const pool = require("../config/database");
 
-// 🛠️ Auto-ensure database has all commercial columns
+// 🛠️ Auto-ensure database has all commercial and date columns
 (async () => {
   try {
     await pool.query("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS billing_type VARCHAR(50) DEFAULT 'Daily'");
@@ -261,8 +273,10 @@ const pool = require("../config/database");
     await pool.query("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS installation_charge DECIMAL(10,2) DEFAULT 0.00");
     await pool.query("ALTER TABLE requisitions MODIFY COLUMN logout_date DATE NULL");
     await pool.query("ALTER TABLE requisitions MODIFY COLUMN recall_date DATE NULL");
+    await pool.query("ALTER TABLE requisitions MODIFY COLUMN notify_date DATE NULL");
+    await pool.query("ALTER TABLE requisitions MODIFY COLUMN record_date DATE NULL");
   } catch (e) {
-    // Ignore alter errors if already present
+    // Ignore if columns already exist
   }
 })();
 
@@ -306,7 +320,6 @@ const safeOptionalDate = (val) => {
   }
 };
 
-// Safe Number parser (fixes 0 bug)
 const getNum = (v1, v2) => {
   if (v1 !== undefined && v1 !== null && v1 !== "") return Number(v1);
   if (v2 !== undefined && v2 !== null && v2 !== "") return Number(v2);
@@ -333,7 +346,8 @@ class Requisition {
              r.alt_mobile_number AS altMobileNumber,
              r.care_address AS careAddress,
              r.record_date AS recordDate,
-             r.recall_date AS recallDate
+             r.recall_date AS recallDate,
+             r.logout_date AS logoutDate
       FROM requisitions r
       LEFT JOIN care_centers c ON r.care_center_id = c.id
       LEFT JOIN equipment e ON r.equipment_id = e.id
@@ -361,7 +375,8 @@ class Requisition {
              r.alt_mobile_number AS altMobileNumber,
              r.care_address AS careAddress,
              r.record_date AS recordDate,
-             r.recall_date AS recallDate
+             r.recall_date AS recallDate,
+             r.logout_date AS logoutDate
       FROM requisitions r
       LEFT JOIN care_centers c ON r.care_center_id = c.id
       LEFT JOIN equipment e ON r.equipment_id = e.id
