@@ -1843,7 +1843,7 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Dynamic Total Days / Day of Month Calculator
+// 🧮 Dynamic Total Days / Day of Month Calculator (e.g. 6/15 or 9/0)
 const getDynamicTotalDays = (loginStr, logoutStr) => {
   const s = formatForDateInput(loginStr);
   if (!s) return "—";
@@ -1851,20 +1851,31 @@ const getDynamicTotalDays = (loginStr, logoutStr) => {
   const [sY, sM, sD] = s.split("-").map(Number);
   const startUtc = Date.UTC(sY, sM - 1, sD);
 
+  const todayClean = todayISO();
+  const [tY, tM, tD] = todayClean.split("-").map(Number);
+  const todayUtc = Date.UTC(tY, tM - 1, tD);
+
   const cleanOut = formatForDateInput(logoutStr);
   if (cleanOut) {
     const [eY, eM, eD] = cleanOut.split("-").map(Number);
     const endUtc = Date.UTC(eY, eM - 1, eD);
-    let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24));
+    
+    // Inclusive total days calculation: (end - start) + 1
+    let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
     if (diffDays < 0) diffDays = 0;
-    const logoutDay = eD;
-    return `${diffDays} / ${logoutDay}`;
+
+    // Agar logout ho chuka hai (past or today), second number 0 aayega
+    if (cleanOut <= todayClean) {
+      return `${diffDays} / 0`;
+    } else {
+      // Future logout date ke liye logout date ka day of month
+      return `${diffDays} / ${eD}`;
+    }
   } else {
-    const now = new Date();
-    const endUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    let diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24));
+    // Agar logout date nahi hai: calculate till today (inclusive) aur second number aaj ki date
+    let diffDays = Math.floor((todayUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
     if (diffDays < 0) diffDays = 0;
-    const currentDay = now.getDate();
+    const currentDay = tD;
     return `${diffDays} / ${currentDay}`;
   }
 };
@@ -1980,13 +1991,15 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
 function KpiCards({ logs = [] }) {
   const today = todayISO();
   const countActive = logs.filter((l) => {
+    const isInactive = String(l?.status || "").toLowerCase() === "inactive";
     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date);
-    return !cleanOut || cleanOut > today;
+    return !isInactive && (!cleanOut || cleanOut > today);
   }).length;
 
   const countClosed = logs.filter((l) => {
+    const isInactive = String(l?.status || "").toLowerCase() === "inactive";
     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date);
-    return Boolean(cleanOut && cleanOut <= today);
+    return !isInactive && Boolean(cleanOut && cleanOut <= today);
   }).length;
 
   const countInactive = logs.filter((l) => String(l?.status || "").toLowerCase() === "inactive").length;
@@ -2030,13 +2043,20 @@ function KpiCards({ logs = [] }) {
   );
 }
 
-function CalculateTotalDaysModal({ onClose }) {
+function CalculateTotalDaysModal({ onClose, onApply }) {
   const [tempLoginDate, setTempLoginDate] = useState(() => todayISO());
   const [tempLogoutDate, setTempLogoutDate] = useState("");
 
   const totalDaysDisplay = useMemo(() => {
     return getDynamicTotalDays(tempLoginDate, tempLogoutDate);
   }, [tempLoginDate, tempLogoutDate]);
+
+  const handleApply = () => {
+    if (onApply) {
+      onApply(totalDaysDisplay);
+    }
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
@@ -2093,7 +2113,7 @@ function CalculateTotalDaysModal({ onClose }) {
           <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
             Cancel
           </button>
-          <button type="button" onClick={onClose} className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer">
+          <button type="button" onClick={handleApply} className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer">
             Apply Changes
           </button>
         </div>
@@ -2121,10 +2141,14 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
 
   const cleanLogout = formatForDateInput(log?.logoutDate || log?.logout_date);
   const today = todayISO();
+  const isInactive = String(log?.status || "").toLowerCase() === "inactive";
   const isCurrentlyActive = !cleanLogout || cleanLogout > today;
-  const statusLabel = isCurrentlyActive ? "Active" : "Closed";
+  
+  const statusLabel = isInactive ? "Inactive" : (isCurrentlyActive ? "Active" : "Closed");
 
-  const statusColor = isCurrentlyActive
+  const statusColor = isInactive
+    ? "bg-rose-50 text-rose-700 border-rose-200"
+    : isCurrentlyActive
     ? "bg-amber-50 text-amber-700 border-amber-200"
     : "bg-emerald-50 text-emerald-700 border-emerald-200";
 
@@ -2962,6 +2986,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [pageForm, setPageForm] = useState(null); 
 
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
+  const [tempCalculatedDays, setTempCalculatedDays] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   const handleSort = (field) => {
@@ -3022,12 +3047,20 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
           inchargeMobile.includes(q);
           
         const cleanLogout = formatForDateInput(l.logoutDate || l.logout_date);
+        const rawStatus = String(l.status || l.requisition_status || "").trim().toLowerCase();
         const isClosed = Boolean(cleanLogout && cleanLogout <= today);
-        const computedStatus = isClosed ? "closed" : "active";
+        const computedStatus = rawStatus === "inactive" ? "inactive" : (isClosed ? "closed" : "active");
         
-        const isStatusMatch = (sFilter === "both" || sFilter === "all")
-          ? true
-          : (sFilter === computedStatus);
+        let isStatusMatch = false;
+        if (sFilter === "both" || sFilter === "all") {
+          isStatusMatch = true;
+        } else if (sFilter === "inactive") {
+          isStatusMatch = (rawStatus === "inactive" || computedStatus === "inactive");
+        } else if (sFilter === "active") {
+          isStatusMatch = (computedStatus === "active" && rawStatus !== "inactive");
+        } else if (sFilter === "closed") {
+          isStatusMatch = (computedStatus === "closed" && rawStatus !== "inactive");
+        }
 
         const dType = String(l.dealType || l.deal_type || "");
         const matchesDealType = dealTypeFilter === "All" || dType === dealTypeFilter;
@@ -3277,6 +3310,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <option value="Both">Status: Both</option>
             <option value="Active">Active</option>
             <option value="Closed">Closed</option>
+            <option value="Inactive">Inactive</option>
           </select>
           
           <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[110px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
@@ -3293,6 +3327,17 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <option value="All">All Modes</option>
             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
+
+          {tempCalculatedDays && (
+            <span className="flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-800 animate-in fade-in">
+              🧮 {tempCalculatedDays}
+              <X 
+                className="h-3.5 w-3.5 cursor-pointer hover:text-rose-600 transition" 
+                onClick={() => setTempCalculatedDays(null)} 
+                title="Clear temporary calculation"
+              />
+            </span>
+          )}
 
           <button 
             type="button"
@@ -3314,6 +3359,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               setCareCenterFilter("All");
               setSortField("startDate");
               setSortOrder("desc");
+              setTempCalculatedDays(null);
               fetchLogs();
               toast.success("Filters reset");
             }}
@@ -3503,6 +3549,10 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       {isCalcModalOpen && (
         <CalculateTotalDaysModal 
           onClose={() => setIsCalcModalOpen(false)} 
+          onApply={(val) => {
+            setTempCalculatedDays(val);
+            toast.success(`Applied Total Days: ${val}`);
+          }}
         />
       )}
 
