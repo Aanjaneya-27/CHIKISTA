@@ -214,55 +214,26 @@
 
 const pool = require("../config/database");
 
-// Mandatory Start Date (defaults to today)
-const safeDate = (val) => {
-  const today = new Date().toISOString().slice(0, 10);
-  if (!val || val === "" || String(val).trim() === "0000-00-00" || String(val).trim().toLowerCase() === "null") {
-    return today;
-  }
-  try {
-    const d = new Date(val);
-    return isNaN(d.getTime()) || d.getFullYear() < 2000 ? today : d.toISOString().slice(0, 10);
-  } catch (err) {
-    return today;
-  }
-};
-
-// Optional Date (Returns strictly NULL if empty or 0000-00-00)
-const safeOptionalDate = (val) => {
-  if (!val || val === "" || String(val).trim() === "0000-00-00" || String(val).trim().toLowerCase() === "null" || val === "undefined") {
-    return null;
-  }
-  try {
-    const d = new Date(val);
-    return isNaN(d.getTime()) || d.getFullYear() < 2000 ? null : d.toISOString().slice(0, 10);
-  } catch (err) {
-    return null;
-  }
+const cleanDate = (val) => {
+  if (!val || val === "" || String(val).trim() === "0000-00-00" || String(val).toLowerCase() === "null") return null;
+  const d = new Date(val);
+  return isNaN(d.getTime()) || d.getFullYear() < 2000 ? null : d.toISOString().slice(0, 10);
 };
 
 class Requisition {
   static async getAll() {
     const [rows] = await pool.query(`
       SELECT r.*, 
-             IF(r.record_date IS NULL OR r.record_date = '0000-00-00', NULL, DATE_FORMAT(r.record_date, '%Y-%m-%d')) AS recordDate,
-             IF(r.record_date IS NULL OR r.record_date = '0000-00-00', NULL, DATE_FORMAT(r.record_date, '%Y-%m-%d')) AS record_date,
-             IF(r.start_date IS NULL OR r.start_date = '0000-00-00', NULL, DATE_FORMAT(r.start_date, '%Y-%m-%d')) AS startDate,
-             IF(r.start_date IS NULL OR r.start_date = '0000-00-00', NULL, DATE_FORMAT(r.start_date, '%Y-%m-%d')) AS start_date,
-             IF(r.start_date IS NULL OR r.start_date = '0000-00-00', NULL, DATE_FORMAT(r.start_date, '%Y-%m-%d')) AS loginDate,
-             IF(r.logout_date IS NULL OR r.logout_date = '0000-00-00', NULL, DATE_FORMAT(r.logout_date, '%Y-%m-%d')) AS logoutDate,
-             IF(r.logout_date IS NULL OR r.logout_date = '0000-00-00', NULL, DATE_FORMAT(r.logout_date, '%Y-%m-%d')) AS logout_date,
-             IF(r.notify_date IS NULL OR r.notify_date = '0000-00-00', NULL, DATE_FORMAT(r.notify_date, '%Y-%m-%d')) AS notifyDate,
-             IF(r.notify_date IS NULL OR r.notify_date = '0000-00-00', NULL, DATE_FORMAT(r.notify_date, '%Y-%m-%d')) AS notify_date,
-             IF(r.recall_date IS NULL OR r.recall_date = '0000-00-00', NULL, DATE_FORMAT(r.recall_date, '%Y-%m-%d')) AS recallDate,
-             IF(r.recall_date IS NULL OR r.recall_date = '0000-00-00', NULL, DATE_FORMAT(r.recall_date, '%Y-%m-%d')) AS recall_date,
+             DATE_FORMAT(r.record_date, '%Y-%m-%d') AS recordDate,
+             DATE_FORMAT(r.start_date, '%Y-%m-%d') AS startDate,
+             DATE_FORMAT(r.start_date, '%Y-%m-%d') AS loginDate,
+             DATE_FORMAT(r.logout_date, '%Y-%m-%d') AS logoutDate,
+             DATE_FORMAT(r.notify_date, '%Y-%m-%d') AS notifyDate,
+             DATE_FORMAT(r.recall_date, '%Y-%m-%d') AS recallDate,
              c.name AS careCenterName, 
              e.name AS equipmentName,
-             r.bed_number AS bedNumber, 
              r.bed_number AS bedNo,
-             r.referral_doctor AS referralDoctor, 
              r.referral_doctor AS referral,
-             r.gst_number AS gstNumber,
              r.billing_type AS billingType,
              r.rental_charge AS rentalCharge,
              r.deposit_advance AS depositAdvance,
@@ -280,60 +251,18 @@ class Requisition {
     `);
     return rows;
   }
-  
-  static async findById(id) {
-    const [rows] = await pool.query(`
-      SELECT r.*, 
-             IF(r.record_date IS NULL OR r.record_date = '0000-00-00', NULL, DATE_FORMAT(r.record_date, '%Y-%m-%d')) AS recordDate,
-             IF(r.record_date IS NULL OR r.record_date = '0000-00-00', NULL, DATE_FORMAT(r.record_date, '%Y-%m-%d')) AS record_date,
-             IF(r.start_date IS NULL OR r.start_date = '0000-00-00', NULL, DATE_FORMAT(r.start_date, '%Y-%m-%d')) AS startDate,
-             IF(r.start_date IS NULL OR r.start_date = '0000-00-00', NULL, DATE_FORMAT(r.start_date, '%Y-%m-%d')) AS start_date,
-             IF(r.start_date IS NULL OR r.start_date = '0000-00-00', NULL, DATE_FORMAT(r.start_date, '%Y-%m-%d')) AS loginDate,
-             IF(r.logout_date IS NULL OR r.logout_date = '0000-00-00', NULL, DATE_FORMAT(r.logout_date, '%Y-%m-%d')) AS logoutDate,
-             IF(r.logout_date IS NULL OR r.logout_date = '0000-00-00', NULL, DATE_FORMAT(r.logout_date, '%Y-%m-%d')) AS logout_date,
-             IF(r.notify_date IS NULL OR r.notify_date = '0000-00-00', NULL, DATE_FORMAT(r.notify_date, '%Y-%m-%d')) AS notifyDate,
-             IF(r.notify_date IS NULL OR r.notify_date = '0000-00-00', NULL, DATE_FORMAT(r.notify_date, '%Y-%m-%d')) AS notify_date,
-             IF(r.recall_date IS NULL OR r.recall_date = '0000-00-00', NULL, DATE_FORMAT(r.recall_date, '%Y-%m-%d')) AS recallDate,
-             IF(r.recall_date IS NULL OR r.recall_date = '0000-00-00', NULL, DATE_FORMAT(r.recall_date, '%Y-%m-%d')) AS recall_date,
-             c.name AS careCenterName, 
-             e.name AS equipmentName,
-             r.bed_number AS bedNumber, 
-             r.bed_number AS bedNo,
-             r.referral_doctor AS referralDoctor, 
-             r.referral_doctor AS referral,
-             r.gst_number AS gstNumber,
-             r.billing_type AS billingType,
-             r.rental_charge AS rentalCharge,
-             r.deposit_advance AS depositAdvance,
-             r.installation_charge AS installationCharge,
-             r.incharge_mobile AS inchargeMobile,
-             r.alt_mobile AS altMobile,
-             r.attendant_name AS attendantName,
-             r.mobile_number AS mobileNumber,
-             r.alt_mobile_number AS altMobileNumber,
-             r.care_address AS careAddress
-      FROM requisitions r
-      LEFT JOIN care_centers c ON r.care_center_id = c.id
-      LEFT JOIN equipment e ON r.equipment_id = e.id
-      WHERE r.id = ?
-    `, [id]);
-    return rows[0];
-  }
 
   static async create(data) {
     const reqId = data.id || `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
-    
-    const startDate = safeDate(data.start_date || data.startDate || data.loginDate);
-    const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); 
-    const notifyDate = safeOptionalDate(data.notify_date || data.notifyDate);
-    const recordDate = safeOptionalDate(data.record_date || data.recordDate) || safeDate(null);
-    const recallDate = safeOptionalDate(data.recall_date || data.recallDate);
+    const startDate = cleanDate(data.startDate || data.start_date || data.loginDate) || new Date().toISOString().slice(0, 10);
+    const logoutDate = cleanDate(data.logoutDate || data.logout_date);
+    const recordDate = cleanDate(data.recordDate || data.record_date) || startDate;
+    const notifyDate = cleanDate(data.notifyDate || data.notify_date);
+    const recallDate = cleanDate(data.recallDate || data.recall_date);
 
+    const finalStatus = logoutDate !== null ? "Closed" : "Active";
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
-
-    // 🔒 Strictly ACTIVE unless a genuine logout date is provided
-    const finalStatus = logoutDate !== null ? "Closed" : "Active";
 
     const sql = `
       INSERT INTO requisitions 
@@ -343,36 +272,36 @@ class Requisition {
 
     const values = [
       reqId,
-      data.care_center_id || data.careCenterId || "CARE-NEW",
-      data.equipment_id || data.equipmentId || data.deviceModel || "EQ-NEW",
-      data.patient_name || data.patientName || "Unknown",
-      data.quantity || 1,
+      data.careCenterId || data.care_center_id || "CARE-NEW",
+      data.equipmentId || data.equipment_id || data.deviceModel || "EQ-NEW",
+      data.patientName || data.patient_name || "Unknown",
+      1,
       startDate,
       logoutDate,
       finalStatus,
-      data.delivery_status || data.deliveryStatus || "Pending Dispatch",
-      data.payment_type || data.paymentType || data.mode || "Postpaid",
-      data.deal_type || data.dealType || "B2B",
+      "Pending Dispatch",
+      data.paymentType || data.mode || "Postpaid",
+      data.dealType || data.deal_type || "B2B",
       data.unit || "ODCOM",
-      data.mode || data.paymentType || "Postpaid",
+      data.mode || "Postpaid",
       notifyDate,
-      data.delivery_address || data.deliveryAddress || "",
+      data.deliveryAddress || data.delivery_address || "",
       data.notes || "",
       accValue,
-      data.referral_doctor || data.referral || data.referralDoctor || "",
-      data.bed_number || data.bedNo || data.bedNumber || "",
-      data.gst_number || data.gstNo || "",
-      data.billing_type || data.billingType || "Daily",
-      data.rental_charge !== undefined && data.rental_charge !== "" && data.rental_charge !== null ? Number(data.rental_charge) : (Number(data.rentalCharge) || 0),
-      data.deposit_advance !== undefined && data.deposit_advance !== "" && data.deposit_advance !== null ? Number(data.deposit_advance) : (Number(data.depositAdvance) || 0),
-      data.installation_charge !== undefined && data.installation_charge !== "" && data.installation_charge !== null ? Number(data.installation_charge) : (Number(data.installationCharge) || 0),
+      data.referral || data.referral_doctor || "",
+      data.bedNo || data.bed_number || "",
+      data.gstNo || data.gst_number || "",
+      data.billingType || data.billing_type || "Daily",
+      Number(data.rentalCharge ?? data.rental_charge) || 0,
+      Number(data.depositAdvance ?? data.deposit_advance) || 0,
+      Number(data.installationCharge ?? data.installation_charge) || 0,
       data.age || "",
-      data.attendant_name || data.attendantName || "",
-      data.mobile_number || data.mobileNumber || "",
-      data.alt_mobile_number || data.altMobileNumber || "",
-      data.incharge_mobile || data.inchargeMobile || data.phone || "",
-      data.alt_mobile || data.altMobile || "",
-      data.care_address || data.careAddress || "",
+      data.attendantName || data.attendant_name || "",
+      data.mobileNumber || data.mobile_number || "",
+      data.altMobileNumber || data.alt_mobile_number || "",
+      data.inchargeMobile || data.incharge_mobile || "",
+      data.altMobile || data.alt_mobile || "",
+      data.careAddress || data.care_address || "",
       recordDate,
       recallDate
     ];
@@ -382,74 +311,65 @@ class Requisition {
   }
 
   static async update(id, data) {
-    const startDate = safeDate(data.start_date || data.startDate || data.loginDate);
-    const logoutDate = safeOptionalDate(data.logout_date || data.logoutDate); 
-    const notifyDate = safeOptionalDate(data.notify_date || data.notifyDate);
-    const recordDate = safeOptionalDate(data.record_date || data.recordDate) || safeDate(null);
-    const recallDate = safeOptionalDate(data.recall_date || data.recallDate);
+    const startDate = cleanDate(data.startDate || data.start_date || data.loginDate) || new Date().toISOString().slice(0, 10);
+    const logoutDate = cleanDate(data.logoutDate || data.logout_date);
+    const recordDate = cleanDate(data.recordDate || data.record_date) || startDate;
+    const notifyDate = cleanDate(data.notifyDate || data.notify_date);
+    const recallDate = cleanDate(data.recallDate || data.recall_date);
+
+    let finalStatus = logoutDate !== null ? "Closed" : "Active";
+    if (String(data.status).toLowerCase() === "inactive") finalStatus = "Inactive";
 
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
-    // 🔒 Status logic
-    let finalStatus = "Active";
-    if (logoutDate !== null) {
-      finalStatus = "Closed";
-    } else if (String(data.status).toLowerCase() === "inactive") {
-      finalStatus = "Inactive";
-    }
-
     const sql = `
       UPDATE requisitions 
-      SET care_center_id = ?, equipment_id = ?, patient_name = ?, quantity = ?, 
-          start_date = ?, logout_date = ?, status = ?, delivery_status = ?, 
-          payment_type = ?, deal_type = ?, unit = ?, mode = ?, notify_date = ?, 
-          delivery_address = ?, notes = ?, accessory = ?, referral_doctor = ?, bed_number = ?, gst_number = ?,
+      SET care_center_id = ?, equipment_id = ?, patient_name = ?, start_date = ?, logout_date = ?, 
+          status = ?, payment_type = ?, deal_type = ?, unit = ?, mode = ?, notify_date = ?, 
+          delivery_address = ?, notes = ?, accessory = ?, referral_doctor = ?, bed_number = ?, 
           billing_type = ?, rental_charge = ?, deposit_advance = ?, installation_charge = ?,
           age = ?, attendant_name = ?, mobile_number = ?, alt_mobile_number = ?,
           incharge_mobile = ?, alt_mobile = ?, care_address = ?, record_date = ?, recall_date = ?
       WHERE id = ?
     `;
-    
+
     const values = [
-      data.care_center_id || data.careCenterId || "CARE-NEW", 
-      data.equipment_id || data.equipmentId || data.deviceModel || "EQ-NEW", 
-      data.patient_name || data.patientName || "Unknown", 
-      data.quantity || 1, 
-      startDate, 
-      logoutDate, 
-      finalStatus, 
-      data.delivery_status || data.deliveryStatus || "Pending Dispatch", 
-      data.payment_type || data.paymentType || data.mode || "Postpaid", 
-      data.deal_type || data.dealType || "B2B", 
-      data.unit || "ODCOM", 
-      data.mode || data.paymentType || "Postpaid", 
-      notifyDate, 
-      data.delivery_address || data.deliveryAddress || "", 
-      data.notes || "", 
-      accValue, 
-      data.referral_doctor || data.referral || data.referralDoctor || "", 
-      data.bed_number || data.bedNo || data.bedNumber || "", 
-      data.gst_number || data.gstNo || "",
-      data.billing_type || data.billingType || "Daily",
-      data.rental_charge !== undefined && data.rental_charge !== "" && data.rental_charge !== null ? Number(data.rental_charge) : (Number(data.rentalCharge) || 0),
-      data.deposit_advance !== undefined && data.deposit_advance !== "" && data.deposit_advance !== null ? Number(data.deposit_advance) : (Number(data.depositAdvance) || 0),
-      data.installation_charge !== undefined && data.installation_charge !== "" && data.installation_charge !== null ? Number(data.installation_charge) : (Number(data.installationCharge) || 0),
-      data.age !== undefined ? data.age : "",
-      data.attendant_name || data.attendantName || "",
-      data.mobile_number || data.mobileNumber || "",
-      data.alt_mobile_number || data.altMobileNumber || "",
-      data.incharge_mobile || data.inchargeMobile || data.phone || "",
-      data.alt_mobile || data.altMobile || "",
-      data.care_address || data.careAddress || "",
+      data.careCenterId || data.care_center_id || "CARE-NEW",
+      data.equipmentId || data.equipment_id || data.deviceModel || "EQ-NEW",
+      data.patientName || data.patient_name || "Unknown",
+      startDate,
+      logoutDate,
+      finalStatus,
+      data.paymentType || data.mode || "Postpaid",
+      data.dealType || data.deal_type || "B2B",
+      data.unit || "ODCOM",
+      data.mode || "Postpaid",
+      notifyDate,
+      data.deliveryAddress || data.delivery_address || "",
+      data.notes || "",
+      accValue,
+      data.referral || data.referral_doctor || "",
+      data.bedNo || data.bed_number || "",
+      data.billingType || data.billing_type || "Daily",
+      Number(data.rentalCharge ?? data.rental_charge) || 0,
+      Number(data.depositAdvance ?? data.deposit_advance) || 0,
+      Number(data.installationCharge ?? data.installation_charge) || 0,
+      data.age || "",
+      data.attendantName || data.attendant_name || "",
+      data.mobileNumber || data.mobile_number || "",
+      data.altMobileNumber || data.alt_mobile_number || "",
+      data.inchargeMobile || data.incharge_mobile || "",
+      data.altMobile || data.alt_mobile || "",
+      data.careAddress || data.care_address || "",
       recordDate,
       recallDate,
-      id 
+      id
     ];
 
     await pool.query(sql, values);
   }
-  
+
   static async delete(id) {
     await pool.query(`DELETE FROM requisitions WHERE id = ?`, [id]);
   }
