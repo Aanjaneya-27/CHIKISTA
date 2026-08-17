@@ -732,42 +732,18 @@ const addCareCenter = async (req, res) => {
       return res.status(400).json({ message: "Care Center Name is required." });
     }
 
-    let id = String(d.id || `CC-${Math.floor(1000 + Math.random() * 9000)}`).trim();
-    const rawPhone = d.phone || d.incharge_mobile || d.inchargeMobile || d.mobile || "";
-    const phone = cleanPhone(rawPhone) || String(rawPhone).trim();
+    const id = String(d.id || `CC-${Math.floor(1000 + Math.random() * 9000)}`).trim();
+    const phone = String(d.phone || d.incharge_mobile || d.inchargeMobile || d.mobile || "").trim();
     const address = String(d.address || d.care_address || d.careAddress || "").trim();
+    const gst = String(d.gst || d.gst_number || d.gstNumber || "").trim(); // Yeh line ensure karegi ki gst blank ho toh '' jaye
     const status = String(d.status || "Active").trim();
 
-    // 🔄 Auto-Retry Loop (Duplicate ID collision se bachne ke liye)
-    let inserted = false;
-    let attempts = 0;
+    await pool.query(
+      "INSERT INTO care_centers (id, name, phone, address, gst, status) VALUES (?, ?, ?, ?, ?, ?)",
+      [id, name, phone, address, gst, status]
+    );
 
-    while (!inserted && attempts < 5) {
-      try {
-        await pool.query(
-          "INSERT INTO care_centers (id, name, phone, address, status) VALUES (?, ?, ?, ?, ?)",
-          [id, name, phone, address, status]
-        );
-        inserted = true;
-      } catch (err) {
-        if (err.code === 'ER_DUP_ENTRY') {
-          // Agar ID match ho gayi, toh nayi random ID banao aur loop retry karo
-          id = `CC-${Math.floor(100000 + Math.random() * 900000)}`;
-          attempts++;
-        } else {
-          throw err; // Agar koi aur SQL error hai toh throw karo
-        }
-      }
-    }
-
-    return res.status(201).json({
-      message: "Care Center added successfully!",
-      id,
-      name,
-      phone,
-      address,
-      status
-    });
+    return res.status(201).json({ message: "Care Center added successfully!", id });
   } catch (error) {
     console.error("Add Care Center Error:", error);
     return res.status(500).json({ message: error.sqlMessage || error.message });
