@@ -1779,7 +1779,7 @@ import {
   MODE_OPTIONS, 
   UNIT_OPTIONS 
 } from "../data/MockData";
-import {todayISO } from "../utils/Helper";
+import { todayISO } from "../utils/Helper";
 import API from "../utils/api";
 
 function GlobalPolish() {
@@ -1843,7 +1843,7 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Exact Total Days / Day of Month Calculator (e.g. 71/6)
+// 🧮 Dynamic Total Days / Day of Month Calculator (e.g. 71 / 6)
 const getDynamicTotalDays = (loginStr, logoutStr) => {
   const s = formatForDateInput(loginStr);
   if (!s) return "—";
@@ -2030,69 +2030,75 @@ function KpiCards({ logs = [] }) {
   );
 }
 
-// 🧮 EXACT MODAL AS PER REFERENCE IMAGE
-function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose, onSaveSuccess }) {
-  const isQuick = !log || log?.isQuickCalc;
-  const [tempLoginDate, setTempLoginDate] = useState(() => formatForDateInput(log?.startDate || log?.start_date || log?.loginDate) || todayISO());
-  const [tempLogoutDate, setTempLogoutDate] = useState(() => formatForDateInput(log?.logoutDate || log?.logout_date) || "");
-  const [saving, setSaving] = useState(false);
+// 🧮 TEMPORARY PREVIEW CALCULATOR MODAL (UI Matching Reference Image)
+function CalculateTotalDaysModal({ requisitions = [], onApplyTemporaryChanges, onClose }) {
+  const [selectedReqId, setSelectedReqId] = useState("");
+  const [tempLoginDate, setTempLoginDate] = useState(() => todayISO());
+  const [tempLogoutDate, setTempLogoutDate] = useState("");
 
-  const eqId = log?.equipmentId || log?.equipment_id;
-  const eqName = equipmentCatalog.find(e => e?.id === eqId)?.name || log?.equipmentName || (isQuick ? "Asset" : "Device");
-  const categoryName = log?.category || "General";
+  const handleSelectReq = (id) => {
+    setSelectedReqId(id);
+    const target = requisitions.find((r) => String(r.id) === String(id));
+    if (target) {
+      setTempLoginDate(formatForDateInput(target.startDate || target.start_date || target.loginDate) || todayISO());
+      setTempLogoutDate(formatForDateInput(target.logoutDate || target.logout_date) || "");
+    }
+  };
 
   const totalDaysDisplay = useMemo(() => {
     return getDynamicTotalDays(tempLoginDate, tempLogoutDate);
   }, [tempLoginDate, tempLogoutDate]);
 
-  const handleApplyChanges = async () => {
-    if (isQuick || !log?.id) {
-      onClose();
-      return;
+  const handleApply = () => {
+    if (selectedReqId) {
+      onApplyTemporaryChanges(selectedReqId, tempLoginDate, tempLogoutDate);
+      toast.success("Temporary preview applied to table! (Will reset on refresh)");
     }
-
-    setSaving(true);
-    try {
-      const today = todayISO();
-      const cleanLogout = formatForDateInput(tempLogoutDate);
-      const isClosed = Boolean(cleanLogout && cleanLogout <= today);
-
-      await API.put(`/rental/requisitions/${log.id}`, {
-        ...log,
-        startDate: tempLoginDate,
-        start_date: tempLoginDate,
-        logoutDate: cleanLogout || null,
-        logout_date: cleanLogout || null,
-        status: isClosed ? "Closed" : "Active",
-        requisition_status: isClosed ? "Closed" : "Active"
-      });
-
-      toast.success("Dates and total days updated successfully!");
-      if (onSaveSuccess) onSaveSuccess();
-      onClose();
-    } catch (err) {
-      toast.error("Failed to update: " + (err.response?.data?.message || err.message));
-    } finally {
-      setSaving(false);
-    }
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
-        <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
+        
+        {/* Modal Header */}
+        <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4.5">
           <div>
             <h3 className="font-display text-base font-bold text-slate-800">
               Calculate Total Days
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">{categoryName} • {eqName}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Quick duration calculator &amp; temporary preview</p>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+          <button 
+            onClick={onClose} 
+            className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
 
+        {/* Modal Body */}
         <div className="p-6 space-y-4">
+          {requisitions.length > 0 && (
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Apply To Requisition (Optional)
+              </label>
+              <select
+                value={selectedReqId}
+                onChange={(e) => handleSelectReq(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
+              >
+                <option value="">-- General Calculation (No Target) --</option>
+                {requisitions.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    #{r.id} • {r.patientName || r.patient_name || "Patient"} ({r.equipmentName || "Device"})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               LOG IN DATE
@@ -2101,7 +2107,7 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose, onSaveSu
               type="date" 
               value={tempLoginDate} 
               onChange={(e) => setTempLoginDate(e.target.value)} 
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
             />
           </div>
 
@@ -2114,20 +2120,23 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose, onSaveSu
               value={tempLogoutDate} 
               min={tempLoginDate}
               onChange={(e) => setTempLogoutDate(e.target.value)} 
-              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
+              className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-semibold text-slate-700 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20" 
             />
             <p className="text-[11px] text-slate-400 mt-1">Leave empty to calculate until today</p>
           </div>
 
-          {/* Result Box exact as Image 2 */}
+          {/* Result Box (71 / 6) */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-5 text-center my-3">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              TOTAL DAYS
+            </span>
             <p className="mt-1 font-display text-3xl font-extrabold text-teal-800">
               {totalDaysDisplay}
             </p>
           </div>
         </div>
 
+        {/* Modal Footer */}
         <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
           <button 
             type="button" 
@@ -2138,11 +2147,10 @@ function CalculateTotalDaysModal({ log, equipmentCatalog = [], onClose, onSaveSu
           </button>
           <button 
             type="button" 
-            disabled={saving}
-            onClick={handleApplyChanges} 
+            onClick={handleApply} 
             className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
           >
-            {saving ? "Applying..." : "Apply Changes"}
+            Apply Changes
           </button>
         </div>
       </div>
@@ -2936,8 +2944,34 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [viewDetailLog, setViewDetailLog] = useState(null); 
   const [pageForm, setPageForm] = useState(null); 
 
-  const [calcModal, setCalcModal] = useState(null);
+  // 🧮 Calculator Modal State
+  const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+
+  // 🔄 TEMPORARY IN-MEMORY APPLY FUNCTION (No API Put, Reverts on refresh)
+  const handleApplyTemporaryChanges = (targetReqId, newStart, newLogout) => {
+    const today = todayISO();
+    const cleanOut = formatForDateInput(newLogout);
+    const isClosed = Boolean(cleanOut && cleanOut <= today);
+
+    setLogs((prevLogs) => 
+      prevLogs.map((item) => {
+        if (String(item.id) === String(targetReqId)) {
+          return {
+            ...item,
+            startDate: newStart,
+            start_date: newStart,
+            loginDate: newStart,
+            logoutDate: cleanOut || null,
+            logout_date: cleanOut || null,
+            status: isClosed ? "Closed" : "Active",
+            requisition_status: isClosed ? "Closed" : "Active"
+          };
+        }
+        return item;
+      })
+    );
+  };
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -3154,6 +3188,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     <div className="space-y-4 sm:space-y-5 fade-slide-up">
       <GlobalPolish />
       
+      {/* Top Title & CTA */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight text-slate-800">Rental Master Sheet</h1>
@@ -3169,7 +3204,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       <KpiCards logs={scopedLogs} />
       
-      {/* Filter Bar */}
+      {/* Filter Bar with Calculator Button right before Reset Filter Cross */}
       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -3222,6 +3257,17 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
 
+          {/* 🧮 TOP CALCULATOR BUTTON (Right before the X button) */}
+          <button 
+            type="button"
+            onClick={() => setIsCalcModalOpen(true)}
+            title="Open Total Days Calculator"
+            className="flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-300 transition cursor-pointer shrink-0 shadow-2xs"
+          >
+            <Calculator className="h-4 w-4" />
+          </button>
+
+          {/* ❌ RESET FILTERS BUTTON */}
           <button 
             type="button"
             onClick={() => {
@@ -3233,9 +3279,10 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               setCareCenterFilter("All");
               setSortField("startDate");
               setSortOrder("desc");
-              toast.success("Filters reset");
+              fetchLogs(); // Reloads fresh data from DB on reset
+              toast.success("Filters and views reset to original");
             }}
-            title="Reset all filters"
+            title="Reset all filters & data"
             className="flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition cursor-pointer shrink-0"
           >
             <X className="h-4 w-4" />
@@ -3353,7 +3400,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         {actualLogoutDate ? formatDisplayDate(actualLogoutDate) : "—"}
                       </td>
                       
-                      {/* 🧮 Exact Total Days Column (e.g. 71/6 or 1/17) */}
+                      {/* Total Days Column (e.g. 71/6) */}
                       <td className="px-5 py-3.5">
                         <span className={`font-bold px-2.5 py-1 rounded-md text-xs border shadow-xs ${
                           isClosed 
@@ -3364,6 +3411,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         </span>
                       </td>
 
+                      {/* Clean Actions: No calculator button in table rows */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1">
 
@@ -3376,14 +3424,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                               <PackageCheck className="h-4 w-4 text-emerald-600" />
                             </IconAction>
                           )}
-
-                          <IconAction 
-                            title="Calculate Total Days" 
-                            tone="teal" 
-                            onClick={() => setCalcModal(log)}
-                          >
-                            <Calculator className="h-4 w-4 text-teal-600" />
-                          </IconAction>
 
                           <IconAction 
                             title="View Details" 
@@ -3427,12 +3467,12 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         </div>
       </div>
 
-      {calcModal && (
+      {/* Top Filter Bar Calculator Modal */}
+      {isCalcModalOpen && (
         <CalculateTotalDaysModal 
-          log={calcModal} 
-          equipmentCatalog={equipmentCatalog}
-          onClose={() => setCalcModal(null)} 
-          onSaveSuccess={fetchLogs}
+          requisitions={scopedLogs}
+          onApplyTemporaryChanges={handleApplyTemporaryChanges}
+          onClose={() => setIsCalcModalOpen(false)} 
         />
       )}
 
