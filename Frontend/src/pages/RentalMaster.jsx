@@ -2972,90 +2972,121 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
+  // const handleFormSubmit = async (data) => {
+  //   try {
+  //     const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
+  //     const chosenMode = data.mode || data.paymentType || "Postpaid";
+      
+  //     const finalCareCenterId = isCareCenterUser 
+  //       ? (matchedUserCenter?.id || loggedUser?.careCenterId || loggedUser?.id || "CC-ME")
+  //       : (data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id));
+
+  //     const finalCareCenterName = isCareCenterUser
+  //       ? (matchedUserCenter?.name || loggedUser?.careCenterName || loggedUser?.name || "")
+  //       : (data.careCenterName || "");
+
+  //     const cleanLogout = formatForDateInput(data.logoutDate);
+  //     const cleanRecord = formatForDateInput(data.recordDate) || todayISO();
+  //     const cleanStart = formatForDateInput(data.startDate || data.loginDate) || todayISO();
+  //     const cleanRecall = formatForDateInput(data.recallDate);
+  //     const cleanNotify = formatForDateInput(data.notifyDate);
+  //     const today = todayISO();
+
+  //     const rCharge = data.rentalCharge !== "" && data.rentalCharge !== undefined ? Number(data.rentalCharge) : 0;
+  //     const dAdvance = data.depositAdvance !== "" && data.depositAdvance !== undefined ? Number(data.depositAdvance) : 0;
+  //     const iCharge = data.installationCharge !== "" && data.installationCharge !== undefined ? Number(data.installationCharge) : 0;
+  //     const bType = data.billingType || "Daily";
+
+  //     const payload = {
+  //       id: data.id,
+  //       careCenterId: finalCareCenterId,
+  //       care_center_id: finalCareCenterId,
+  //       careCenterName: finalCareCenterName,
+  //       equipmentId: data.equipmentId || data.deviceModel,
+  //       equipment_id: data.equipmentId || data.deviceModel,
+  //       patientName: data.patientName,
+  //       patient_name: data.patientName,
+  //       quantity: 1,
+  //       startDate: cleanStart,
+  //       start_date: cleanStart,
+  //       logoutDate: cleanLogout || null,
+  //       logout_date: cleanLogout || null,
+  //       status: (cleanLogout && cleanLogout <= today) ? "Closed" : "Active",
+        
+  //       billingType: bType,
+  //       billing_type: bType,
+  //       rentalCharge: rCharge,
+  //       rental_charge: rCharge,
+  //       depositAdvance: dAdvance,
+  //       deposit_advance: dAdvance,
+  //       installationCharge: iCharge,
+  //       installation_charge: iCharge,
+        
+  //       age: data.age || "",
+  //       attendantName: data.attendantName || "",
+  //       attendant_name: data.attendantName || "",
+  //       mobileNumber: data.mobileNumber || "",
+  //       mobile_number: data.mobileNumber || "",
+  //       altMobileNumber: data.altMobileNumber || "",
+  //       alt_mobile_number: data.altMobileNumber || "",
+  //       deliveryAddress: data.deliveryAddress || "",
+  //       delivery_address: data.deliveryAddress || "",
+
+  //       inchargeMobile: data.inchargeMobile || "",
+  //       incharge_mobile: data.inchargeMobile || "",
+  //       altMobile: data.altMobile || "",
+  //       alt_mobile: data.altMobile || "",
+  //       careAddress: data.careAddress || "",
+  //       care_address: data.careAddress || "",
+  //       bedNo: data.bedNo || "",
+  //       bed_number: data.bedNo || "",
+  //       referral: data.referral || "",
+  //       referral_doctor: data.referral || "",
+        
+  //       dealType: data.dealType || "B2B",
+  //       deal_type: data.dealType || "B2B",
+  //       unit: data.unit || "ODCOM",
+  //       mode: chosenMode,
+  //       paymentType: chosenMode,
+  //       recordDate: cleanRecord,
+  //       record_date: cleanRecord,
+  //       notifyDate: cleanNotify,
+  //       notify_date: cleanNotify,
+  //       recallDate: cleanRecall,
+  //       recall_date: cleanRecall,
+  //       notes: data.notes || "",
+  //       accessory: accStr
+  //     };
+
+  //     if (data.id) {
+  //       await API.put(`/rental/requisitions/${data.id}`, payload);
+  //       toast.success("Requisition updated successfully!");
+  //     } else {
+  //       await API.post("/rental/requisitions", payload);
+  //       toast.success("Requisition created & deployed!");
+  //     }
+
+  //     await fetchLogs();
+  //     setPageForm(null);
+  //   } catch (err) {
+  //     toast.error("Error: " + (err.response?.data?.message || err.message)); 
+  //   }
+  // };
+
   const handleFormSubmit = async (data) => {
     try {
-      const accStr = Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || "");
-      const chosenMode = data.mode || data.paymentType || "Postpaid";
-      
-      const finalCareCenterId = isCareCenterUser 
-        ? (matchedUserCenter?.id || loggedUser?.careCenterId || loggedUser?.id || "CC-ME")
-        : (data.careCenterId === "other" ? "NEW" : (data.careCenterId || data.care_center_id));
-
-      const finalCareCenterName = isCareCenterUser
-        ? (matchedUserCenter?.name || loggedUser?.careCenterName || loggedUser?.name || "")
-        : (data.careCenterName || "");
-
       const cleanLogout = formatForDateInput(data.logoutDate);
-      const cleanRecord = formatForDateInput(data.recordDate) || todayISO();
       const cleanStart = formatForDateInput(data.startDate || data.loginDate) || todayISO();
-      const cleanRecall = formatForDateInput(data.recallDate);
-      const cleanNotify = formatForDateInput(data.notifyDate);
-      const today = todayISO();
-
-      const rCharge = data.rentalCharge !== "" && data.rentalCharge !== undefined ? Number(data.rentalCharge) : 0;
-      const dAdvance = data.depositAdvance !== "" && data.depositAdvance !== undefined ? Number(data.depositAdvance) : 0;
-      const iCharge = data.installationCharge !== "" && data.installationCharge !== undefined ? Number(data.installationCharge) : 0;
-      const bType = data.billingType || "Daily";
-
+      
       const payload = {
         id: data.id,
-        careCenterId: finalCareCenterId,
-        care_center_id: finalCareCenterId,
-        careCenterName: finalCareCenterName,
-        equipmentId: data.equipmentId || data.deviceModel,
-        equipment_id: data.equipmentId || data.deviceModel,
-        patientName: data.patientName,
-        patient_name: data.patientName,
-        quantity: 1,
-        startDate: cleanStart,
+        patient_name: data.patientName || data.patient_name,
         start_date: cleanStart,
-        logoutDate: cleanLogout || null,
         logout_date: cleanLogout || null,
-        status: (cleanLogout && cleanLogout <= today) ? "Closed" : "Active",
-        
-        billingType: bType,
-        billing_type: bType,
-        rentalCharge: rCharge,
-        rental_charge: rCharge,
-        depositAdvance: dAdvance,
-        deposit_advance: dAdvance,
-        installationCharge: iCharge,
-        installation_charge: iCharge,
-        
-        age: data.age || "",
-        attendantName: data.attendantName || "",
-        attendant_name: data.attendantName || "",
-        mobileNumber: data.mobileNumber || "",
-        mobile_number: data.mobileNumber || "",
-        altMobileNumber: data.altMobileNumber || "",
-        alt_mobile_number: data.altMobileNumber || "",
-        deliveryAddress: data.deliveryAddress || "",
-        delivery_address: data.deliveryAddress || "",
-
-        inchargeMobile: data.inchargeMobile || "",
-        incharge_mobile: data.inchargeMobile || "",
-        altMobile: data.altMobile || "",
-        alt_mobile: data.altMobile || "",
-        careAddress: data.careAddress || "",
-        care_address: data.careAddress || "",
-        bedNo: data.bedNo || "",
-        bed_number: data.bedNo || "",
-        referral: data.referral || "",
-        referral_doctor: data.referral || "",
-        
-        dealType: data.dealType || "B2B",
-        deal_type: data.dealType || "B2B",
-        unit: data.unit || "ODCOM",
-        mode: chosenMode,
-        paymentType: chosenMode,
-        recordDate: cleanRecord,
-        record_date: cleanRecord,
-        notifyDate: cleanNotify,
-        notify_date: cleanNotify,
-        recallDate: cleanRecall,
-        recall_date: cleanRecall,
-        notes: data.notes || "",
-        accessory: accStr
+        billing_type: data.billingType || data.billing_type || "Daily",
+        rental_charge: Number(data.rentalCharge ?? data.rental_charge ?? 0),
+        deposit_advance: Number(data.depositAdvance ?? data.deposit_advance ?? 0),
+        installation_charge: Number(data.installationCharge ?? data.installation_charge ?? 0)
       };
 
       if (data.id) {
@@ -3063,7 +3094,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         toast.success("Requisition updated successfully!");
       } else {
         await API.post("/rental/requisitions", payload);
-        toast.success("Requisition created & deployed!");
+        toast.success("Requisition created successfully!");
       }
 
       await fetchLogs();
@@ -3072,7 +3103,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       toast.error("Error: " + (err.response?.data?.message || err.message)); 
     }
   };
-
   const handleFastClose = async (log) => {
     try {
       const today = todayISO();
