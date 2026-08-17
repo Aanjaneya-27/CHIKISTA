@@ -235,6 +235,7 @@ class Requisition {
                e.name AS equipmentName,
                r.bed_number AS bedNo,
                r.referral_doctor AS referral,
+               r.gst_number AS gstNumber,
                r.billing_type AS billingType,
                r.rental_charge AS rentalCharge,
                r.deposit_advance AS depositAdvance,
@@ -271,8 +272,8 @@ class Requisition {
 
     const sql = `
       INSERT INTO requisitions 
-      (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, status, delivery_status, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, accessory, referral_doctor, bed_number, billing_type, rental_charge, deposit_advance, installation_charge, age, attendant_name, mobile_number, alt_mobile_number, incharge_mobile, alt_mobile, care_address, record_date, recall_date) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, care_center_id, equipment_id, patient_name, quantity, start_date, logout_date, status, delivery_status, payment_type, deal_type, unit, mode, notify_date, delivery_address, notes, accessory, referral_doctor, bed_number, gst_number, billing_type, rental_charge, deposit_advance, installation_charge, age, attendant_name, mobile_number, alt_mobile_number, incharge_mobile, alt_mobile, care_address, record_date, recall_date) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -295,6 +296,7 @@ class Requisition {
       accValue,
       data.referral || data.referral_doctor || "",
       data.bedNo || data.bed_number || "",
+      data.gstNo || data.gst_number || "",
       data.billingType || data.billing_type || "Daily",
       Number(data.rentalCharge ?? data.rental_charge) || 0,
       Number(data.depositAdvance ?? data.deposit_advance) || 0,
@@ -340,7 +342,7 @@ class Requisition {
       UPDATE requisitions 
       SET care_center_id = ?, equipment_id = ?, patient_name = ?, start_date = ?, logout_date = ?, 
           status = ?, payment_type = ?, deal_type = ?, unit = ?, mode = ?, notify_date = ?, 
-          delivery_address = ?, notes = ?, accessory = ?, referral_doctor = ?, bed_number = ?, 
+          delivery_address = ?, notes = ?, accessory = ?, referral_doctor = ?, bed_number = ?, gst_number = ?,
           billing_type = ?, rental_charge = ?, deposit_advance = ?, installation_charge = ?,
           age = ?, attendant_name = ?, mobile_number = ?, alt_mobile_number = ?,
           incharge_mobile = ?, alt_mobile = ?, care_address = ?, record_date = ?, recall_date = ?
@@ -364,6 +366,7 @@ class Requisition {
       accValue,
       data.referral || data.referral_doctor || "",
       data.bedNo || data.bed_number || "",
+      data.gstNo || data.gst_number || "",
       data.billingType || data.billing_type || "Daily",
       Number(data.rentalCharge ?? data.rental_charge) || 0,
       Number(data.depositAdvance ?? data.deposit_advance) || 0,
