@@ -292,10 +292,15 @@ class Requisition {
     const depositAdvance = Number(data.deposit_advance ?? data.depositAdvance ?? 0) || 0;
     const installationCharge = Number(data.installation_charge ?? data.installationCharge ?? 0) || 0;
     const patientName = (data.patient_name || data.patientName || "Unknown").trim();
+    const eqId = data.equipment_id || data.equipmentId || data.deviceModel || null;
+    const ccId = data.care_center_id || data.careCenterId || null;
 
+    // 🔒 Safe & Clean Update Query (Prevents missing column 500 errors)
     const sql = `
       UPDATE requisitions 
-      SET patient_name = ?, 
+      SET care_center_id = COALESCE(?, care_center_id),
+          equipment_id = COALESCE(?, equipment_id),
+          patient_name = ?, 
           logout_date = ?, 
           status = ?, 
           billing_type = ?, 
@@ -306,6 +311,8 @@ class Requisition {
     `;
     
     await pool.query(sql, [
+      ccId,
+      eqId,
       patientName,
       logoutDate,
       finalStatus,
