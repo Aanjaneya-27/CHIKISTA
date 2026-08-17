@@ -2490,6 +2490,53 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     return Object.keys(e).length === 0;
   };
 
+  // const handleSubmit = () => {
+  //   if (!validate()) { 
+  //     toast.error("Please fix the validation errors before saving."); 
+  //     window.scrollTo({ top: 0, behavior: "smooth" }); 
+  //     return; 
+  //   }
+
+  //   const equipment = equipmentCatalog.find((eq) => eq?.id === form.deviceModel);
+  //   let careCenterName = isCareCenterUser ? (matchedUserCenter?.name || loggedUser?.careCenterName || loggedUser?.name || "") : "Other";
+  //   if (form.careCenterId !== "other" && !isCareCenterUser) {
+  //     careCenterName = careCenters.find((c) => c?.id === form.careCenterId)?.name || "";
+  //   }
+
+  //   const cleanLogout = formatForDateInput(form.logoutDate);
+  //   const today = todayISO();
+  //   const finalCalculatedStatus = (cleanLogout && cleanLogout <= today) ? "Closed" : "Active";
+
+  //   const rCharge = form.rentalCharge !== "" && form.rentalCharge !== undefined && form.rentalCharge !== null ? parseFloat(form.rentalCharge) : 0;
+  //   const dAdvance = form.depositAdvance !== "" && form.depositAdvance !== undefined && form.depositAdvance !== null ? parseFloat(form.depositAdvance) : 0;
+  //   const iCharge = form.installationCharge !== "" && form.installationCharge !== undefined && form.installationCharge !== null ? parseFloat(form.installationCharge) : 0;
+
+  //   onSubmit({
+  //     ...form, 
+  //     id: form.id,
+  //     recordDate: formatForDateInput(form.recordDate) || todayISO(),
+  //     startDate: formatForDateInput(form.loginDate) || todayISO(),
+  //     logoutDate: cleanLogout || null,
+  //     notifyDate: formatForDateInput(form.notifyDate) || null,
+  //     recallDate: formatForDateInput(form.recallDate) || null,
+  //     equipmentId: form.deviceModel, 
+  //     equipmentName: equipment?.name || form.deviceModel, 
+  //     category: equipment?.category || "General", 
+  //     careCenterName, 
+  //     quantity: 1, 
+  //     paymentType: form.mode, 
+  //     rentalCharge: isNaN(rCharge) ? 0 : rCharge,
+  //     depositAdvance: isNaN(dAdvance) ? 0 : dAdvance,
+  //     installationCharge: isNaN(iCharge) ? 0 : iCharge,
+  //     billingType: form.billingType || "Daily",
+  //     deliveryAddress: form.deliveryAddress, 
+  //     status: finalCalculatedStatus, 
+  //     deliveryStatus: "Pending Dispatch",
+  //     photoCount: photos.length
+  //   });
+  // };
+
+
   const handleSubmit = () => {
     if (!validate()) { 
       toast.error("Please fix the validation errors before saving."); 
@@ -2497,45 +2544,109 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       return; 
     }
 
-    const equipment = equipmentCatalog.find((eq) => eq?.id === form.deviceModel);
+    const deviceId = form.deviceModel || form.equipmentId || form.equipment_id;
+    const equipment = equipmentCatalog.find((eq) => eq?.id === deviceId);
+    
     let careCenterName = isCareCenterUser ? (matchedUserCenter?.name || loggedUser?.careCenterName || loggedUser?.name || "") : "Other";
     if (form.careCenterId !== "other" && !isCareCenterUser) {
-      careCenterName = careCenters.find((c) => c?.id === form.careCenterId)?.name || "";
+      careCenterName = careCenters.find((c) => c?.id === (form.careCenterId || form.care_center_id))?.name || "";
     }
 
-    const cleanLogout = formatForDateInput(form.logoutDate);
+    const cleanLogout = formatForDateInput(form.logoutDate || form.logout_date);
     const today = todayISO();
     const finalCalculatedStatus = (cleanLogout && cleanLogout <= today) ? "Closed" : "Active";
 
-    const rCharge = form.rentalCharge !== "" && form.rentalCharge !== undefined && form.rentalCharge !== null ? parseFloat(form.rentalCharge) : 0;
-    const dAdvance = form.depositAdvance !== "" && form.depositAdvance !== undefined && form.depositAdvance !== null ? parseFloat(form.depositAdvance) : 0;
-    const iCharge = form.installationCharge !== "" && form.installationCharge !== undefined && form.installationCharge !== null ? parseFloat(form.installationCharge) : 0;
+    // 🛠️ Safe number parsing (Dono camelCase & snake_case check karega)
+    const parseNum = (v1, v2) => {
+      const val = (v1 !== undefined && v1 !== null && v1 !== "") ? v1 : v2;
+      if (val === undefined || val === null || val === "") return 0;
+      const n = parseFloat(val);
+      return isNaN(n) ? 0 : n;
+    };
+
+    const rCharge = parseNum(form.rentalCharge, form.rental_charge);
+    const dAdvance = parseNum(form.depositAdvance, form.deposit_advance);
+    const iCharge = parseNum(form.installationCharge, form.installation_charge);
 
     onSubmit({
       ...form, 
       id: form.id,
-      recordDate: formatForDateInput(form.recordDate) || todayISO(),
-      startDate: formatForDateInput(form.loginDate) || todayISO(),
+      
+      // Dates
+      recordDate: formatForDateInput(form.recordDate || form.record_date) || todayISO(),
+      record_date: formatForDateInput(form.recordDate || form.record_date) || todayISO(),
+      startDate: formatForDateInput(form.loginDate || form.startDate || form.start_date) || todayISO(),
+      start_date: formatForDateInput(form.loginDate || form.startDate || form.start_date) || todayISO(),
       logoutDate: cleanLogout || null,
-      notifyDate: formatForDateInput(form.notifyDate) || null,
-      recallDate: formatForDateInput(form.recallDate) || null,
-      equipmentId: form.deviceModel, 
-      equipmentName: equipment?.name || form.deviceModel, 
-      category: equipment?.category || "General", 
+      logout_date: cleanLogout || null,
+      notifyDate: formatForDateInput(form.notifyDate || form.notify_date) || null,
+      notify_date: formatForDateInput(form.notifyDate || form.notify_date) || null,
+      recallDate: formatForDateInput(form.recallDate || form.recall_date) || null,
+      recall_date: formatForDateInput(form.recallDate || form.recall_date) || null,
+
+      // Equipment & Center
+      careCenterId: form.careCenterId || form.care_center_id || null,
+      care_center_id: form.careCenterId || form.care_center_id || null,
       careCenterName, 
+      care_center_name: careCenterName,
+      equipmentId: deviceId,
+      equipment_id: deviceId, 
+      equipmentName: equipment?.name || form.equipmentName || deviceId, 
+      equipment_name: equipment?.name || form.equipmentName || deviceId, 
+      category: equipment?.category || "General", 
       quantity: 1, 
-      paymentType: form.mode, 
-      rentalCharge: isNaN(rCharge) ? 0 : rCharge,
-      depositAdvance: isNaN(dAdvance) ? 0 : dAdvance,
-      installationCharge: isNaN(iCharge) ? 0 : iCharge,
-      billingType: form.billingType || "Daily",
-      deliveryAddress: form.deliveryAddress, 
+
+      // 💳 Commercials (Dono keys provide kar di hain)
+      billingType: form.billingType || form.billing_type || "Daily",
+      billing_type: form.billingType || form.billing_type || "Daily",
+      rentalCharge: rCharge,
+      rental_charge: rCharge,
+      depositAdvance: dAdvance,
+      deposit_advance: dAdvance,
+      installationCharge: iCharge,
+      installation_charge: iCharge,
+
+      // 👤 Patient Identity & Contact
+      patientName: form.patientName || form.patient_name || "",
+      patient_name: form.patientName || form.patient_name || "",
+      age: form.age || "",
+      attendantName: form.attendantName || form.attendant_name || "",
+      attendant_name: form.attendantName || form.attendant_name || "",
+      mobileNumber: form.mobileNumber || form.mobile_number || form.mobile || "",
+      mobile_number: form.mobileNumber || form.mobile_number || form.mobile || "",
+      altMobileNumber: form.altMobileNumber || form.alt_mobile_number || form.alternativeMobile || "",
+      alt_mobile_number: form.altMobileNumber || form.alt_mobile_number || form.alternativeMobile || "",
+      inchargeMobile: form.inchargeMobile || form.incharge_mobile || "",
+      incharge_mobile: form.inchargeMobile || form.incharge_mobile || "",
+      altMobile: form.altMobile || form.alt_mobile || "",
+      alt_mobile: form.altMobile || form.alt_mobile || "",
+      careAddress: form.careAddress || form.care_address || "",
+      care_address: form.careAddress || form.care_address || "",
+      deliveryAddress: form.deliveryAddress || form.delivery_address || "",
+      delivery_address: form.deliveryAddress || form.delivery_address || "",
+      bedNumber: form.bedNumber || form.bed_number || form.bedNo || "",
+      bed_number: form.bedNumber || form.bed_number || form.bedNo || "",
+      referralDoctor: form.referralDoctor || form.referral_doctor || form.referral || "",
+      referral_doctor: form.referralDoctor || form.referral_doctor || form.referral || "",
+      gstNumber: form.gstNumber || form.gst_number || form.gstNo || "",
+      gst_number: form.gstNumber || form.gst_number || form.gstNo || "",
+      accessory: form.accessory || form.accessories || form.selectAccessory || "",
+      accessories: form.accessory || form.accessories || form.selectAccessory || "",
+      notes: form.notes || form.note || "",
+
+      // Status
+      dealType: form.dealType || form.deal_type || "B2B",
+      deal_type: form.dealType || form.deal_type || "B2B",
+      unit: form.unit || "ODCOM",
+      mode: form.mode || form.paymentType || "Postpaid",
+      paymentType: form.mode || form.paymentType || "Postpaid",
+      payment_type: form.mode || form.paymentType || "Postpaid",
       status: finalCalculatedStatus, 
-      deliveryStatus: "Pending Dispatch",
+      deliveryStatus: form.deliveryStatus || form.delivery_status || "Pending Dispatch",
+      delivery_status: form.deliveryStatus || form.delivery_status || "Pending Dispatch",
       photoCount: photos.length
     });
   };
-
   return (
     <div className="fade-slide-up space-y-5">
       <GlobalPolish />
