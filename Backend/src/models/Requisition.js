@@ -215,7 +215,7 @@
 const pool = require("../config/database");
 
 const cleanDate = (val) => {
-  if (!val || val === "" || String(val).trim() === "0000-00-00" || String(val).toLowerCase() === "null") return null;
+  if (!val || val === "" || String(val).trim() === "0000-00-00" || String(val).toLowerCase() === "null" || String(val).toLowerCase() === "undefined") return null;
   const d = new Date(val);
   return isNaN(d.getTime()) || d.getFullYear() < 2000 ? null : d.toISOString().slice(0, 10);
 };
@@ -260,7 +260,12 @@ class Requisition {
     const notifyDate = cleanDate(data.notifyDate || data.notify_date);
     const recallDate = cleanDate(data.recallDate || data.recall_date);
 
-    const finalStatus = logoutDate !== null ? "Closed" : "Active";
+    // 🔒 100% FORCE ACTIVE UNLESS LOGOUT DATE HAS A REAL VALUE
+    let finalStatus = "Active";
+    if (logoutDate !== null && logoutDate !== "" && logoutDate !== "0000-00-00") {
+      finalStatus = "Closed";
+    }
+
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
 
@@ -278,7 +283,7 @@ class Requisition {
       1,
       startDate,
       logoutDate,
-      finalStatus,
+      finalStatus, // 👈 Forced Active / Closed
       "Pending Dispatch",
       data.paymentType || data.mode || "Postpaid",
       data.dealType || data.deal_type || "B2B",
@@ -317,8 +322,12 @@ class Requisition {
     const notifyDate = cleanDate(data.notifyDate || data.notify_date);
     const recallDate = cleanDate(data.recallDate || data.recall_date);
 
-    let finalStatus = logoutDate !== null ? "Closed" : "Active";
-    if (String(data.status).toLowerCase() === "inactive") finalStatus = "Inactive";
+    let finalStatus = "Active";
+    if (logoutDate !== null && logoutDate !== "" && logoutDate !== "0000-00-00") {
+      finalStatus = "Closed";
+    } else if (String(data.status).toLowerCase() === "inactive") {
+      finalStatus = "Inactive";
+    }
 
     let accValue = data.accessories || data.accessory || "";
     if (Array.isArray(accValue)) accValue = accValue.join(", ");
