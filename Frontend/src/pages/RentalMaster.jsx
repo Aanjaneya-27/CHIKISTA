@@ -2538,6 +2538,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
 
 
   const handleSubmit = () => {
+      console.log("👉 FORM MEIN KYA DATA HAI:", form); 
     if (!validate()) { 
       toast.error("Please fix the validation errors before saving."); 
       window.scrollTo({ top: 0, behavior: "smooth" }); 
