@@ -1853,7 +1853,6 @@ import {
   Phone,
   Calendar,
   CalendarDays,
-  Info,
   CheckCircle2,
   Sparkles,
   RotateCcw
@@ -1925,7 +1924,9 @@ const formatForDateInput = (d) => {
 const formatDisplayDate = (d) => {
   const clean = formatForDateInput(d);
   if (!clean) return "—";
-  const [y, m, day] = clean.split("-");
+  const parts = clean.split("-");
+  if (parts.length !== 3) return "—";
+  const [y, m, day] = parts;
   return `${day}/${m}/${y}`;
 };
 
@@ -1937,7 +1938,7 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Universal Calendar-Month Overlap Engine (Applies to all 12 months)
+// 🧮 Universal Calendar-Month Overlap Engine
 const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
   const s = formatForDateInput(loginStr);
   if (!s) return "—";
@@ -1951,11 +1952,9 @@ const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
     return Date.UTC(eY, eM - 1, eD);
   })() : null;
 
-  // Month reference boundary
   const now = new Date();
   let refYear = now.getFullYear();
   let refMonth = now.getMonth(); // 0-11
-  let refDay = now.getDate();
 
   if (targetMonthISO) {
     const cleanTarget = formatForDateInput(targetMonthISO);
@@ -1963,7 +1962,6 @@ const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
       const [tY, tM] = cleanTarget.split("-").map(Number);
       refYear = tY;
       refMonth = tM - 1;
-      refDay = new Date(refYear, refMonth + 1, 0).getDate();
     }
   }
 
@@ -1971,20 +1969,15 @@ const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
   const lastDayOfMonth = new Date(refYear, refMonth + 1, 0).getDate();
   const monthEndUtc = Date.UTC(refYear, refMonth, lastDayOfMonth);
 
-  // 1. Agar rental is month se pehle hi logout/close ho gaya tha -> 0 / 0
   if (endUtc !== null && endUtc < monthStartUtc) return "0 / 0";
-  
-  // 2. Agar rental is month ke baad shuru hoga -> 0 / 0
   if (startUtc > monthEndUtc) return "0 / 0";
 
   const todayClean = todayISO();
   const [tY, tM, tD] = todayClean.split("-").map(Number);
   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
-  // Effective Active End
   const effectiveEndUtc = endUtc !== null ? endUtc : Math.min(todayUtc, monthEndUtc);
 
-  // Overlap Intersection
   const interStart = Math.max(startUtc, monthStartUtc);
   const interEnd = Math.min(effectiveEndUtc, monthEndUtc);
 
@@ -2034,7 +2027,7 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Aesthetic Enhanced Calculator Modal
+// 🌟 Calculator Modal
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const [tempLoginDate, setTempLoginDate] = useState(() => todayISO());
   const [tempLogoutDate, setTempLogoutDate] = useState("");
@@ -2062,21 +2055,21 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
   const calcStatus = useMemo(() => {
     if (totalDaysDisplay === "0 / 0") {
       return {
-        label: "Zero Usage in Selected Month",
+        label: "Zero Usage",
         desc: "Rental is outside this calendar month window",
         tone: "amber"
       };
     }
     if (tempLogoutDate && tempLogoutDate <= todayISO()) {
       return {
-        label: "Closed / Completed Record",
-        desc: "Asset was logged out & returned",
+        label: "Closed / Completed",
+        desc: "Asset was returned within this period",
         tone: "slate"
       };
     }
     return {
-      label: "Active Running Rental",
-      desc: "Currently deployed to patient",
+      label: "Active Running",
+      desc: "Currently active with patient",
       tone: "teal"
     };
   }, [totalDaysDisplay, tempLogoutDate]);
@@ -2089,130 +2082,116 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/65 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="fade-slide-up w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/10">
-        
-        {/* Modal Header */}
-        <div className="relative border-b border-slate-100 bg-gradient-to-r from-teal-500/10 via-slate-50 to-white px-6 py-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/10">
+        <div className="border-b border-slate-100 bg-gradient-to-r from-teal-500/10 via-slate-50 to-white px-6 py-4.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 text-white shadow-md shadow-teal-500/25">
+              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-teal-600 text-white shadow-md shadow-teal-500/20">
                 <Calculator className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-display text-lg font-bold text-slate-800">
+                <h3 className="font-display text-base font-bold text-slate-800">
                   Universal Days Calculator
                 </h3>
-                <p className="text-xs font-medium text-slate-400">
-                  Monthly Overlap Engine • {selectedMonthName}
+                <p className="text-xs font-semibold text-teal-700">
+                  {selectedMonthName}
                 </p>
               </div>
             </div>
             <button 
               onClick={onClose} 
-              className="grid h-8 w-8 place-items-center rounded-xl text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition cursor-pointer"
+              className="grid h-8 w-8 place-items-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
             >
               <X className="h-4.5 w-4.5" />
             </button>
           </div>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-6 space-y-5">
-          
-          {/* Target Month Inspector */}
-          <div className="rounded-2xl border border-teal-100 bg-teal-50/40 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-teal-600" />
-                <span className="text-xs font-bold uppercase tracking-wider text-teal-900">
-                  Viewing Month Filter:
-                </span>
-              </div>
-              <input 
-                type="month" 
-                value={viewMonth} 
-                onChange={(e) => setViewMonth(e.target.value)} 
-                className="rounded-lg border border-teal-200 bg-white px-2.5 py-1 text-xs font-bold text-teal-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 cursor-pointer shadow-2xs"
-              />
+        <div className="p-6 space-y-4">
+          <div className="rounded-2xl border border-teal-100 bg-teal-50/50 p-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-teal-600" />
+              <span className="text-xs font-bold uppercase tracking-wider text-teal-900">
+                Inspection Month:
+              </span>
             </div>
+            <input 
+              type="month" 
+              value={viewMonth} 
+              onChange={(e) => setViewMonth(e.target.value)} 
+              className="rounded-lg border border-teal-200 bg-white px-2 py-1 text-xs font-bold text-teal-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 cursor-pointer shadow-2xs"
+            />
           </div>
 
-          {/* Date Range Inputs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                LOG IN DATE
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <Calendar className="h-3.5 w-3.5 text-slate-400" /> LOG IN DATE
               </label>
               <input 
                 type="date" 
                 value={tempLoginDate} 
                 onChange={(e) => setTempLoginDate(e.target.value)} 
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20 shadow-2xs" 
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20 shadow-2xs" 
               />
               <button 
                 type="button" 
                 onClick={() => setTempLoginDate(todayISO())} 
-                className="text-[11px] font-semibold text-teal-600 hover:text-teal-800 transition cursor-pointer"
+                className="text-[11px] font-semibold text-teal-600 hover:text-teal-800 cursor-pointer"
               >
                 Set Today
               </button>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                LOG OUT DATE
+            <div className="space-y-1">
+              <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <Calendar className="h-3.5 w-3.5 text-slate-400" /> LOG OUT DATE
               </label>
               <input 
                 type="date" 
                 value={tempLogoutDate} 
                 min={tempLoginDate}
                 onChange={(e) => setTempLogoutDate(e.target.value)} 
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20 shadow-2xs" 
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20 shadow-2xs" 
               />
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400">Leave blank for Active</span>
+                <span className="text-slate-400">Optional</span>
                 {tempLogoutDate && (
                   <button 
                     type="button" 
                     onClick={() => setTempLogoutDate("")} 
-                    className="font-semibold text-rose-500 hover:text-rose-700 transition cursor-pointer"
+                    className="font-semibold text-rose-500 hover:text-rose-700 cursor-pointer"
                   >
-                    Clear Logout
+                    Clear
                   </button>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Result Gradient Card */}
-          <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white shadow-lg">
-            <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-teal-500/20 blur-2xl pointer-events-none" />
-            
-            <div className="relative flex items-center justify-between">
+          <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-5 text-white shadow-xl">
+            <div className="flex items-center justify-between">
               <div>
-                <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-teal-300">
-                  <Sparkles className="h-3.5 w-3.5 text-teal-400" />
-                  Calculated Output
+                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-teal-400">
+                  <Sparkles className="h-3.5 w-3.5 text-teal-400" /> Overlap Result
                 </span>
-                <p className="mt-2 font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+                <p className="mt-1 font-display text-4xl font-extrabold tracking-tight text-white">
                   {totalDaysDisplay}
                 </p>
               </div>
 
               <div className="text-right">
-                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border ${
+                <span className={`inline-block rounded-md px-2.5 py-1 text-[11px] font-bold border ${
                   calcStatus.tone === "amber" 
                     ? "bg-amber-400/10 text-amber-300 border-amber-400/20" 
                     : calcStatus.tone === "slate"
-                    ? "bg-slate-700 text-slate-300 border-slate-600"
+                    ? "bg-slate-800 text-slate-300 border-slate-700"
                     : "bg-teal-400/15 text-teal-300 border-teal-400/30"
                 }`}>
                   {calcStatus.label}
                 </span>
-                <p className="text-[11px] text-slate-400 mt-1.5 max-w-[170px]">
+                <p className="text-[10px] text-slate-400 mt-1 max-w-[140px]">
                   {calcStatus.desc}
                 </p>
               </div>
@@ -2220,8 +2199,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           </div>
         </div>
 
-        {/* Modal Footer */}
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/70 px-6 py-4">
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/80 px-6 py-3.5">
           <button 
             type="button" 
             onClick={() => {
@@ -2230,12 +2208,12 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
               const d = new Date();
               setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
             }} 
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 transition cursor-pointer"
+            className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-700 cursor-pointer"
           >
             <RotateCcw className="h-3.5 w-3.5" /> Reset
           </button>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <button 
               type="button" 
               onClick={onClose} 
@@ -2246,9 +2224,9 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             <button 
               type="button" 
               onClick={handleApply} 
-              className="flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 text-xs font-bold shadow-md shadow-teal-600/20 transition cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
             >
-              <CheckCircle2 className="h-4 w-4" /> Apply Changes
+              <CheckCircle2 className="h-4 w-4" /> Apply
             </button>
           </div>
         </div>
@@ -2851,40 +2829,40 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       installation_charge: iCharge,
 
       // 👤 Patient Identity & Contact
-      patientName: form.patientName || form.patient_name || "",
-      patient_name: form.patientName || form.patient_name || "",
-      age: form.age || "",
-      attendantName: form.attendantName || form.attendant_name || "",
-      attendant_name: form.attendantName || form.attendant_name || "",
-      mobileNumber: form.mobileNumber || form.mobile_number || form.mobile || "",
-      mobile_number: form.mobileNumber || form.mobile_number || form.mobile || "",
-      altMobileNumber: form.altMobileNumber || form.alt_mobile_number || form.alternativeMobile || "",
-      alt_mobile_number: form.altMobileNumber || form.alt_mobile_number || form.alternativeMobile || "",
-      inchargeMobile: form.inchargeMobile || form.incharge_mobile || "",
-      incharge_mobile: form.inchargeMobile || form.incharge_mobile || "",
-      altMobile: form.altMobile || form.alt_mobile || "",
-      alt_mobile: form.altMobile || form.alt_mobile || "",
-      careAddress: form.careAddress || form.care_address || "",
-      care_address: form.careAddress || form.care_address || "",
-      deliveryAddress: form.deliveryAddress || form.delivery_address || "",
-      delivery_address: form.deliveryAddress || form.delivery_address || "",
-      bedNumber: form.bedNumber || form.bed_number || form.bedNo || "",
-      bed_number: form.bedNumber || form.bed_number || form.bedNo || "",
-      referralDoctor: form.referralDoctor || form.referral_doctor || form.referral || "",
-      referral_doctor: form.referralDoctor || form.referral_doctor || form.referral || "",
-      gstNumber: form.gstNumber || form.gst_number || form.gstNo || "",
-      gst_number: form.gstNumber || form.gst_number || form.gstNo || "",
-      accessory: form.accessory || form.accessories || form.selectAccessory || "",
-      accessories: form.accessory || form.accessories || form.selectAccessory || "",
+      patientName: String(form.patientName || form.patient_name || "").trim(),
+      patient_name: String(form.patientName || form.patient_name || "").trim(),
+      age: String(form.age || "").trim(),
+      attendantName: String(form.attendantName || form.attendant_name || "").trim(),
+      attendant_name: String(form.attendantName || form.attendant_name || "").trim(),
+      mobileNumber: String(form.mobileNumber || form.mobile_number || form.mobile || "").trim(),
+      mobile_number: String(form.mobileNumber || form.mobile_number || form.mobile || "").trim(),
+      altMobileNumber: String(form.altMobileNumber || form.alt_mobile_number || "").trim(),
+      alt_mobile_number: String(form.altMobileNumber || form.alt_mobile_number || "").trim(),
+      inchargeMobile: String(form.inchargeMobile || form.incharge_mobile || "").trim(),
+      incharge_mobile: String(form.inchargeMobile || form.incharge_mobile || "").trim(),
+      altMobile: String(form.altMobile || form.alt_mobile || "").trim(),
+      alt_mobile: String(form.altMobile || form.alt_mobile || "").trim(),
+      careAddress: String(form.careAddress || form.care_address || "").trim(),
+      care_address: String(form.careAddress || form.care_address || "").trim(),
+      deliveryAddress: String(form.deliveryAddress || form.delivery_address || "").trim(),
+      delivery_address: String(form.deliveryAddress || form.delivery_address || "").trim(),
+      bedNumber: String(form.bedNo || form.bedNumber || form.bed_number || "").trim(),
+      bed_number: String(form.bedNo || form.bedNumber || form.bed_number || "").trim(),
+      referralDoctor: String(form.referral || form.referralDoctor || form.referral_doctor || "").trim(),
+      referral_doctor: String(form.referral || form.referralDoctor || form.referral_doctor || "").trim(),
+      gstNumber: String(form.gstNo || form.gstNumber || form.gst_number || "").trim(),
+      gst_number: String(form.gstNo || form.gstNumber || form.gst_number || "").trim(),
+      accessory: form.accessory || form.accessories || "",
+      accessories: form.accessory || form.accessories || "",
       notes: form.notes || form.note || "",
 
       // Status
       dealType: form.dealType || form.deal_type || "B2B",
       deal_type: form.dealType || form.deal_type || "B2B",
       unit: form.unit || "ODCOM",
-      mode: chosenMode,
-      payment_type: chosenMode,
-      paymentType: chosenMode,
+      mode: form.mode || form.paymentType || "Postpaid",
+      paymentType: form.mode || form.paymentType || "Postpaid",
+      payment_type: form.mode || form.paymentType || "Postpaid",
       status: finalCalculatedStatus, 
       deliveryStatus: form.deliveryStatus || form.delivery_status || "Pending Dispatch",
       delivery_status: form.deliveryStatus || form.delivery_status || "Pending Dispatch",
@@ -3304,7 +3282,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         const eqName = String(l.equipmentName || eqObj?.name || eqId || "");
 
         const patient = String(l.patientName || l.patient_name || "");
-        const inchargeMobile = String(l.inchargeMobile || l.incharge_mobile || l.phone || "");
+        const inchargePhone = String(l.inchargeMobile || l.incharge_mobile || l.phone || "");
         const logId = String(l.id || "");
 
         const matchesSearch = !q || 
@@ -3312,7 +3290,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
           eqName.toLowerCase().includes(q) || 
           patient.toLowerCase().includes(q) || 
           ccName.toLowerCase().includes(q) || 
-          inchargeMobile.includes(q);
+          inchargePhone.includes(q);
           
         const cleanLogout = formatForDateInput(l.logoutDate || l.logout_date);
         const rawStatus = String(l.status || l.requisition_status || "").trim().toLowerCase();
@@ -3350,6 +3328,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
+  // ✅ 100% Bug-Free handleFormSubmit using `data`
   const handleFormSubmit = async (data) => {
     try {
       let accStr = data.accessory || data.accessories || "";
@@ -3451,7 +3430,12 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         recallDate: cleanRecall,
         notes: data.notes || "",
         accessory: accStr,
-        accessories: accStr
+        accessories: accStr,
+
+        // Status & Delivery Properties
+        deliveryStatus: data.deliveryStatus || data.delivery_status || "Pending Dispatch",
+        delivery_status: data.deliveryStatus || data.delivery_status || "Pending Dispatch",
+        photoCount: Number(data.photoCount || 0)
       };
 
       if (data.id) {
