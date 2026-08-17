@@ -321,72 +321,56 @@
 
 const pool = require("../config/database");
 
-// 👨‍⚕️ 1. REFERENCES
+// 🛠️ AUTO-CREATE 'references' TABLE IF MISSING
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS \`references\` (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        doctor_name VARCHAR(255) NULL,
+        name VARCHAR(255) NULL,
+        phone VARCHAR(50) NULL,
+        contact VARCHAR(50) NULL,
+        hospital VARCHAR(255) NULL,
+        specialist_domain VARCHAR(255) NULL,
+        address TEXT NULL,
+        status VARCHAR(50) DEFAULT 'Active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  } catch (e) {
+    console.warn("References table auto-init:", e.message);
+  }
+})();
+
+// ==========================================
+// 👨‍⚕️ 1. REFERENCES (DOCTORS / PARTNERS)
+// ==========================================
+
 const getReferences = async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM `references` ORDER BY id DESC").catch(() => [[]]);
+    
     const formatted = (rows || []).map((r) => ({
       id: r.id,
       name: r.doctor_name || r.doctorName || r.name || "",
       doctorName: r.doctor_name || r.doctorName || r.name || "",
       phone: r.phone || r.contact || "",
+      contact: r.contact || r.phone || "",
       hospital: r.hospital || "",
       domain: r.specialist_domain || r.domain || r.specialistDomain || "",
+      specialistDomain: r.specialist_domain || r.domain || r.specialistDomain || "",
       address: r.address || "",
       status: r.status || "Active"
     }));
+
     return res.status(200).json(formatted);
   } catch (error) {
-    console.error("Get References Error:", error);
-    return res.status(200).json([]); // Fallback to empty list instead of 500
+    console.error("Get References Notice:", error.message);
+    return res.status(200).json([]); // Returns clean empty array instead of 500 error
   }
 };
 
-// 🏥 2. CARE CENTERS
-const getCareCenters = async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT * FROM care_centers ORDER BY id DESC").catch(() => [[]]);
-    return res.status(200).json(rows || []);
-  } catch (error) {
-    console.error("Get Care Centers Error:", error);
-    return res.status(200).json([]);
-  }
-};
-
-// 📦 3. EQUIPMENT
-const getEquipment = async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT * FROM equipment ORDER BY id DESC").catch(() => [[]]);
-    return res.status(200).json(rows || []);
-  } catch (error) {
-    console.error("Get Equipment Error:", error);
-    return res.status(200).json([]);
-  }
-};
-
-// 🏷️ 4. CATEGORIES (ACCESSORIES)
-const getCategories = async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT * FROM categories ORDER BY id DESC").catch(() => [[]]);
-    return res.status(200).json(rows || []);
-  } catch (error) {
-    console.error("Get Categories Error:", error);
-    return res.status(200).json([]);
-  }
-};
-
-// 🚚 5. DELIVERY EXECUTIVES
-const getDeliveryExecutives = async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT * FROM delivery_executives ORDER BY id DESC").catch(() => [[]]);
-    return res.status(200).json(rows || []);
-  } catch (error) {
-    console.error("Get Delivery Execs Error:", error);
-    return res.status(200).json([]);
-  }
-};
-
-// POST / PUT / DELETE Handlers
 const addReference = async (req, res) => {
   try {
     const data = req.body;
@@ -397,171 +381,255 @@ const addReference = async (req, res) => {
     const address = (data.address || "").trim();
     const status = data.status || "Active";
 
-    if (!doctorName) return res.status(400).json({ message: "Doctor name required." });
+    if (!doctorName) {
+      return res.status(400).json({ message: "Doctor / Reference name is required." });
+    }
 
     const [result] = await pool.query(
-      "INSERT INTO `references` (doctor_name, phone, contact, hospital, specialist_domain, address, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [doctorName, phone, phone, hospital, domain, address, status]
+      "INSERT INTO `references` (doctor_name, name, phone, contact, hospital, specialist_domain, address, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [doctorName, doctorName, phone, phone, hospital, domain, address, status]
     );
-    return res.status(201).json({ message: "Reference added!", id: result.insertId });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+
+    return res.status(201).json({
+      message: "Reference added successfully!",
+      id: result.insertId,
+      reference: { id: result.insertId, doctorName, phone, hospital, specialistDomain: domain, address, status }
+    });
+  } catch (error) {
+    console.error("Add Reference Error:", error);
+    return res.status(500).json({ message: "Failed to add reference: " + error.message });
   }
 };
 
 const updateReference = async (req, res) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
     const data = req.body;
+    const doctorName = (data.doctorName || data.doctor_name || data.name || "").trim();
+    const phone = (data.phone || data.contact || "").trim();
+    const hospital = (data.hospital || "").trim();
+    const domain = (data.specialistDomain || data.specialist_domain || data.domain || "").trim();
+    const address = (data.address || "").trim();
+    const status = data.status || "Active";
+
     await pool.query(
-      "UPDATE `references` SET doctor_name = ?, phone = ?, contact = ?, hospital = ?, specialist_domain = ?, address = ?, status = ? WHERE id = ?",
-      [data.doctorName || data.name, data.phone, data.phone, data.hospital, data.specialistDomain, data.address, data.status || "Active", id]
+      "UPDATE `references` SET doctor_name = ?, name = ?, phone = ?, contact = ?, hospital = ?, specialist_domain = ?, address = ?, status = ? WHERE id = ?",
+      [doctorName, doctorName, phone, phone, hospital, domain, address, status, id]
     );
-    return res.status(200).json({ message: "Reference updated!" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+
+    return res.status(200).json({ message: "Reference updated successfully!" });
+  } catch (error) {
+    console.error("Update Reference Error:", error);
+    return res.status(500).json({ message: "Failed to update reference: " + error.message });
   }
 };
 
 const deleteReference = async (req, res) => {
+  const { id } = req.params;
   try {
-    await pool.query("DELETE FROM `references` WHERE id = ?", [req.params.id]);
-    return res.status(200).json({ message: "Reference deleted!" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+    await pool.query("DELETE FROM `references` WHERE id = ?", [id]);
+    return res.status(200).json({ message: "Reference deleted successfully!" });
+  } catch (error) {
+    console.error("Delete Reference Error:", error);
+    return res.status(500).json({ message: "Failed to delete reference: " + error.message });
+  }
+};
+
+// ==========================================
+// 🏥 2. CARE CENTERS
+// ==========================================
+
+const getCareCenters = async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM care_centers ORDER BY id DESC").catch(() => [[]]);
+    return res.status(200).json(rows || []);
+  } catch (error) {
+    return res.status(200).json([]);
   }
 };
 
 const addCareCenter = async (req, res) => {
   try {
-    const { name, phone, address, contactPerson, status } = req.body;
+    const { name, phone, address, contactPerson, contact_person, status } = req.body;
     const [result] = await pool.query(
       "INSERT INTO care_centers (name, phone, address, contact_person, status) VALUES (?, ?, ?, ?, ?)",
-      [name?.trim(), phone?.trim(), address?.trim() || "", contactPerson?.trim() || "", status || "Active"]
+      [name?.trim(), phone?.trim(), address?.trim() || "", (contactPerson || contact_person || "")?.trim(), status || "Active"]
     );
-    return res.status(201).json({ message: "Care center added!", id: result.insertId });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+    return res.status(201).json({ message: "Care Center added!", id: result.insertId });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
 const updateCareCenter = async (req, res) => {
   try {
-    const { name, phone, address, contactPerson, status } = req.body;
+    const { id } = req.params;
+    const { name, phone, address, contactPerson, contact_person, status } = req.body;
     await pool.query(
       "UPDATE care_centers SET name = ?, phone = ?, address = ?, contact_person = ?, status = ? WHERE id = ?",
-      [name?.trim(), phone?.trim(), address?.trim() || "", contactPerson?.trim() || "", status || "Active", req.params.id]
+      [name?.trim(), phone?.trim(), address?.trim() || "", (contactPerson || contact_person || "")?.trim(), status || "Active", id]
     );
-    return res.status(200).json({ message: "Care center updated!" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+    return res.status(200).json({ message: "Care Center updated!" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
 const deleteCareCenter = async (req, res) => {
   try {
-    await pool.query("DELETE FROM care_centers WHERE id = ?", [req.params.id]);
-    return res.status(200).json({ message: "Care center deleted!" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+    const { id } = req.params;
+    await pool.query("DELETE FROM care_centers WHERE id = ?", [id]);
+    return res.status(200).json({ message: "Care Center deleted!" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// ==========================================
+// 📦 3. EQUIPMENT
+// ==========================================
+
+const getEquipment = async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM equipment ORDER BY id DESC").catch(() => [[]]);
+    return res.status(200).json(rows || []);
+  } catch (error) {
+    return res.status(200).json([]);
   }
 };
 
 const addEquipment = async (req, res) => {
   try {
-    const { name, category, model, serialNumber, stock, status } = req.body;
+    const { name, category, model, serialNumber, serial_number, stock, status } = req.body;
     const [result] = await pool.query(
       "INSERT INTO equipment (name, category, model, serial_number, stock, status) VALUES (?, ?, ?, ?, ?, ?)",
-      [name?.trim(), category?.trim() || "General", model?.trim() || "", serialNumber || "", Number(stock) || 1, status || "Active"]
+      [name?.trim(), category?.trim() || "General", model?.trim() || "", serialNumber || serial_number || "", Number(stock) || 1, status || "Active"]
     );
     return res.status(201).json({ message: "Equipment added!", id: result.insertId });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
 const updateEquipment = async (req, res) => {
   try {
-    const { name, category, model, serialNumber, stock, status } = req.body;
+    const { id } = req.params;
+    const { name, category, model, serialNumber, serial_number, stock, status } = req.body;
     await pool.query(
       "UPDATE equipment SET name = ?, category = ?, model = ?, serial_number = ?, stock = ?, status = ? WHERE id = ?",
-      [name?.trim(), category?.trim() || "General", model?.trim() || "", serialNumber || "", Number(stock) || 1, status || "Active", req.params.id]
+      [name?.trim(), category?.trim() || "General", model?.trim() || "", serialNumber || serial_number || "", Number(stock) || 1, status || "Active", id]
     );
     return res.status(200).json({ message: "Equipment updated!" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
 const deleteEquipment = async (req, res) => {
   try {
-    await pool.query("DELETE FROM equipment WHERE id = ?", [req.params.id]);
+    const { id } = req.params;
+    await pool.query("DELETE FROM equipment WHERE id = ?", [id]);
     return res.status(200).json({ message: "Equipment deleted!" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// ==========================================
+// 🏷️ 4. CATEGORIES (ACCESSORIES)
+// ==========================================
+
+const getCategories = async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM categories ORDER BY id DESC").catch(() => [[]]);
+    return res.status(200).json(rows || []);
+  } catch (error) {
+    return res.status(200).json([]);
   }
 };
 
 const addCategory = async (req, res) => {
   try {
-    const { name, status } = req.body;
-    const [result] = await pool.query("INSERT INTO categories (name, status) VALUES (?, ?)", [name?.trim(), status || "Active"]);
+    const { name, title, status } = req.body;
+    const catName = (name || title || "").trim();
+    const [result] = await pool.query("INSERT INTO categories (name, status) VALUES (?, ?)", [catName, status || "Active"]);
     return res.status(201).json({ message: "Category added!", id: result.insertId });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
 const updateCategory = async (req, res) => {
   try {
-    await pool.query("UPDATE categories SET name = ?, status = ? WHERE id = ?", [req.body.name?.trim(), req.body.status || "Active", req.params.id]);
+    const { id } = req.params;
+    const { name, title, status } = req.body;
+    const catName = (name || title || "").trim();
+    await pool.query("UPDATE categories SET name = ?, status = ? WHERE id = ?", [catName, status || "Active", id]);
     return res.status(200).json({ message: "Category updated!" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
 const deleteCategory = async (req, res) => {
   try {
-    await pool.query("DELETE FROM categories WHERE id = ?", [req.params.id]);
+    const { id } = req.params;
+    await pool.query("DELETE FROM categories WHERE id = ?", [id]);
     return res.status(200).json({ message: "Category deleted!" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// ==========================================
+// 🚚 5. DELIVERY EXECUTIVES
+// ==========================================
+
+const getDeliveryExecutives = async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM delivery_executives ORDER BY id DESC").catch(() => [[]]);
+    return res.status(200).json(rows || []);
+  } catch (error) {
+    return res.status(200).json([]);
   }
 };
 
 const addDeliveryExecutive = async (req, res) => {
   try {
-    const { name, driverName, phone, vehicleNumber, status } = req.body;
+    const { name, driverName, phone, vehicleNumber, vehicle_number, status } = req.body;
+    const driver = (driverName || name || "").trim();
     const [result] = await pool.query(
       "INSERT INTO delivery_executives (driver_name, phone, vehicle_number, status) VALUES (?, ?, ?, ?)",
-      [(driverName || name)?.trim(), phone?.trim(), vehicleNumber || "", status || "Active"]
+      [driver, phone?.trim(), vehicleNumber || vehicle_number || "", status || "Active"]
     );
     return res.status(201).json({ message: "Delivery Executive added!", id: result.insertId });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
 const updateDeliveryExecutive = async (req, res) => {
   try {
-    const { name, driverName, phone, vehicleNumber, status } = req.body;
+    const { id } = req.params;
+    const { name, driverName, phone, vehicleNumber, vehicle_number, status } = req.body;
+    const driver = (driverName || name || "").trim();
     await pool.query(
       "UPDATE delivery_executives SET driver_name = ?, phone = ?, vehicle_number = ?, status = ? WHERE id = ?",
-      [(driverName || name)?.trim(), phone?.trim(), vehicleNumber || "", status || "Active", req.params.id]
+      [driver, phone?.trim(), vehicleNumber || vehicle_number || "", status || "Active", id]
     );
     return res.status(200).json({ message: "Delivery Executive updated!" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
 const deleteDeliveryExecutive = async (req, res) => {
   try {
-    await pool.query("DELETE FROM delivery_executives WHERE id = ?", [req.params.id]);
+    const { id } = req.params;
+    await pool.query("DELETE FROM delivery_executives WHERE id = ?", [id]);
     return res.status(200).json({ message: "Delivery Executive deleted!" });
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
