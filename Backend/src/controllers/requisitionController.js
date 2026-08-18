@@ -844,22 +844,22 @@ const updateRequisition = async (req, res) => {
 
     const [result] = await pool.query(query, values);
     console.log("👉 [UPDATE RESULT]: Affected rows =", result.affectedRows);
-    try {
-      const patientName = data.patient_name || data.patientName || "Patient";
+
+     try {
       await pool.query(
-        "INSERT INTO notifications (type, title, message, care_center_id, created_at) VALUES (?, ?, ?, ?, NOW())",
+        "INSERT INTO notifications (type, title, message, care_center_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())",
         [
           "UPDATED",
-          `Requisition Updated: ${patientName}`,
-          `Requisition #${targetId} for ${patientName} has been updated.`,
+          `Requisition Updated: ${patientNameVal}`,
+          `Requisition #${targetId} for ${patientNameVal} updated. Status: ${finalStatus}.`,
           careCenterId || null
         ]
       );
-      console.log("✅ SUCCESS: Notification database mein save ho gayi!");
-    } catch (notifInsertErr) {
-      console.error("❌ ERROR: Notification save nahi ho payi ->", notifInsertErr.message);
+      console.log("✅ Update notification inserted successfully into DB for ID:", targetId);
+    } catch (notifErr) {
+      console.error("❌ Notification Insert Error:", notifErr.message);
     }
-
+    
     return res.status(200).json({ 
       message: "Requisition updated successfully!", 
       id: targetId 
