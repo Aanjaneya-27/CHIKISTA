@@ -8,4 +8,5 @@ router.post("/requisitions", createRequisition);
 router.put("/requisitions/:id", updateRequisition);
 router.delete("/requisitions/:id", deleteRequisition);
 router.get("/notifications", getNotifications);
+router.delete("/notifications/:id", deleteNotification);
 module.exports = router;

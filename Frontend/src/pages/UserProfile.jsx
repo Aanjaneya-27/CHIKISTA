@@ -669,8 +669,6 @@ export default function UserProfile() {
         currentPassword: passwords.current,
         newPassword: passwords.new
       };
-
-      // Matched with router.put("/password", changePassword)
       const res = await API.put("/users/password", payload);
 
       toast.success(res.data?.message || "Password changed successfully!");

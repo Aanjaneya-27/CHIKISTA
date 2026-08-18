@@ -1,5 +1,5 @@
 // import { useState, useEffect, useMemo } from "react"; 
-// import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+// import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 // import { ShieldCheck } from "lucide-react";
 // import { Toaster, toast } from "./components/UiComponents"; 
 // import { ROLES } from "./data/MockData";
@@ -67,6 +67,7 @@
 // }
 
 // function MainAppLayout({ role, handleLogout, welcomeUser, setWelcomeUser }) {
+//   const navigate = useNavigate();
 //   const [mobileOpen, setMobileOpen] = useState(false);
 //   const [notifOpen, setNotifOpen] = useState(false);
 //   const [careCenters, setCareCenters] = useState([]);
@@ -244,15 +245,55 @@
 //           <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6">
 //             <Routes>
 //               <Route path="/" element={<Navigate to="/dashboard" replace />} />
-//               <Route path="/dashboard" element={<AdminDashboard role={role} logs={logs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} deliveryExecutives={deliveryExecutives} />} />
-//               <Route path="/rental" element={<RentalMaster role={role} permissions={permissions} logs={logs} setLogs={setLogs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} categories={categories}/>} />
-//               <Route path="/master" element={
-//                 permissions.canViewMaster ? (
-//                   <MasterInfo careCenters={careCenters} setCareCenters={setCareCenters} equipmentCatalog={equipmentCatalog} setEquipmentCatalog={setEquipmentCatalog} categories={categories} setCategories={setCategories} references={references} setReferences={setReferences} deliveryExecutives={deliveryExecutives} setDeliveryExecutives={setDeliveryExecutives} />
-//                 ) : (
-//                   <AccessDenied role={role} />
-//                 )
-//               } />
+//               <Route 
+//                 path="/dashboard" 
+//                 element={
+//                   <AdminDashboard 
+//                     role={role} 
+//                     logs={logs} 
+//                     careCenters={careCenters} 
+//                     equipmentCatalog={equipmentCatalog} 
+//                     deliveryExecutives={deliveryExecutives} 
+//                     onNavigate={(path) => navigate(path.startsWith("/") ? path : `/${path}`)}
+//                   />
+//                 } 
+//               />
+//               <Route 
+//                 path="/rental" 
+//                 element={
+//                   <RentalMaster 
+//                     role={role} 
+//                     permissions={permissions} 
+//                     logs={logs} 
+//                     setLogs={setLogs} 
+//                     careCenters={careCenters} 
+//                     equipmentCatalog={equipmentCatalog} 
+//                     references={references} 
+//                     categories={categories}
+//                   />
+//                 } 
+//               />
+//               <Route 
+//                 path="/master" 
+//                 element={
+//                   permissions.canViewMaster ? (
+//                     <MasterInfo 
+//                       careCenters={careCenters} 
+//                       setCareCenters={setCareCenters} 
+//                       equipmentCatalog={equipmentCatalog} 
+//                       setEquipmentCatalog={setEquipmentCatalog} 
+//                       categories={categories} 
+//                       setCategories={setCategories} 
+//                       references={references} 
+//                       setReferences={setReferences} 
+//                       deliveryExecutives={deliveryExecutives} 
+//                       setDeliveryExecutives={setDeliveryExecutives} 
+//                     />
+//                   ) : (
+//                     <AccessDenied role={role} />
+//                   )
+//                 } 
+//               />
 //               <Route path="/profile" element={<UserProfile />} />
 //               <Route path="*" element={<Navigate to="/dashboard" replace />} />
 //             </Routes>
@@ -404,12 +445,63 @@ function MainAppLayout({ role, handleLogout, welcomeUser, setWelcomeUser }) {
   const myCenterId = (loggedUser?.careCenterId || loggedUser?.id || "").toString().trim().toLowerCase();
   const myCenterName = (loggedUser?.careCenterName || loggedUser?.name || "").toLowerCase().trim();
 
+  // 🔔 1. Self-contained Notifications Engine
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchNotificationsData = async () => {
+      try {
+        const userObj = getSafeUser();
+        const ccId = userObj?.careCenterId || userObj?.id || "";
+        const userRole = userObj?.role || role || "";
+
+        const res = await API.get(`/rental/notifications?careCenterId=${ccId}&role=${userRole}&t=${Date.now()}`);
+        if (isMounted && res && Array.isArray(res.data)) {
+          setNotifications(
+            res.data.map((n) => ({
+              id: n.id,
+              title: n.title,
+              message: n.message,
+              type: n.type || "info",
+              care_center_id: n.care_center_id || n.careCenterId || "",
+              careCenterName: n.care_center_name || n.careCenterName || "",
+              time: n.created_at || n.time,
+              read: n.is_read === 1 || n.read === true,
+              is_read: n.is_read
+            }))
+          );
+        }
+      } catch (err) {
+        console.warn("Notification load error:", err.message);
+      }
+    };
+
+    fetchNotificationsData();
+
+    // Requisition create/update hone par instant refresh
+    const handleUpdate = () => {
+      fetchNotificationsData();
+    };
+
+    window.addEventListener("notification-updated", handleUpdate);
+    const intervalTimer = setInterval(fetchNotificationsData, 30000);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("notification-updated", handleUpdate);
+      clearInterval(intervalTimer);
+    };
+  }, [role]);
+
+  // 🔔 2. Unread Count
   const unreadCount = useMemo(() => {
     if (!notifications || notifications.length === 0) return 0;
-    if (!isCareCenter) return notifications.filter((n) => !n.read).length;
-
+    
     return notifications.filter((n) => {
-      if (n.read) return false;
+      const isUnread = !n.read && n.is_read !== 1;
+      if (!isUnread) return false;
+      if (!isCareCenter) return true;
+
       const nCcId = (n.care_center_id || n.careCenterId || "").toString().trim().toLowerCase();
       const nCcName = (n.careCenterName || "").toLowerCase().trim();
       const nText = `${n.title || ""} ${n.message || ""}`.toLowerCase();
@@ -423,13 +515,24 @@ function MainAppLayout({ role, handleLogout, welcomeUser, setWelcomeUser }) {
     }).length;
   }, [notifications, isCareCenter, myCenterId, myCenterName]);
 
-  const markNotifRead = (id) => setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  const markAllNotifRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markNotifRead = (id) => {
+    setNotifications((prev) => 
+      prev.map((n) => (n.id === id ? { ...n, read: true, is_read: 1 } : n))
+    );
+  };
+
+  const markAllNotifRead = () => {
+    setNotifications((prev) => 
+      prev.map((n) => ({ ...n, read: true, is_read: 1 }))
+    );
+    toast.success("All notifications marked as read");
+  };
   
   const deleteNotif = async (id) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
     try {
       await API.delete(`/rental/notifications/${id}`);
+      toast.success("Notification removed");
     } catch (err) {
       console.error("Failed to delete notification:", err);
     }
@@ -442,6 +545,7 @@ function MainAppLayout({ role, handleLogout, welcomeUser, setWelcomeUser }) {
     canDelete: role === "super_admin",
   };
 
+  // 📦 3. Master & Requisitions Initial Load
   useEffect(() => {
     let isMounted = true;
 
@@ -506,26 +610,6 @@ function MainAppLayout({ role, handleLogout, welcomeUser, setWelcomeUser }) {
             status: r.status || "Active" 
           })));
         }
-
-        const userObj = getSafeUser();
-        const ccId = userObj?.careCenterId || userObj?.id || "";
-        const userRole = userObj?.role || role || "";
-
-        const notifRes = await API.get(`/rental/notifications?careCenterId=${ccId}&role=${userRole}`).catch(() => ({ data: [] }));
-        
-        if (isMounted && Array.isArray(notifRes.data)) {
-          setNotifications(notifRes.data.map((n) => ({
-            id: n.id,
-            title: n.title,
-            message: n.message,
-            type: n.type || "info",
-            care_center_id: n.care_center_id || n.careCenterId || "",
-            careCenterName: n.care_center_name || n.careCenterName || "",
-            time: n.created_at || n.time,
-            read: false
-          })));
-        }
-
       } catch (err) {
         console.error("Data load error:", err);
       }
