@@ -1983,7 +1983,6 @@ import {
   ArrowDown,
   Phone,
   Calendar,
-  CalendarDays,
   CheckCircle2,
   RotateCcw
 } from "lucide-react";
@@ -2067,63 +2066,47 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Total Days (Lifetime) / Current Month Days
-const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
+// 🧮 Exact Total Days / Status Engine
+const getDynamicTotalDays = (loginStr, logoutStr, recallStr = null) => {
   const s = formatForDateInput(loginStr);
   if (!s) return "—";
 
   const [sY, sM, sD] = s.split("-").map(Number);
   const startUtc = Date.UTC(sY, sM - 1, sD);
 
+  const cleanOut = formatForDateInput(logoutStr);
+  const cleanRecall = formatForDateInput(recallStr);
+  const isClosed = Boolean(cleanOut || cleanRecall);
+
+  // 1. Agar Machine Closed / Return ho gayi hai -> Total Days / 0
+  if (isClosed) {
+    const closedDateStr = cleanOut || cleanRecall;
+    const [cY, cM, cD] = closedDateStr.split("-").map(Number);
+    const endUtc = Date.UTC(cY, cM - 1, cD);
+
+    let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
+    if (totalDays < 0) totalDays = 0;
+
+    return `${totalDays} / 0`;
+  }
+
+  // 2. Agar Active chal raha hai -> Days / Aaj ki Date
   const todayClean = todayISO();
   const [tY, tM, tD] = todayClean.split("-").map(Number);
   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
-  const cleanOut = formatForDateInput(logoutStr);
-  let endUtc = null;
-  if (cleanOut) {
-    const [eY, eM, eD] = cleanOut.split("-").map(Number);
-    endUtc = Date.UTC(eY, eM - 1, eD);
+  const isSameMonthYear = (sY === tY && sM === tM);
+
+  if (isSameMonthYear) {
+    let sameMonthDays = Math.floor((todayUtc - startUtc) / 86400000) + 1;
+    if (sameMonthDays < 1) sameMonthDays = 1;
+    return `${sameMonthDays} / ${tD}`;
+  } else {
+    const nextCycleEndUtc = Date.UTC(tY, tM - 1, sD);
+    let cycleDays = Math.floor((nextCycleEndUtc - startUtc) / 86400000) + 1;
+    if (cycleDays < 1) cycleDays = 1;
+    return `${cycleDays} / ${tD}`;
   }
-
-  // 1. Left Side: Total Lifetime Days (Login se Logout ya Today tak)
-  const finalEndUtc = endUtc !== null ? endUtc : todayUtc;
-  let totalOverallDays = Math.floor((finalEndUtc - startUtc) / 86400000) + 1;
-  if (totalOverallDays < 0) totalOverallDays = 0;
-
-  // 2. Right Side: Month Days (Iss Mahine mein use hue din)
-  let refYear = tY;
-  let refMonth = tM - 1; // 0-indexed
-
-  if (targetMonthISO) {
-    const cleanTarget = formatForDateInput(targetMonthISO);
-    if (cleanTarget) {
-      const [mY, mM] = cleanTarget.split("-").map(Number);
-      refYear = mY;
-      refMonth = mM - 1;
-    }
-  }
-
-  const monthStartUtc = Date.UTC(refYear, refMonth, 1);
-  const lastDayOfMonth = new Date(refYear, refMonth + 1, 0).getDate();
-  const monthEndUtc = Date.UTC(refYear, refMonth, lastDayOfMonth);
-
-  const isCurrentMonth = (refYear === tY && refMonth === (tM - 1));
-  const activeLimitUtc = isCurrentMonth ? todayUtc : monthEndUtc;
-  const monthEndLimitUtc = endUtc !== null ? endUtc : activeLimitUtc;
-
-  const interStart = Math.max(startUtc, monthStartUtc);
-  const interEnd = Math.min(monthEndLimitUtc, monthEndUtc);
-
-  let monthUsedDays = 0;
-  if (interStart <= interEnd && startUtc <= monthEndUtc) {
-    if (endUtc === null || endUtc >= monthStartUtc) {
-      monthUsedDays = Math.floor((interEnd - interStart) / 86400000) + 1;
-      if (monthUsedDays < 0) monthUsedDays = 0;
-    }
-  }
-
-  return `${totalOverallDays} / ${monthUsedDays}`;
 };
 
 const getOptionLabel = (item) => {
@@ -2156,31 +2139,16 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Simple & Clean Total Days Calculator Modal (With X / Y Result)
+// 🌟 Simple & Clean Total Days Calculator Modal
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const [tempLoginDate, setTempLoginDate] = useState("");
   const [tempLogoutDate, setTempLogoutDate] = useState("");
-  const [viewMonth, setViewMonth] = useState(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  });
-
-  const targetDateForCalc = useMemo(() => {
-    if (!viewMonth) return null;
-    return `${viewMonth}-01`;
-  }, [viewMonth]);
+  const [tempRecallDate, setTempRecallDate] = useState("");
 
   const totalDaysDisplay = useMemo(() => {
     if (!tempLoginDate) return "—";
-    return getDynamicTotalDays(tempLoginDate, tempLogoutDate, targetDateForCalc);
-  }, [tempLoginDate, tempLogoutDate, targetDateForCalc]);
-
-  const selectedMonthName = useMemo(() => {
-    if (!viewMonth) return "";
-    const [y, m] = viewMonth.split("-").map(Number);
-    const date = new Date(y, m - 1, 1);
-    return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-  }, [viewMonth]);
+    return getDynamicTotalDays(tempLoginDate, tempLogoutDate, tempRecallDate);
+  }, [tempLoginDate, tempLogoutDate, tempRecallDate]);
 
   const handleApply = () => {
     if (onApply && totalDaysDisplay !== "—") {
@@ -2201,7 +2169,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-800">Days Calculator</h3>
-              <p className="text-[11px] font-semibold text-teal-700">{selectedMonthName} Window</p>
+              <p className="text-[11px] font-semibold text-teal-700">Quick Preview</p>
             </div>
           </div>
           <button 
@@ -2215,18 +2183,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
 
         {/* Inputs */}
         <div className="p-5 space-y-3.5">
-          <div className="flex items-center justify-between rounded-lg border border-teal-100 bg-teal-50/50 p-2.5">
-            <span className="text-xs font-semibold text-teal-900 flex items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 text-teal-600" /> Target Month:
-            </span>
-            <input 
-              type="month" 
-              value={viewMonth} 
-              onChange={(e) => setViewMonth(e.target.value)} 
-              className="rounded-md border border-teal-200 bg-white px-2 py-1 text-xs font-bold text-teal-800 outline-none cursor-pointer shadow-2xs"
-            />
-          </div>
-
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 text-teal-600" /> Log In Date
@@ -2263,14 +2219,38 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             />
           </div>
 
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-amber-500" /> Recall Date
+              </label>
+              {tempRecallDate && (
+                <button 
+                  type="button" 
+                  onClick={() => setTempRecallDate("")} 
+                  className="text-[11px] font-semibold text-rose-500 hover:underline cursor-pointer"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <input 
+              type="date" 
+              value={tempRecallDate} 
+              min={tempLogoutDate || tempLoginDate || undefined}
+              onChange={(e) => setTempRecallDate(e.target.value)} 
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 shadow-2xs"
+            />
+          </div>
+
           {/* Result Display */}
           <div className="rounded-xl border border-teal-100 bg-teal-50/60 p-4 text-center">
-            <span className="text-xs font-bold uppercase tracking-wider text-teal-700">Total Days / Month Days</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-700">Calculated Days</span>
             <p className="mt-1 font-display text-3xl font-extrabold text-teal-950">
               {totalDaysDisplay}
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              {tempLogoutDate ? "Asset Returned (Closed Period)" : "Asset In-Use (Active Running)"}
+              {tempLogoutDate || tempRecallDate ? "Asset Closed -> / 0" : "Asset In-Use -> / Today Date"}
             </p>
           </div>
         </div>
@@ -2282,8 +2262,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             onClick={() => {
               setTempLoginDate("");
               setTempLogoutDate("");
-              const d = new Date();
-              setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+              setTempRecallDate("");
             }} 
             className="flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer"
           >
@@ -2397,13 +2376,17 @@ function KpiCards({ logs = [] }) {
   const countActive = logs.filter((l) => {
     const isInactive = String(l?.status || "").toLowerCase() === "inactive";
     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date || l?.end_date);
-    return !isInactive && (!cleanOut || cleanOut > today);
+    const cleanRecall = formatForDateInput(l?.recallDate || l?.recall_date);
+    const hasEnded = Boolean((cleanOut && cleanOut <= today) || (cleanRecall && cleanRecall <= today));
+    return !isInactive && !hasEnded;
   }).length;
 
   const countClosed = logs.filter((l) => {
     const isInactive = String(l?.status || "").toLowerCase() === "inactive";
     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date || l?.end_date);
-    return !isInactive && Boolean(cleanOut && cleanOut <= today);
+    const cleanRecall = formatForDateInput(l?.recallDate || l?.recall_date);
+    const hasEnded = Boolean((cleanOut && cleanOut <= today) || (cleanRecall && cleanRecall <= today));
+    return !isInactive && hasEnded;
   }).length;
 
   const countInactive = logs.filter((l) => String(l?.status || "").toLowerCase() === "inactive").length;
@@ -2464,17 +2447,18 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   const careCenterName = log?.careCenterName || log?.care_center_name || careCenterObj?.name || ccId || "—";
 
   const cleanLogout = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
+  const cleanRecall = formatForDateInput(log?.recallDate || log?.recall_date);
   const today = todayISO();
   const isInactive = String(log?.status || "").toLowerCase() === "inactive";
-  const isCurrentlyActive = !cleanLogout || cleanLogout > today;
+  const isClosed = Boolean((cleanLogout && cleanLogout <= today) || (cleanRecall && cleanRecall <= today));
   
-  const statusLabel = isInactive ? "Inactive" : (isCurrentlyActive ? "Active" : "Closed");
+  const statusLabel = isInactive ? "Inactive" : (isClosed ? "Closed" : "Active");
 
   const statusColor = isInactive
     ? "bg-rose-50 text-rose-700 border-rose-200"
-    : isCurrentlyActive
-    ? "bg-amber-50 text-amber-700 border-amber-200"
-    : "bg-emerald-50 text-emerald-700 border-emerald-200";
+    : isClosed
+    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+    : "bg-amber-50 text-amber-700 border-amber-200";
 
   const billingTypeVal = log?.billingType || log?.billing_type || log?.billing || "Daily";
   const rentalChargeVal = Number(log?.rentalCharge ?? log?.rental_charge ?? log?.rent ?? log?.daily_rate ?? log?.dailyRate ?? 0).toFixed(2);
@@ -2487,7 +2471,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   const deliveryAddressVal = log?.deliveryAddress || log?.delivery_address || log?.address || "—";
 
   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate || log?.record_date;
-  const totalDaysFormatted = getDynamicTotalDays(startDateVal, cleanLogout);
+  const totalDaysFormatted = getDynamicTotalDays(startDateVal, cleanLogout, cleanRecall);
 
   return (
     <div className="fade-slide-up space-y-6">
@@ -2860,8 +2844,10 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     }
 
     const cleanLogout = formatForDateInput(form.logoutDate || form.logout_date);
+    const cleanRecall = formatForDateInput(form.recallDate || form.recall_date);
     const today = todayISO();
-    const finalCalculatedStatus = (cleanLogout && cleanLogout <= today) ? "Closed" : "Active";
+    const isClosed = Boolean((cleanLogout && cleanLogout <= today) || (cleanRecall && cleanRecall <= today));
+    const finalCalculatedStatus = isClosed ? "Closed" : "Active";
 
     const parseNum = (v) => {
       if (v === undefined || v === null || v === "") return 0;
@@ -2889,8 +2875,8 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       end_date: cleanLogout || null,
       notifyDate: formatForDateInput(form.notifyDate) || null,
       notify_date: formatForDateInput(form.notifyDate) || null,
-      recallDate: formatForDateInput(form.recallDate) || null,
-      recall_date: formatForDateInput(form.recallDate) || null,
+      recallDate: cleanRecall || null,
+      recall_date: cleanRecall || null,
 
       careCenterId: form.careCenterId || null,
       care_center_id: form.careCenterId || null,
@@ -3385,8 +3371,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
           inchargePhone.includes(q);
           
         const cleanLogout = formatForDateInput(l.logoutDate || l.logout_date || l.end_date);
+        const cleanRecall = formatForDateInput(l.recallDate || l.recall_date);
         const rawStatus = String(l.status || l.requisition_status || "").trim().toLowerCase();
-        const isClosed = Boolean(cleanLogout && cleanLogout <= today);
+        const isClosed = Boolean((cleanLogout && cleanLogout <= today) || (cleanRecall && cleanRecall <= today));
         const computedStatus = rawStatus === "inactive" ? "inactive" : (isClosed ? "closed" : "active");
         
         let isStatusMatch = false;
@@ -3434,9 +3421,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         : (data.careCenterName || data.care_center_name || "");
 
       const cleanLogout = formatForDateInput(data.logoutDate || data.logout_date);
+      const cleanRecall = formatForDateInput(data.recallDate || data.recall_date);
       const cleanRecord = formatForDateInput(data.recordDate || data.record_date) || todayISO();
       const cleanStart = formatForDateInput(data.startDate || data.start_date || data.loginDate || data.login_date) || todayISO();
-      const cleanRecall = formatForDateInput(data.recallDate || data.recall_date);
       const cleanNotify = formatForDateInput(data.notifyDate || data.notify_date);
       const today = todayISO();
 
@@ -3450,6 +3437,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       const dAdvance = parseVal(data.depositAdvance ?? data.deposit_advance ?? data.deposit ?? data.advance);
       const iCharge = parseVal(data.installationCharge ?? data.installation_charge ?? data.installation);
       const bType = data.billingType || data.billing_type || "Daily";
+
+      const isClosed = Boolean((cleanLogout && cleanLogout <= today) || (cleanRecall && cleanRecall <= today));
 
       const payload = {
         id: data.id,
@@ -3473,7 +3462,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         logout_date: cleanLogout || null,
         logoutDate: cleanLogout || null,
         end_date: cleanLogout || null,
-        status: (cleanLogout && cleanLogout <= today) ? "Closed" : "Active",
+        status: isClosed ? "Closed" : "Active",
         
         billing_type: bType,
         billingType: bType,
@@ -3527,8 +3516,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         recall_date: cleanRecall,
         recallDate: cleanRecall,
         notes: data.notes || "",
-        accessory: data.accessory || data.accessories || "",
-        accessories: data.accessory || data.accessories || "",
+        accessory: Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || ""),
+        accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || ""),
 
         deliveryStatus: data.deliveryStatus || data.delivery_status || "Pending Dispatch",
         delivery_status: data.deliveryStatus || data.delivery_status || "Pending Dispatch",
@@ -3776,10 +3765,11 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               ) : (
                 filtered.map((log, i) => {
                   const actualLogoutDate = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
+                  const actualRecallDate = formatForDateInput(log?.recallDate || log?.recall_date);
                   const today = todayISO();
-                  const isClosed = Boolean(actualLogoutDate && actualLogoutDate <= today);
+                  const isClosed = Boolean((actualLogoutDate && actualLogoutDate <= today) || (actualRecallDate && actualRecallDate <= today));
                   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate;
-                  const dynamicDaysFormatted = getDynamicTotalDays(startDateVal, actualLogoutDate);
+                  const dynamicDaysFormatted = getDynamicTotalDays(startDateVal, actualLogoutDate, actualRecallDate);
                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
 
                   const rowColor = currentMode === "Prepaid" 
