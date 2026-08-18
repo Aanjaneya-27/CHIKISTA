@@ -845,21 +845,23 @@ const updateRequisition = async (req, res) => {
     const [result] = await pool.query(query, values);
     console.log("👉 [UPDATE RESULT]: Affected rows =", result.affectedRows);
 
-     try {
+    try {
+      const safeCareCenterId = (careCenterId && careCenterId !== "other") ? careCenterId : null;
+      
       await pool.query(
         "INSERT INTO notifications (type, title, message, care_center_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())",
         [
           "UPDATED",
           `Requisition Updated: ${patientNameVal}`,
           `Requisition #${targetId} for ${patientNameVal} updated. Status: ${finalStatus}.`,
-          careCenterId || null
+          safeCareCenterId
         ]
       );
-      console.log("✅ Update notification inserted successfully into DB for ID:", targetId);
+      console.log("🔥 100% SUCCESS: Notification database me save ho gayi!");
     } catch (notifErr) {
-      console.error("❌ Notification Insert Error:", notifErr.message);
+      console.error("🚨 ASLI ERROR YEH HAI ->", notifErr.message);
     }
-    
+
     return res.status(200).json({ 
       message: "Requisition updated successfully!", 
       id: targetId 
