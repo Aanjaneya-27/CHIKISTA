@@ -1984,7 +1984,6 @@ import {
   ArrowDown,
   Phone,
   Calendar,
-  CalendarDays,
   CheckCircle2,
   RotateCcw
 } from "lucide-react";
@@ -2068,17 +2067,16 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Clean & Safe Dynamic Total Days Engine
-const getDynamicTotalDays = (loginStr, logoutStr, recallStr = null, targetMonthISO = null) => {
+// 🧮 Exact Concept Engine: Left (Total Lifetime Days) / Right (Current Date or 0 if Recall/Closed)
+const getDynamicTotalDays = (loginStr, logoutStr, recallStr = null) => {
   const s = formatForDateInput(loginStr);
   if (!s) return "—";
 
   const [sY, sM, sD] = s.split("-").map(Number);
   const startUtc = Date.UTC(sY, sM - 1, sD);
 
-  const cleanLogout = formatForDateInput(logoutStr);
   const cleanRecall = formatForDateInput(recallStr);
-  const isClosedByRecall = Boolean(cleanRecall);
+  const isClosed = Boolean(cleanRecall);
 
   const todayClean = todayISO();
   const [tY, tM, tD] = todayClean.split("-").map(Number);
@@ -2088,60 +2086,50 @@ const getDynamicTotalDays = (loginStr, logoutStr, recallStr = null, targetMonthI
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
     endUtc = Date.UTC(rY, rM - 1, rD);
-  } else if (cleanLogout) {
+  }
+
+  // 1. Left Side: Total Lifetime Days
+  let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
+  if (totalDays < 0) totalDays = 0;
+
+  // If closed via recall date, right side is 0
+  if (isClosed) {
+    return `${totalDays} / 0`;
+  }
+
+  // 2. Right Side: Always current calendar date (tD)
+  return `${totalDays} / ${tD}`;
+};
+
+// 🧮 Calculator Specific Engine (Login & Logout)
+const getCalculatorDays = (loginStr, logoutStr) => {
+  const s = formatForDateInput(loginStr);
+  if (!s) return "—";
+
+  const [sY, sM, sD] = s.split("-").map(Number);
+  const startUtc = Date.UTC(sY, sM - 1, sD);
+
+  const cleanLogout = formatForDateInput(logoutStr);
+  const isClosed = Boolean(cleanLogout);
+
+  const todayClean = todayISO();
+  const [tY, tM, tD] = todayClean.split("-").map(Number);
+  const todayUtc = Date.UTC(tY, tM - 1, tD);
+
+  let endUtc = todayUtc;
+  if (cleanLogout) {
     const [lY, lM, lD] = cleanLogout.split("-").map(Number);
     endUtc = Date.UTC(lY, lM - 1, lD);
   }
 
-  // 1. Left Side: Total Lifetime Days
-  let totalOverallDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
-  if (totalOverallDays < 0) totalOverallDays = 0;
+  let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
+  if (totalDays < 0) totalDays = 0;
 
-  if (isClosedByRecall) {
-    return `${totalOverallDays} / 0`;
+  if (isClosed) {
+    return `${totalDays} / 0`;
   }
 
-  // 2. Right Side: Current Month (or Target Month) Usage Days
-  let refYear = tY;
-  let refMonth = tM - 1;
-
-  if (targetMonthISO) {
-    const cleanTarget = formatForDateInput(targetMonthISO);
-    if (cleanTarget) {
-      const [mY, mM] = cleanTarget.split("-").map(Number);
-      refYear = mY;
-      refMonth = mM - 1;
-    }
-  }
-
-  const monthStartUtc = Date.UTC(refYear, refMonth, 1);
-  const lastDayOfMonth = new Date(refYear, refMonth + 1, 0).getDate();
-  const monthEndUtc = Date.UTC(refYear, refMonth, lastDayOfMonth);
-
-  const isCurrentRealMonth = (refYear === tY && refMonth === (tM - 1));
-  let effectiveMonthEnd = isCurrentRealMonth ? todayUtc : monthEndUtc;
-  
-  if (cleanLogout) {
-    const [lY, lM, lD] = cleanLogout.split("-").map(Number);
-    const logoutUtc = Date.UTC(lY, lM - 1, lD);
-    if (logoutUtc < effectiveMonthEnd) {
-      effectiveMonthEnd = logoutUtc;
-    }
-  }
-
-  const interStart = Math.max(startUtc, monthStartUtc);
-  const interEnd = Math.min(effectiveMonthEnd, monthEndUtc);
-
-  let currentMonthDays = 0;
-  if (interStart <= interEnd && startUtc <= monthEndUtc) {
-    const logoutUtcCheck = cleanLogout ? Date.UTC(...cleanLogout.split("-").map((v, i) => i === 1 ? Number(v) - 1 : Number(v))) : null;
-    if (!logoutUtcCheck || logoutUtcCheck >= monthStartUtc) {
-      currentMonthDays = Math.floor((interEnd - interStart) / 86400000) + 1;
-      if (currentMonthDays < 0) currentMonthDays = 0;
-    }
-  }
-
-  return `${totalOverallDays} / ${currentMonthDays}`;
+  return `${totalDays} / ${tD}`;
 };
 
 const getOptionLabel = (item) => {
@@ -2178,27 +2166,11 @@ const getSafeTime = (item, field) => {
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const [tempLoginDate, setTempLoginDate] = useState("");
   const [tempLogoutDate, setTempLogoutDate] = useState("");
-  const [viewMonth, setViewMonth] = useState(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  });
-
-  const targetDateForCalc = useMemo(() => {
-    if (!viewMonth) return null;
-    return `${viewMonth}-01`;
-  }, [viewMonth]);
 
   const totalDaysDisplay = useMemo(() => {
     if (!tempLoginDate) return "—";
-    return getDynamicTotalDays(tempLoginDate, tempLogoutDate, null, targetDateForCalc);
-  }, [tempLoginDate, tempLogoutDate, targetDateForCalc]);
-
-  const selectedMonthName = useMemo(() => {
-    if (!viewMonth) return "";
-    const [y, m] = viewMonth.split("-").map(Number);
-    const date = new Date(y, m - 1, 1);
-    return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-  }, [viewMonth]);
+    return getCalculatorDays(tempLoginDate, tempLogoutDate);
+  }, [tempLoginDate, tempLogoutDate]);
 
   const handleApply = () => {
     if (onApply && totalDaysDisplay !== "—") {
@@ -2219,7 +2191,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-800">Rental Days Calculator</h3>
-              <p className="text-xs font-semibold text-teal-700">Analyzing Window: {selectedMonthName}</p>
+              <p className="text-xs font-semibold text-teal-700">Quick Preview</p>
             </div>
           </div>
           <button 
@@ -2233,18 +2205,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
 
         {/* Inputs */}
         <div className="p-6 space-y-4">
-          <div className="flex items-center justify-between rounded-2xl border border-teal-100 bg-teal-50/40 p-3.5">
-            <span className="text-xs font-bold text-teal-900 flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-teal-600" /> Target Calculation Month:
-            </span>
-            <input 
-              type="month" 
-              value={viewMonth} 
-              onChange={(e) => setViewMonth(e.target.value)} 
-              className="rounded-xl border border-teal-200 bg-white px-3 py-1.5 text-xs font-bold text-teal-800 outline-none cursor-pointer shadow-2xs transition hover:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
-            />
-          </div>
-
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 text-teal-600" /> Log In Date
@@ -2283,7 +2243,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
 
           {/* Result Display Box */}
           <div className="rounded-2xl border border-teal-100 bg-gradient-to-b from-teal-50/70 to-teal-50/20 p-5 text-center shadow-inner">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-teal-800">Result (Total Days / Month Usage)</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-teal-800">Result (Total Days / Current Date)</span>
             <p className="mt-2 font-display text-4xl font-black text-teal-950 tracking-tight">
               {totalDaysDisplay}
             </p>
@@ -2300,8 +2260,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             onClick={() => {
               setTempLoginDate("");
               setTempLogoutDate("");
-              const d = new Date();
-              setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
             }} 
             className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer"
           >
