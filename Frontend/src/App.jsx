@@ -60,7 +60,7 @@
 //       </div>
 //       <h3 className="mt-4 font-display text-lg font-bold text-slate-700">Access Restricted</h3>
 //       <p className="mt-1.5 max-w-sm text-sm text-slate-400">
-//         The <span className="font-semibold text-slate-600">{ROLES[role]?.label || role}</span> role does not have permission to view Master Info.
+//         The <span className="font-semibold text-slate-600">{ROLES?.[role]?.label || role}</span> role does not have permission to view Master Info.
 //       </p>
 //     </div>
 //   );
@@ -219,7 +219,6 @@
 //   return (
 //     <div className="font-body flex h-screen w-full overflow-hidden bg-slate-50 relative">
       
-//       {/* 🌟 Modern Floating Welcome Banner */}
 //       {welcomeUser && (
 //         <WelcomeBanner user={welcomeUser} onClose={() => setWelcomeUser(null)} />
 //       )}
@@ -321,7 +320,7 @@
 // }
 
 import { useState, useEffect, useMemo } from "react"; 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { Toaster, toast } from "./components/UiComponents"; 
 import { ROLES } from "./data/MockData";
@@ -389,6 +388,7 @@ function AccessDenied({ role }) {
 }
 
 function MainAppLayout({ role, handleLogout, welcomeUser, setWelcomeUser }) {
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [careCenters, setCareCenters] = useState([]);
@@ -566,15 +566,55 @@ function MainAppLayout({ role, handleLogout, welcomeUser, setWelcomeUser }) {
           <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6">
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<AdminDashboard role={role} logs={logs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} deliveryExecutives={deliveryExecutives} />} />
-              <Route path="/rental" element={<RentalMaster role={role} permissions={permissions} logs={logs} setLogs={setLogs} careCenters={careCenters} equipmentCatalog={equipmentCatalog} references={references} categories={categories}/>} />
-              <Route path="/master" element={
-                permissions.canViewMaster ? (
-                  <MasterInfo careCenters={careCenters} setCareCenters={setCareCenters} equipmentCatalog={equipmentCatalog} setEquipmentCatalog={setEquipmentCatalog} categories={categories} setCategories={setCategories} references={references} setReferences={setReferences} deliveryExecutives={deliveryExecutives} setDeliveryExecutives={setDeliveryExecutives} />
-                ) : (
-                  <AccessDenied role={role} />
-                )
-              } />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <AdminDashboard 
+                    role={role} 
+                    logs={logs} 
+                    careCenters={careCenters} 
+                    equipmentCatalog={equipmentCatalog} 
+                    deliveryExecutives={deliveryExecutives} 
+                    onNavigate={(path) => navigate(path.startsWith("/") ? path : `/${path}`)}
+                  />
+                } 
+              />
+              <Route 
+                path="/rental" 
+                element={
+                  <RentalMaster 
+                    role={role} 
+                    permissions={permissions} 
+                    logs={logs} 
+                    setLogs={setLogs} 
+                    careCenters={careCenters} 
+                    equipmentCatalog={equipmentCatalog} 
+                    references={references} 
+                    categories={categories}
+                  />
+                } 
+              />
+              <Route 
+                path="/master" 
+                element={
+                  permissions.canViewMaster ? (
+                    <MasterInfo 
+                      careCenters={careCenters} 
+                      setCareCenters={setCareCenters} 
+                      equipmentCatalog={equipmentCatalog} 
+                      setEquipmentCatalog={setEquipmentCatalog} 
+                      categories={categories} 
+                      setCategories={setCategories} 
+                      references={references} 
+                      setReferences={setReferences} 
+                      deliveryExecutives={deliveryExecutives} 
+                      setDeliveryExecutives={setDeliveryExecutives} 
+                    />
+                  ) : (
+                    <AccessDenied role={role} />
+                  )
+                } 
+              />
               <Route path="/profile" element={<UserProfile />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>

@@ -621,8 +621,8 @@
 //     </div>
 //   );
 // }
-
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Activity, 
   PackageCheck, 
@@ -680,7 +680,6 @@ function GlobalPolish() {
   );
 }
 
-// 📅 Timezone-Safe Date Formatter
 const formatForDateInput = (d) => {
   if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || String(d).trim() === "") return "";
   const str = String(d).trim();
@@ -702,7 +701,6 @@ const formatForDateInput = (d) => {
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-// 🧮 Synchronized Status Resolver
 const getLogStatus = (l) => {
   if (!l) return "Pending";
   const rawStatus = String(l.status || l.requisition_status || "").trim().toLowerCase();
@@ -753,8 +751,10 @@ export default function AdminDashboard({
   careCenters = [], 
   equipmentCatalog = [], 
   deliveryExecutives = [], 
-  setActiveModule 
+  onNavigate 
 }) {
+  const navigate = useNavigate();
+
   const loggedUser = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}");
@@ -834,8 +834,10 @@ export default function AdminDashboard({
   const recentLogs = [...scopedLogs].slice(0, 5);
 
   const handleNavigateToRental = () => {
-    if (typeof setActiveModule === "function") {
-      setActiveModule("rental");
+    if (typeof onNavigate === "function") {
+      onNavigate("/rental");
+    } else {
+      navigate("/rental");
     }
   };
 
@@ -843,7 +845,6 @@ export default function AdminDashboard({
     <div className="space-y-5 fade-slide-up">
       <GlobalPolish />
       
-      {/* Top Header */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight text-slate-800">
@@ -855,7 +856,6 @@ export default function AdminDashboard({
         </div>
       </div>
 
-      {/* KPI Stats Cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <DashboardStat 
           label={isCareCenterUser ? "Active Leases" : "Active Rentals"} 
@@ -891,7 +891,6 @@ export default function AdminDashboard({
         />
       </div>
 
-      {/* Analytics Charts Grid */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
@@ -953,11 +952,10 @@ export default function AdminDashboard({
         </div>
       </div>
 
-      {/* Bottom Grid: Recent Requisitions & Alerts */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs lg:col-span-2">
           
-          {/* Header with Working View All Button */}
+          {/* Header with Direct Route Navigation */}
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <h3 className="font-display text-sm font-bold text-slate-700">
               {isCareCenterUser ? "My Center's Recent Requisitions" : "Recent Requisitions"}
