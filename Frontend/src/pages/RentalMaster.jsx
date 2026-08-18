@@ -1953,6 +1953,7 @@
 //   );
 // }
 
+
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { 
   Search, 
@@ -1983,6 +1984,7 @@ import {
   ArrowDown,
   Phone,
   Calendar,
+  CalendarDays,
   CheckCircle2,
   RotateCcw
 } from "lucide-react";
@@ -2066,47 +2068,80 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Exact Total Days / Status Engine
-const getDynamicTotalDays = (loginStr, logoutStr, recallStr = null) => {
+// 🧮 Clean & Safe Dynamic Total Days Engine
+const getDynamicTotalDays = (loginStr, logoutStr, recallStr = null, targetMonthISO = null) => {
   const s = formatForDateInput(loginStr);
   if (!s) return "—";
 
   const [sY, sM, sD] = s.split("-").map(Number);
   const startUtc = Date.UTC(sY, sM - 1, sD);
 
-  const cleanOut = formatForDateInput(logoutStr);
+  const cleanLogout = formatForDateInput(logoutStr);
   const cleanRecall = formatForDateInput(recallStr);
-  const isClosed = Boolean(cleanOut || cleanRecall);
+  const isClosedByRecall = Boolean(cleanRecall);
 
-  // 1. Agar Machine Closed / Return ho gayi hai -> Total Days / 0
-  if (isClosed) {
-    const closedDateStr = cleanOut || cleanRecall;
-    const [cY, cM, cD] = closedDateStr.split("-").map(Number);
-    const endUtc = Date.UTC(cY, cM - 1, cD);
-
-    let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
-    if (totalDays < 0) totalDays = 0;
-
-    return `${totalDays} / 0`;
-  }
-
-  // 2. Agar Active chal raha hai -> Days / Aaj ki Date
   const todayClean = todayISO();
   const [tY, tM, tD] = todayClean.split("-").map(Number);
   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
-  const isSameMonthYear = (sY === tY && sM === tM);
-
-  if (isSameMonthYear) {
-    let sameMonthDays = Math.floor((todayUtc - startUtc) / 86400000) + 1;
-    if (sameMonthDays < 1) sameMonthDays = 1;
-    return `${sameMonthDays} / ${tD}`;
-  } else {
-    const nextCycleEndUtc = Date.UTC(tY, tM - 1, sD);
-    let cycleDays = Math.floor((nextCycleEndUtc - startUtc) / 86400000) + 1;
-    if (cycleDays < 1) cycleDays = 1;
-    return `${cycleDays} / ${tD}`;
+  let endUtc = todayUtc;
+  if (cleanRecall) {
+    const [rY, rM, rD] = cleanRecall.split("-").map(Number);
+    endUtc = Date.UTC(rY, rM - 1, rD);
+  } else if (cleanLogout) {
+    const [lY, lM, lD] = cleanLogout.split("-").map(Number);
+    endUtc = Date.UTC(lY, lM - 1, lD);
   }
+
+  // 1. Left Side: Total Lifetime Days
+  let totalOverallDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
+  if (totalOverallDays < 0) totalOverallDays = 0;
+
+  if (isClosedByRecall) {
+    return `${totalOverallDays} / 0`;
+  }
+
+  // 2. Right Side: Current Month (or Target Month) Usage Days
+  let refYear = tY;
+  let refMonth = tM - 1;
+
+  if (targetMonthISO) {
+    const cleanTarget = formatForDateInput(targetMonthISO);
+    if (cleanTarget) {
+      const [mY, mM] = cleanTarget.split("-").map(Number);
+      refYear = mY;
+      refMonth = mM - 1;
+    }
+  }
+
+  const monthStartUtc = Date.UTC(refYear, refMonth, 1);
+  const lastDayOfMonth = new Date(refYear, refMonth + 1, 0).getDate();
+  const monthEndUtc = Date.UTC(refYear, refMonth, lastDayOfMonth);
+
+  const isCurrentRealMonth = (refYear === tY && refMonth === (tM - 1));
+  let effectiveMonthEnd = isCurrentRealMonth ? todayUtc : monthEndUtc;
+  
+  if (cleanLogout) {
+    const [lY, lM, lD] = cleanLogout.split("-").map(Number);
+    const logoutUtc = Date.UTC(lY, lM - 1, lD);
+    if (logoutUtc < effectiveMonthEnd) {
+      effectiveMonthEnd = logoutUtc;
+    }
+  }
+
+  const interStart = Math.max(startUtc, monthStartUtc);
+  const interEnd = Math.min(effectiveMonthEnd, monthEndUtc);
+
+  let currentMonthDays = 0;
+  if (interStart <= interEnd && startUtc <= monthEndUtc) {
+    const logoutUtcCheck = cleanLogout ? Date.UTC(...cleanLogout.split("-").map((v, i) => i === 1 ? Number(v) - 1 : Number(v))) : null;
+    if (!logoutUtcCheck || logoutUtcCheck >= monthStartUtc) {
+      currentMonthDays = Math.floor((interEnd - interStart) / 86400000) + 1;
+      if (currentMonthDays < 0) currentMonthDays = 0;
+    }
+  }
+
+  return `${totalOverallDays} / ${currentMonthDays}`;
 };
 
 const getOptionLabel = (item) => {
@@ -2139,16 +2174,31 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Simple & Clean Total Days Calculator Modal
+// 🌟 Modern & Clean Days Calculator Modal
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const [tempLoginDate, setTempLoginDate] = useState("");
   const [tempLogoutDate, setTempLogoutDate] = useState("");
-  const [tempRecallDate, setTempRecallDate] = useState("");
+  const [viewMonth, setViewMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
+
+  const targetDateForCalc = useMemo(() => {
+    if (!viewMonth) return null;
+    return `${viewMonth}-01`;
+  }, [viewMonth]);
 
   const totalDaysDisplay = useMemo(() => {
     if (!tempLoginDate) return "—";
-    return getDynamicTotalDays(tempLoginDate, tempLogoutDate, tempRecallDate);
-  }, [tempLoginDate, tempLogoutDate, tempRecallDate]);
+    return getDynamicTotalDays(tempLoginDate, tempLogoutDate, null, targetDateForCalc);
+  }, [tempLoginDate, tempLogoutDate, targetDateForCalc]);
+
+  const selectedMonthName = useMemo(() => {
+    if (!viewMonth) return "";
+    const [y, m] = viewMonth.split("-").map(Number);
+    const date = new Date(y, m - 1, 1);
+    return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  }, [viewMonth]);
 
   const handleApply = () => {
     if (onApply && totalDaysDisplay !== "—") {
@@ -2158,55 +2208,67 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-      <div className="fade-slide-up w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-900/5">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 bg-slate-50/70">
-          <div className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-teal-600 text-white shadow-xs">
-              <Calculator className="h-4 w-4" />
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 bg-gradient-to-r from-teal-50/80 to-white">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-teal-600 text-white shadow-md shadow-teal-600/25">
+              <Calculator className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-800">Days Calculator</h3>
-              <p className="text-[11px] font-semibold text-teal-700">Quick Preview</p>
+              <h3 className="text-base font-bold text-slate-800">Rental Days Calculator</h3>
+              <p className="text-xs font-semibold text-teal-700">Analyzing Window: {selectedMonthName}</p>
             </div>
           </div>
           <button 
             type="button"
             onClick={onClose} 
-            className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition cursor-pointer"
+            className="grid h-8 w-8 place-items-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Inputs */}
-        <div className="p-5 space-y-3.5">
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+        <div className="p-6 space-y-4">
+          <div className="flex items-center justify-between rounded-2xl border border-teal-100 bg-teal-50/40 p-3.5">
+            <span className="text-xs font-bold text-teal-900 flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-teal-600" /> Target Calculation Month:
+            </span>
+            <input 
+              type="month" 
+              value={viewMonth} 
+              onChange={(e) => setViewMonth(e.target.value)} 
+              className="rounded-xl border border-teal-200 bg-white px-3 py-1.5 text-xs font-bold text-teal-800 outline-none cursor-pointer shadow-2xs transition hover:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 text-teal-600" /> Log In Date
             </label>
             <input 
               type="date" 
               value={tempLoginDate} 
               onChange={(e) => setTempLoginDate(e.target.value)} 
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 shadow-2xs"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20 shadow-2xs"
             />
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-slate-400" /> Log Out Date
+              <label className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-slate-400" /> Log Out Date (Optional)
               </label>
               {tempLogoutDate && (
                 <button 
                   type="button" 
                   onClick={() => setTempLogoutDate("")} 
-                  className="text-[11px] font-semibold text-rose-500 hover:underline cursor-pointer"
+                  className="text-xs font-semibold text-rose-500 hover:underline cursor-pointer"
                 >
-                  Clear
+                  Clear Date
                 </button>
               )}
             </div>
@@ -2215,65 +2277,42 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
               value={tempLogoutDate} 
               min={tempLoginDate || undefined}
               onChange={(e) => setTempLogoutDate(e.target.value)} 
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 shadow-2xs"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20 shadow-2xs"
             />
           </div>
 
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-amber-500" /> Recall Date
-              </label>
-              {tempRecallDate && (
-                <button 
-                  type="button" 
-                  onClick={() => setTempRecallDate("")} 
-                  className="text-[11px] font-semibold text-rose-500 hover:underline cursor-pointer"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-            <input 
-              type="date" 
-              value={tempRecallDate} 
-              min={tempLogoutDate || tempLoginDate || undefined}
-              onChange={(e) => setTempRecallDate(e.target.value)} 
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 shadow-2xs"
-            />
-          </div>
-
-          {/* Result Display */}
-          <div className="rounded-xl border border-teal-100 bg-teal-50/60 p-4 text-center">
-            <span className="text-xs font-bold uppercase tracking-wider text-teal-700">Calculated Days</span>
-            <p className="mt-1 font-display text-3xl font-extrabold text-teal-950">
+          {/* Result Display Box */}
+          <div className="rounded-2xl border border-teal-100 bg-gradient-to-b from-teal-50/70 to-teal-50/20 p-5 text-center shadow-inner">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-teal-800">Result (Total Days / Month Usage)</span>
+            <p className="mt-2 font-display text-4xl font-black text-teal-950 tracking-tight">
               {totalDaysDisplay}
             </p>
-            <p className="mt-1 text-[11px] text-slate-500">
-              {tempLogoutDate || tempRecallDate ? "Asset Closed -> / 0" : "Asset In-Use -> / Today Date"}
+            <p className="mt-1.5 text-xs font-medium text-slate-500">
+              {tempLogoutDate ? "Asset Returned" : "Asset Active"}
             </p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 px-5 py-3">
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-6 py-4">
           <button 
             type="button" 
             onClick={() => {
               setTempLoginDate("");
               setTempLogoutDate("");
-              setTempRecallDate("");
+              const d = new Date();
+              setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
             }} 
-            className="flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer"
           >
             <RotateCcw className="h-3.5 w-3.5" /> Reset
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <button 
               type="button" 
               onClick={onClose} 
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
             >
               Cancel
             </button>
@@ -2281,9 +2320,9 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
               type="button" 
               onClick={handleApply} 
               disabled={totalDaysDisplay === "—"}
-              className="flex items-center gap-1 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white px-4 py-1.5 text-xs font-semibold shadow-xs transition cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white px-5 py-2 text-xs font-bold shadow-md shadow-teal-600/20 transition cursor-pointer"
             >
-              <CheckCircle2 className="h-3.5 w-3.5" /> Apply
+              <CheckCircle2 className="h-4 w-4" /> Apply Result
             </button>
           </div>
         </div>
@@ -2375,17 +2414,15 @@ function KpiCards({ logs = [] }) {
   const today = todayISO();
   const countActive = logs.filter((l) => {
     const isInactive = String(l?.status || "").toLowerCase() === "inactive";
-    const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date || l?.end_date);
     const cleanRecall = formatForDateInput(l?.recallDate || l?.recall_date);
-    const hasEnded = Boolean((cleanOut && cleanOut <= today) || (cleanRecall && cleanRecall <= today));
+    const hasEnded = Boolean(cleanRecall && cleanRecall <= today);
     return !isInactive && !hasEnded;
   }).length;
 
   const countClosed = logs.filter((l) => {
     const isInactive = String(l?.status || "").toLowerCase() === "inactive";
-    const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date || l?.end_date);
     const cleanRecall = formatForDateInput(l?.recallDate || l?.recall_date);
-    const hasEnded = Boolean((cleanOut && cleanOut <= today) || (cleanRecall && cleanRecall <= today));
+    const hasEnded = Boolean(cleanRecall && cleanRecall <= today);
     return !isInactive && hasEnded;
   }).length;
 
@@ -2450,7 +2487,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   const cleanRecall = formatForDateInput(log?.recallDate || log?.recall_date);
   const today = todayISO();
   const isInactive = String(log?.status || "").toLowerCase() === "inactive";
-  const isClosed = Boolean((cleanLogout && cleanLogout <= today) || (cleanRecall && cleanRecall <= today));
+  const isClosed = Boolean(cleanRecall && cleanRecall <= today);
   
   const statusLabel = isInactive ? "Inactive" : (isClosed ? "Closed" : "Active");
 
@@ -2846,7 +2883,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     const cleanLogout = formatForDateInput(form.logoutDate || form.logout_date);
     const cleanRecall = formatForDateInput(form.recallDate || form.recall_date);
     const today = todayISO();
-    const isClosed = Boolean((cleanLogout && cleanLogout <= today) || (cleanRecall && cleanRecall <= today));
+    const isClosed = Boolean(cleanRecall && cleanRecall <= today);
     const finalCalculatedStatus = isClosed ? "Closed" : "Active";
 
     const parseNum = (v) => {
@@ -3370,10 +3407,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
           ccName.toLowerCase().includes(q) || 
           inchargePhone.includes(q);
           
-        const cleanLogout = formatForDateInput(l.logoutDate || l.logout_date || l.end_date);
         const cleanRecall = formatForDateInput(l.recallDate || l.recall_date);
         const rawStatus = String(l.status || l.requisition_status || "").trim().toLowerCase();
-        const isClosed = Boolean((cleanLogout && cleanLogout <= today) || (cleanRecall && cleanRecall <= today));
+        const isClosed = Boolean(cleanRecall && cleanRecall <= today);
         const computedStatus = rawStatus === "inactive" ? "inactive" : (isClosed ? "closed" : "active");
         
         let isStatusMatch = false;
@@ -3438,7 +3474,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       const iCharge = parseVal(data.installationCharge ?? data.installation_charge ?? data.installation);
       const bType = data.billingType || data.billing_type || "Daily";
 
-      const isClosed = Boolean((cleanLogout && cleanLogout <= today) || (cleanRecall && cleanRecall <= today));
+      const isClosed = Boolean(cleanRecall && cleanRecall <= today);
 
       const payload = {
         id: data.id,
@@ -3546,9 +3582,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         ...log,
         status: "Closed",
         requisition_status: "Closed",
-        logoutDate: today,
-        logout_date: today,
-        end_date: today
+        recallDate: today,
+        recall_date: today
       });
       toast.success("Requisition marked as Closed!");
       await fetchLogs();
@@ -3767,7 +3802,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                   const actualLogoutDate = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
                   const actualRecallDate = formatForDateInput(log?.recallDate || log?.recall_date);
                   const today = todayISO();
-                  const isClosed = Boolean((actualLogoutDate && actualLogoutDate <= today) || (actualRecallDate && actualRecallDate <= today));
+                  const isClosed = Boolean(actualRecallDate && actualRecallDate <= today);
                   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate;
                   const dynamicDaysFormatted = getDynamicTotalDays(startDateVal, actualLogoutDate, actualRecallDate);
                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
