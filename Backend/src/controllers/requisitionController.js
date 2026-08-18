@@ -745,6 +745,7 @@ const createRequisition = async (req, res) => {
 
 // 3. UPDATE REQUISITION 
 const updateRequisition = async (req, res) => {
+  console.log("🔥🔥🔥 MAIN UPDATE FUNCTION KE ANDAR AA GAYA HU! 🔥🔥🔥");
   const data = req.body || {};
   const targetId = cleanStr(req.params.id) || cleanStr(data.id);
   console.log("👉 [UPDATE REQUISITION PAYLOAD for ID:", targetId, "]:", data);
