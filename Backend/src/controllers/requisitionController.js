@@ -468,8 +468,7 @@ const createRequisition = async (req, res) => {
   }
 };
 
-// PUT: Update Requisition
-export const updateRequisition = async (req, res) => {
+const updateRequisition = async (req, res) => {
   try {
     const { id } = req.params;
     const d = req.body || {};
