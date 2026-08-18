@@ -1953,7 +1953,6 @@
 //   );
 // }
 
-
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { 
   Search, 
@@ -1984,7 +1983,6 @@ import {
   ArrowDown,
   Phone,
   Calendar,
-  CheckCircle2,
   RotateCcw
 } from "lucide-react";
 import { 
@@ -2067,53 +2065,59 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Exact Concept Engine: Left (Total Lifetime Days) / Right (Current Date or 0 if Recall/Closed)
+// 🧮 Pure Calculation Logic
 const getDynamicTotalDays = (loginStr, logoutStr, recallStr = null) => {
-  const s = formatForDateInput(loginStr);
-  if (!s) return "—";
+  const cleanLogin = formatForDateInput(loginStr);
+  if (!cleanLogin) return "—";
 
-  const [sY, sM, sD] = s.split("-").map(Number);
+  const [sY, sM, sD] = cleanLogin.split("-").map(Number);
   const startUtc = Date.UTC(sY, sM - 1, sD);
 
   const cleanRecall = formatForDateInput(recallStr);
-  const isClosed = Boolean(cleanRecall);
+  const cleanLogout = formatForDateInput(logoutStr);
 
-  const todayClean = todayISO();
-  const [tY, tM, tD] = todayClean.split("-").map(Number);
+  const todayStr = todayISO();
+  const [tY, tM, tD] = todayStr.split("-").map(Number);
   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
-  let endUtc = todayUtc;
+  // 1. Agar Recall Date dali hui hai (Closed period)
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
-    endUtc = Date.UTC(rY, rM - 1, rD);
-  }
-
-  // 1. Left Side: Total Lifetime Days
-  let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
-  if (totalDays < 0) totalDays = 0;
-
-  // If closed via recall date, right side is 0
-  if (isClosed) {
+    const recallUtc = Date.UTC(rY, rM - 1, rD);
+    let totalDays = Math.floor((recallUtc - startUtc) / 86400000) + 1;
+    if (totalDays < 1) totalDays = 1;
     return `${totalDays} / 0`;
   }
 
-  // 2. Right Side: Always current calendar date (tD)
+  // 2. Active Rental
+  let endUtc = todayUtc;
+  if (cleanLogout) {
+    const [lY, lM, lD] = cleanLogout.split("-").map(Number);
+    const logoutUtc = Date.UTC(lY, lM - 1, lD);
+    if (logoutUtc < startUtc) {
+      endUtc = startUtc;
+    } else {
+      endUtc = logoutUtc;
+    }
+  }
+
+  let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
+  if (totalDays < 1) totalDays = 1;
+
   return `${totalDays} / ${tD}`;
 };
 
-// 🧮 Calculator Specific Engine (Login & Logout)
+// 🧮 Calculator Specific Pure Function
 const getCalculatorDays = (loginStr, logoutStr) => {
-  const s = formatForDateInput(loginStr);
-  if (!s) return "—";
+  const cleanLogin = formatForDateInput(loginStr);
+  if (!cleanLogin) return "—";
 
-  const [sY, sM, sD] = s.split("-").map(Number);
+  const [sY, sM, sD] = cleanLogin.split("-").map(Number);
   const startUtc = Date.UTC(sY, sM - 1, sD);
 
   const cleanLogout = formatForDateInput(logoutStr);
-  const isClosed = Boolean(cleanLogout);
-
-  const todayClean = todayISO();
-  const [tY, tM, tD] = todayClean.split("-").map(Number);
+  const todayStr = todayISO();
+  const [tY, tM, tD] = todayStr.split("-").map(Number);
   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
   let endUtc = todayUtc;
@@ -2123,9 +2127,9 @@ const getCalculatorDays = (loginStr, logoutStr) => {
   }
 
   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
-  if (totalDays < 0) totalDays = 0;
+  if (totalDays < 1) totalDays = 1;
 
-  if (isClosed) {
+  if (cleanLogout) {
     return `${totalDays} / 0`;
   }
 
@@ -2162,8 +2166,8 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Modern & Clean Days Calculator Modal
-function CalculateTotalDaysModal({ onClose, onApply }) {
+// 🌟 Clean & Modern Days Calculator Modal
+function CalculateTotalDaysModal({ onClose }) {
   const [tempLoginDate, setTempLoginDate] = useState("");
   const [tempLogoutDate, setTempLogoutDate] = useState("");
 
@@ -2171,13 +2175,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
     if (!tempLoginDate) return "—";
     return getCalculatorDays(tempLoginDate, tempLogoutDate);
   }, [tempLoginDate, tempLogoutDate]);
-
-  const handleApply = () => {
-    if (onApply && totalDaysDisplay !== "—") {
-      onApply(totalDaysDisplay);
-    }
-    onClose();
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
@@ -2191,7 +2188,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-800">Rental Days Calculator</h3>
-              <p className="text-xs font-semibold text-teal-700">Quick Preview</p>
+              <p className="text-xs font-semibold text-teal-700">Quick Test Tool</p>
             </div>
           </div>
           <button 
@@ -2243,12 +2240,12 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
 
           {/* Result Display Box */}
           <div className="rounded-2xl border border-teal-100 bg-gradient-to-b from-teal-50/70 to-teal-50/20 p-5 text-center shadow-inner">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-teal-800">Result (Total Days / Current Date)</span>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-teal-800">Result (Total Days / Status)</span>
             <p className="mt-2 font-display text-4xl font-black text-teal-950 tracking-tight">
               {totalDaysDisplay}
             </p>
             <p className="mt-1.5 text-xs font-medium text-slate-500">
-              {tempLogoutDate ? "Asset Returned" : "Asset Active"}
+              {tempLogoutDate ? "Asset Returned (/ 0)" : "Asset Active (/ Today Date)"}
             </p>
           </div>
         </div>
@@ -2266,23 +2263,13 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             <RotateCcw className="h-3.5 w-3.5" /> Reset
           </button>
 
-          <div className="flex items-center gap-2.5">
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
-            >
-              Cancel
-            </button>
-            <button 
-              type="button" 
-              onClick={handleApply} 
-              disabled={totalDaysDisplay === "—"}
-              className="flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white px-5 py-2 text-xs font-bold shadow-md shadow-teal-600/20 transition cursor-pointer"
-            >
-              <CheckCircle2 className="h-4 w-4" /> Apply Result
-            </button>
-          </div>
+          <button 
+            type="button" 
+            onClick={onClose} 
+            className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 text-xs font-bold shadow-md shadow-teal-600/20 transition cursor-pointer"
+          >
+            Close
+          </button>
         </div>
 
       </div>
@@ -3305,7 +3292,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [pageForm, setPageForm] = useState(null); 
 
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
-  const [tempCalculatedDays, setTempCalculatedDays] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   const handleSort = (field) => {
@@ -3680,7 +3666,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               setCareCenterFilter("All");
               setSortField("startDate");
               setSortOrder("desc");
-              setTempCalculatedDays(null);
               fetchLogs();
               toast.success("Filters reset");
             }}
@@ -3811,7 +3796,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                             ? "bg-slate-100 text-slate-700 border-slate-200" 
                             : "bg-teal-50 text-teal-800 border-teal-200"
                         }`}>
-                          {tempCalculatedDays !== null ? tempCalculatedDays : dynamicDaysFormatted}
+                          {dynamicDaysFormatted}
                         </span>
                       </td>
 
@@ -3873,10 +3858,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       {isCalcModalOpen && (
         <CalculateTotalDaysModal 
           onClose={() => setIsCalcModalOpen(false)} 
-          onApply={(val) => {
-            setTempCalculatedDays(val);
-            toast.success(`Applied Total Days: ${val}`);
-          }}
         />
       )}
 
