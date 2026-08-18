@@ -468,108 +468,85 @@ const createRequisition = async (req, res) => {
   }
 };
 
-// 3. UPDATE REQUISITION (Direct Full Update)
-const updateRequisition = async (req, res) => {
-  const { id } = req.params;
-  const data = req.body;
-  console.log(`👉 [UPDATE REQUISITION PAYLOAD ${id}]:`, data);
-
+// PUT: Update Requisition
+export const updateRequisition = async (req, res) => {
   try {
-    const today = new Date().toISOString().slice(0, 10);
-    const startDate = cleanDate(data.start_date || data.startDate) || today;
-    const logoutDate = cleanDate(data.logout_date || data.logoutDate);
-    let finalStatus = (logoutDate && logoutDate <= today) ? "Closed" : "Active";
-    if (String(data.status || data.requisition_status || "").toLowerCase() === "inactive") {
-      finalStatus = "Inactive";
-    }
+    const { id } = req.params;
+    const d = req.body || {};
 
-    let accValue = data.accessories || data.accessory || "";
-    if (Array.isArray(accValue)) accValue = accValue.join(", ");
-
-    const careCenterId = cleanFk(data.care_center_id || data.careCenterId);
-    const equipmentId = cleanFk(data.equipment_id || data.equipmentId || data.deviceModel);
-    const billingType = String(data.billing_type || data.billingType || "Daily").trim();
-    const rentalCharge = cleanNum(data.rental_charge, data.rentalCharge);
-    const depositAdvance = cleanNum(data.deposit_advance, data.depositAdvance);
-    const installationCharge = cleanNum(data.installation_charge, data.installationCharge);
-
-    const sql = `
-      UPDATE requisitions 
-      SET care_center_id = COALESCE(?, care_center_id), 
-          equipment_id = COALESCE(?, equipment_id), 
-          patient_name = ?, 
-          quantity = ?, 
-          start_date = ?, 
-          logout_date = ?, 
-          status = ?, 
-          delivery_status = ?, 
-          payment_type = ?, 
-          deal_type = ?, 
-          unit = ?, 
-          mode = ?, 
-          notify_date = ?, 
-          delivery_address = ?, 
-          notes = ?, 
-          accessory = ?, 
-          referral_doctor = ?, 
-          bed_number = ?, 
-          gst_number = ?, 
-          billing_type = ?, 
-          rental_charge = ?, 
-          deposit_advance = ?, 
-          installation_charge = ?, 
-          age = ?, 
-          attendant_name = ?, 
-          mobile_number = ?, 
-          alt_mobile_number = ?, 
-          incharge_mobile = ?, 
-          alt_mobile = ?, 
-          care_address = ?, 
-          record_date = ?, 
-          recall_date = ?
+    const query = `
+      UPDATE requisitions SET 
+        care_center_id = ?,
+        equipment_id = ?,
+        patient_name = ?,
+        start_date = ?,
+        logout_date = ?,
+        deal_type = ?,
+        unit = ?,
+        mode = ?,
+        payment_type = ?,
+        notify_date = ?,
+        recall_date = ?,
+        record_date = ?,
+        billing_type = ?,
+        rental_charge = ?,
+        deposit_advance = ?,
+        installation_charge = ?,
+        age = ?,
+        attendant_name = ?,
+        mobile_number = ?,
+        alt_mobile_number = ?,
+        incharge_mobile = ?,
+        alt_mobile = ?,
+        care_address = ?,
+        delivery_address = ?,
+        bed_number = ?,
+        referral_doctor = ?,
+        gst_number = ?,
+        accessory = ?,
+        notes = ?,
+        status = ?
       WHERE id = ?
     `;
 
     const values = [
-      careCenterId,
-      equipmentId,
-      cleanStr(data.patient_name || data.patientName, "Unknown"),
-      Math.max(1, cleanNum(data.quantity) || 1),
-      startDate,
-      logoutDate,
-      finalStatus,
-      cleanStr(data.delivery_status || data.deliveryStatus, "Pending Dispatch"),
-      cleanStr(data.payment_type || data.paymentType || data.mode, "Postpaid"),
-      cleanStr(data.deal_type || data.dealType, "B2B"),
-      cleanStr(data.unit, "ODCOM"),
-      cleanStr(data.mode || data.paymentType, "Postpaid"),
-      cleanDate(data.notify_date || data.notifyDate),
-      cleanStr(data.delivery_address || data.deliveryAddress),
-      cleanStr(data.notes),
-      cleanStr(accValue),
-      cleanStr(data.referral_doctor || data.referralDoctor || data.referral),
-      cleanStr(data.bed_number || data.bedNo),
-      cleanStr(data.gst_number || data.gstNo),
-      billingType,
-      rentalCharge,
-      depositAdvance,
-      installationCharge,
-      cleanStr(data.age),
-      cleanStr(data.attendant_name || data.attendantName),
-      cleanStr(data.mobile_number || data.mobileNumber || data.mobile),
-      cleanStr(data.alt_mobile_number || data.altMobileNumber),
-      cleanStr(data.incharge_mobile || data.inchargeMobile || data.phone),
-      cleanStr(data.alt_mobile || data.altMobile),
-      cleanStr(data.care_address || data.careAddress),
-      cleanDate(data.record_date || data.recordDate),
-      cleanDate(data.recall_date || data.recallDate),
+      d.care_center_id || d.careCenterId || null,
+      d.equipment_id || d.equipmentId || null,
+      String(d.patient_name || d.patientName || "").trim(),
+      d.start_date || d.startDate || null,
+      d.logout_date || d.logoutDate || null,
+      d.deal_type || d.dealType || "B2B",
+      d.unit || "ODCOM",
+      d.mode || d.payment_type || d.paymentType || "Postpaid",
+      d.payment_type || d.paymentType || d.mode || "Postpaid",
+      d.notify_date || d.notifyDate || null,
+      d.recall_date || d.recallDate || null,
+      d.record_date || d.recordDate || null,
+      d.billing_type || d.billingType || "Daily",
+      parseFloat(d.rental_charge ?? d.rentalCharge ?? d.rent ?? 0),
+      parseFloat(d.deposit_advance ?? d.depositAdvance ?? d.deposit ?? 0),
+      parseFloat(d.installation_charge ?? d.installationCharge ?? 0),
+      String(d.age || "").trim(),
+      String(d.attendant_name || d.attendantName || "").trim(),
+      String(d.mobile_number || d.mobileNumber || d.mobile || "").trim(),
+      String(d.alt_mobile_number || d.altMobileNumber || "").trim(),
+      String(d.incharge_mobile || d.inchargeMobile || "").trim(),
+      String(d.alt_mobile || d.altMobile || "").trim(),
+      String(d.care_address || d.careAddress || "").trim(),
+      String(d.delivery_address || d.deliveryAddress || "").trim(),
+      String(d.bed_number || d.bedNumber || d.bedNo || "").trim(),
+      String(d.referral_doctor || d.referralDoctor || "").trim(),
+      String(d.gst_number || d.gstNumber || "").trim(),
+      String(d.accessory || d.accessories || "").trim(),
+      String(d.notes || "").trim(),
+      d.status || "Active",
       id
     ];
 
-    await pool.query(sql, values);
-    return res.status(200).json({ message: "Requisition updated successfully!", status: finalStatus });
+    await pool.query(query, values);
+    return res.status(200).json({ message: "Requisition updated successfully!" });
   } catch (error) {
-    console.error("Update Error:", error);
+    console.error("Update Requisition Error:", error);
     return res.status(500).json({ message: error.sqlMessage || error.message });
   }
 };
