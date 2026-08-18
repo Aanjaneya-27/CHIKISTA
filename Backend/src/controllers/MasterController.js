@@ -948,6 +948,31 @@ const getReferences = async (req, res) => {
   }
 };
 
+// const addReference = async (req, res) => {
+//   try {
+//     const d = req.body || {};
+//     const doctorName = String(d.doctorName || d.doctor_name || d.name || "").trim();
+//     if (!doctorName) return res.status(400).json({ message: "Doctor / Reference name is required." });
+
+//     const phone = cleanPhone(d.phone || d.contact || "") || String(d.phone || d.contact || "").trim();
+//     const hospital = String(d.hospital || "").trim();
+//     const domain = String(d.specialistDomain || d.specialist_domain || d.domain || "").trim();
+//     const status = d.status || "Active";
+//     const id = `REF-${Date.now()}`;
+
+//     await pool.query(
+//       "INSERT INTO `references` (id, name, doctor_name, contact, phone, specialist_domain, hospital, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+//       [id, doctorName, doctorName, phone, phone, domain, hospital, status]
+//     );
+
+//     return res.status(201).json({ message: "Reference added successfully!", id });
+//   } catch (error) {
+//     console.error("Add Reference Error:", error);
+//     return res.status(500).json({ message: error.sqlMessage || error.message });
+//   }
+// };
+
+// ❌ PURANA / ERROR WALA CODE (Isko dhoondo):
 const addReference = async (req, res) => {
   try {
     const d = req.body || {};
@@ -971,7 +996,6 @@ const addReference = async (req, res) => {
     return res.status(500).json({ message: error.sqlMessage || error.message });
   }
 };
-
 const updateReference = async (req, res) => {
   try {
     const { id } = req.params;
