@@ -1,5 +1,5 @@
 const express = require("express");
-const { getRequisitions,createRequisition,updateRequisition,deleteRequisition,getNotifications } = require("../controllers/requisitionController");
+const { getRequisitions,createRequisition,updateRequisition,deleteRequisition,getNotifications,deleteNotification } = require("../controllers/requisitionController");
 
 const router = express.Router();
 

@@ -906,11 +906,26 @@ const getNotifications = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+const deleteNotification = async (req, res) => {
+  const { id } = req.params;
+  try {
+    if (typeof id === "string" && id.startsWith("REMINDER_")) {
+      return res.status(200).json({ message: "Reminder dismissed successfully!" });
+    }
+
+    await pool.query("DELETE FROM notifications WHERE id = ?", [id]);
+    return res.status(200).json({ message: "Notification deleted successfully!" });
+  } catch (error) {
+    console.error("Delete Notification Error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
 
 module.exports = {
   getRequisitions,
   createRequisition,
   updateRequisition,
   deleteRequisition,
-  getNotifications
+  getNotifications,
+  deleteNotification
 };
