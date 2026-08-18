@@ -2067,7 +2067,7 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Simple & Clean: Total Days (Left) / Current Month Used Days (Right)
+// 🧮 Total Days (Lifetime) / Current Month Days
 const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
   const s = formatForDateInput(loginStr);
   if (!s) return "—";
@@ -2086,14 +2086,14 @@ const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
     endUtc = Date.UTC(eY, eM - 1, eD);
   }
 
-  // 1. Total Overall Days (Left Side)
-  const finalEnd = endUtc !== null ? endUtc : todayUtc;
-  let totalDays = Math.floor((finalEnd - startUtc) / 86400000) + 1;
-  if (totalDays < 0) totalDays = 0;
+  // 1. Left Side: Total Lifetime Days (Login se Logout ya Today tak)
+  const finalEndUtc = endUtc !== null ? endUtc : todayUtc;
+  let totalOverallDays = Math.floor((finalEndUtc - startUtc) / 86400000) + 1;
+  if (totalOverallDays < 0) totalOverallDays = 0;
 
-  // 2. Current / Target Month Days (Right Side)
+  // 2. Right Side: Month Days (Iss Mahine mein use hue din)
   let refYear = tY;
-  let refMonth = tM - 1;
+  let refMonth = tM - 1; // 0-indexed
 
   if (targetMonthISO) {
     const cleanTarget = formatForDateInput(targetMonthISO);
@@ -2109,21 +2109,21 @@ const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
   const monthEndUtc = Date.UTC(refYear, refMonth, lastDayOfMonth);
 
   const isCurrentMonth = (refYear === tY && refMonth === (tM - 1));
-  const activeLimit = isCurrentMonth ? todayUtc : monthEndUtc;
-  const monthEndLimit = endUtc !== null ? endUtc : activeLimit;
+  const activeLimitUtc = isCurrentMonth ? todayUtc : monthEndUtc;
+  const monthEndLimitUtc = endUtc !== null ? endUtc : activeLimitUtc;
 
   const interStart = Math.max(startUtc, monthStartUtc);
-  const interEnd = Math.min(monthEndLimit, monthEndUtc);
+  const interEnd = Math.min(monthEndLimitUtc, monthEndUtc);
 
-  let monthDays = 0;
+  let monthUsedDays = 0;
   if (interStart <= interEnd && startUtc <= monthEndUtc) {
     if (endUtc === null || endUtc >= monthStartUtc) {
-      monthDays = Math.floor((interEnd - interStart) / 86400000) + 1;
-      if (monthDays < 0) monthDays = 0;
+      monthUsedDays = Math.floor((interEnd - interStart) / 86400000) + 1;
+      if (monthUsedDays < 0) monthUsedDays = 0;
     }
   }
 
-  return `${totalDays} / ${monthDays}`;
+  return `${totalOverallDays} / ${monthUsedDays}`;
 };
 
 const getOptionLabel = (item) => {
@@ -2156,7 +2156,7 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Calculator Modal
+// 🌟 Simple & Clean Total Days Calculator Modal (With X / Y Result)
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const [tempLoginDate, setTempLoginDate] = useState("");
   const [tempLogoutDate, setTempLogoutDate] = useState("");
@@ -2263,7 +2263,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             />
           </div>
 
-          {/* Result */}
+          {/* Result Display */}
           <div className="rounded-xl border border-teal-100 bg-teal-50/60 p-4 text-center">
             <span className="text-xs font-bold uppercase tracking-wider text-teal-700">Total Days / Month Days</span>
             <p className="mt-1 font-display text-3xl font-extrabold text-teal-950">
