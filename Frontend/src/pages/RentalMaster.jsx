@@ -1,3 +1,5 @@
+
+
 // import { useState, useEffect, useMemo, useCallback } from "react";
 // import { 
 //   Search, 
@@ -114,7 +116,7 @@
 //   return dt.toISOString().split("T")[0];
 // };
 
-// // 🧮 Universal Calendar-Month Overlap Engine
+// // 🧮 Universal Overlap Engine
 // const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
 //   const s = formatForDateInput(loginStr);
 //   if (!s) return "—";
@@ -145,6 +147,7 @@
 //   const lastDayOfMonth = new Date(refYear, refMonth + 1, 0).getDate();
 //   const monthEndUtc = Date.UTC(refYear, refMonth, lastDayOfMonth);
 
+//   // Month check
 //   if (endUtc !== null && endUtc < monthStartUtc) return "0 / 0";
 //   if (startUtc > monthEndUtc) return "0 / 0";
 
@@ -195,15 +198,15 @@
 // const getSafeTime = (item, field) => {
 //   if (!item) return 0;
 //   const raw = field === "logoutDate" 
-//     ? (item.logoutDate || item.logout_date) 
-//     : (item.startDate || item.start_date || item.loginDate);
+//     ? (item.logoutDate || item.logout_date || item.end_date || item.endDate) 
+//     : (item.startDate || item.start_date || item.loginDate || item.login_date || item.recordDate || item.record_date);
 //   const clean = formatForDateInput(raw);
 //   if (!clean) return 0;
 //   const t = new Date(clean).getTime();
 //   return isNaN(t) ? 0 : t;
 // };
 
-// // 🌟 Calculator Modal
+// // 🌟 Universal Days Calculator Modal
 // function CalculateTotalDaysModal({ onClose, onApply }) {
 //   const [tempLoginDate, setTempLoginDate] = useState(() => todayISO());
 //   const [tempLogoutDate, setTempLogoutDate] = useState("");
@@ -493,13 +496,13 @@
 //   const today = todayISO();
 //   const countActive = logs.filter((l) => {
 //     const isInactive = String(l?.status || "").toLowerCase() === "inactive";
-//     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date);
+//     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date || l?.end_date);
 //     return !isInactive && (!cleanOut || cleanOut > today);
 //   }).length;
 
 //   const countClosed = logs.filter((l) => {
 //     const isInactive = String(l?.status || "").toLowerCase() === "inactive";
-//     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date);
+//     const cleanOut = formatForDateInput(l?.logoutDate || l?.logout_date || l?.end_date);
 //     return !isInactive && Boolean(cleanOut && cleanOut <= today);
 //   }).length;
 
@@ -553,6 +556,7 @@
 //   );
 // }
 
+// // 🔍 Requisition Detail View (100% Fallback Safe)
 // function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], onBack }) {
 //   const eqId = log?.equipmentId || log?.equipment_id || log?.deviceModel;
 //   const equipmentName = equipmentCatalog.find(e => String(e?.id) === String(eqId))?.name || log?.equipmentName || log?.equipment_name || eqId || "—";
@@ -561,7 +565,7 @@
 //   const careCenterObj = careCenters.find(c => String(c?.id) === String(ccId));
 //   const careCenterName = log?.careCenterName || log?.care_center_name || careCenterObj?.name || ccId || "—";
 
-//   const cleanLogout = formatForDateInput(log?.logoutDate || log?.logout_date);
+//   const cleanLogout = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
 //   const today = todayISO();
 //   const isInactive = String(log?.status || "").toLowerCase() === "inactive";
 //   const isCurrentlyActive = !cleanLogout || cleanLogout > today;
@@ -574,12 +578,20 @@
 //     ? "bg-amber-50 text-amber-700 border-amber-200"
 //     : "bg-emerald-50 text-emerald-700 border-emerald-200";
 
+//   // Commercials Fallback
 //   const billingTypeVal = log?.billingType || log?.billing_type || log?.billing || "Daily";
-//   const rentalChargeVal = Number(log?.rentalCharge ?? log?.rental_charge ?? log?.rental ?? log?.rent ?? 0).toFixed(2);
-//   const depositAdvanceVal = Number(log?.depositAdvance ?? log?.deposit_advance ?? log?.deposit ?? log?.advance ?? 0).toFixed(2);
-//   const installationChargeVal = Number(log?.installationCharge ?? log?.installation_charge ?? log?.installation ?? 0).toFixed(2);
+//   const rentalChargeVal = Number(log?.rentalCharge ?? log?.rental_charge ?? log?.rent ?? log?.daily_rate ?? log?.dailyRate ?? log?.amount ?? log?.rental ?? 0).toFixed(2);
+//   const depositAdvanceVal = Number(log?.depositAdvance ?? log?.deposit_advance ?? log?.deposit ?? log?.advance ?? log?.advance_amount ?? 0).toFixed(2);
+//   const installationChargeVal = Number(log?.installationCharge ?? log?.installation_charge ?? log?.installation ?? log?.install_charge ?? 0).toFixed(2);
 
-//   const totalDaysFormatted = getDynamicTotalDays(log?.startDate || log?.start_date || log?.loginDate, cleanLogout);
+//   // Patient Identity Fallback
+//   const patientNameVal = log?.patientName || log?.patient_name || log?.patient || "—";
+//   const mobileNumberVal = log?.mobileNumber || log?.mobile_number || log?.mobile || log?.phone || log?.contact || log?.patient_mobile || "—";
+//   const attendantNameVal = log?.attendantName || log?.attendant_name || log?.attendant || log?.guardian_name || log?.care_taker || "—";
+//   const deliveryAddressVal = log?.deliveryAddress || log?.delivery_address || log?.address || "—";
+
+//   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate || log?.record_date;
+//   const totalDaysFormatted = getDynamicTotalDays(startDateVal, cleanLogout);
 
 //   return (
 //     <div className="fade-slide-up space-y-6">
@@ -635,7 +647,7 @@
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Log In Date</p>
 //               <p className="font-bold text-slate-800 mt-0.5">
-//                 {formatDisplayDate(log?.startDate || log?.start_date || log?.loginDate)}
+//                 {formatDisplayDate(startDateVal)}
 //               </p>
 //             </div>
 
@@ -702,18 +714,18 @@
 
 //           <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-sm">
 //             <div><p className="text-xs font-medium text-slate-400">Patient Name:</p></div>
-//             <div><p className="font-bold text-slate-800">{log?.patientName || log?.patient_name || "—"}</p></div>
+//             <div><p className="font-bold text-slate-800">{patientNameVal}</p></div>
 
 //             <div><p className="text-xs font-medium text-slate-400">Mobile:</p></div>
-//             <div><p className="font-bold text-slate-800">{log?.mobileNumber || log?.mobile_number || log?.mobile || "—"}</p></div>
+//             <div><p className="font-bold text-slate-800">{mobileNumberVal}</p></div>
 
 //             <div><p className="text-xs font-medium text-slate-400">Attendant:</p></div>
-//             <div><p className="font-bold text-slate-800">{log?.attendantName || log?.attendant_name || "—"}</p></div>
+//             <div><p className="font-bold text-slate-800">{attendantNameVal}</p></div>
 
 //             <div className="col-span-2 pt-2">
 //               <p className="text-xs font-medium text-slate-400 mb-1.5">Delivery Address:</p>
 //               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
-//                 {log?.deliveryAddress || log?.delivery_address || "—"}
+//                 {deliveryAddressVal}
 //               </div>
 //             </div>
 //           </div>
@@ -732,7 +744,7 @@
 //             <div><p className="font-bold text-slate-800">{log?.inchargeMobile || log?.incharge_mobile || log?.phone || careCenterObj?.phone || careCenterObj?.incharge_mobile || "—"}</p></div>
 
 //             <div><p className="text-xs font-medium text-slate-400">Bed No:</p></div>
-//             <div><p className="font-bold text-slate-800">{log?.bedNumber || log?.bed_number || log?.bedNo || "—"}</p></div>
+//             <div><p className="font-bold text-slate-800">{log?.bedNumber || log?.bed_number || log?.bedNo || log?.bed_no || "—"}</p></div>
 
 //             <div className="col-span-2 pt-2">
 //               <p className="text-xs font-medium text-slate-400 mb-1.5">Care Address:</p>
@@ -791,11 +803,11 @@
 
 //       const ccId = initial.careCenterId || initial.care_center_id || "";
 //       const cc = careCenters.find((c) => c?.id === ccId);
-//       const parsedLogoutDate = formatForDateInput(initial.logoutDate || initial.logout_date);
+//       const parsedLogoutDate = formatForDateInput(initial.logoutDate || initial.logout_date || initial.end_date);
 
-//       const rCharge = initial.rentalCharge !== undefined && initial.rentalCharge !== null ? initial.rentalCharge : (initial.rental_charge !== undefined ? initial.rental_charge : "");
-//       const dAdvance = initial.depositAdvance !== undefined && initial.depositAdvance !== null ? initial.depositAdvance : (initial.deposit_advance !== undefined ? initial.deposit_advance : "");
-//       const iCharge = initial.installationCharge !== undefined && initial.installationCharge !== null ? initial.installationCharge : (initial.installation_charge !== undefined ? initial.installation_charge : "");
+//       const rCharge = initial.rentalCharge ?? initial.rental_charge ?? initial.rent ?? initial.daily_rate ?? initial.amount ?? "";
+//       const dAdvance = initial.depositAdvance ?? initial.deposit_advance ?? initial.deposit ?? initial.advance ?? initial.advance_amount ?? "";
+//       const iCharge = initial.installationCharge ?? initial.installation_charge ?? initial.installation ?? initial.install_charge ?? "";
 
 //       return {
 //         id: initial.id || null,
@@ -805,27 +817,27 @@
 //         deviceModel: initial.equipmentId || initial.equipment_id || initial.deviceModel || "",
 //         accessory: parsedAcc,
 //         recordDate: formatForDateInput(initial.recordDate || initial.record_date) || todayISO(),
-//         loginDate: formatForDateInput(initial.startDate || initial.start_date || initial.loginDate) || todayISO(),
+//         loginDate: formatForDateInput(initial.startDate || initial.start_date || initial.loginDate || initial.login_date) || todayISO(),
 //         notifyDate: formatForDateInput(initial.notifyDate || initial.notify_date) || "",
 //         logoutDate: parsedLogoutDate || "",
 //         recallDate: formatForDateInput(initial.recallDate || initial.recall_date) || "",
 //         billingType: initial.billingType || initial.billing_type || "Daily",
-//         rentalCharge: rCharge,
-//         depositAdvance: dAdvance,
-//         installationCharge: iCharge,
+//         rentalCharge: rCharge !== undefined && rCharge !== null ? String(rCharge) : "",
+//         depositAdvance: dAdvance !== undefined && dAdvance !== null ? String(dAdvance) : "",
+//         installationCharge: iCharge !== undefined && iCharge !== null ? String(iCharge) : "",
 //         careCenterId: ccId || matchedUserCenter?.id || "",
 //         inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || cc?.phone || "",
 //         altMobile: initial.altMobile || initial.alt_mobile || "",
 //         careAddress: initial.careAddress || initial.care_address || initial.address || cc?.address || "",
-//         bedNo: initial.bedNumber || initial.bed_number || initial.bedNo || "",
+//         bedNo: initial.bedNumber || initial.bed_number || initial.bedNo || initial.bed_no || "",
 //         referral: initial.referralDoctor || initial.referral_doctor || initial.referral || "",
-//         patientName: initial.patientName || initial.patient_name || "",
+//         patientName: initial.patientName || initial.patient_name || initial.patient || "",
 //         age: initial.age || "",
-//         attendantName: initial.attendantName || initial.attendant_name || "",
-//         mobileNumber: initial.mobileNumber || initial.mobile_number || initial.mobile || "",
+//         attendantName: initial.attendantName || initial.attendant_name || initial.attendant || "",
+//         mobileNumber: initial.mobileNumber || initial.mobile_number || initial.mobile || initial.phone || "",
 //         altMobileNumber: initial.altMobileNumber || initial.alt_mobile_number || "",
-//         deliveryAddress: initial.deliveryAddress || initial.delivery_address || "",
-//         notes: initial.notes || ""
+//         deliveryAddress: initial.deliveryAddress || initial.delivery_address || initial.address || "",
+//         notes: initial.notes || initial.note || ""
 //       };
 //     }
 
@@ -955,36 +967,38 @@
 //     const today = todayISO();
 //     const finalCalculatedStatus = (cleanLogout && cleanLogout <= today) ? "Closed" : "Active";
 
-//     const parseNum = (v1, v2) => {
-//       const val = (v1 !== undefined && v1 !== null && v1 !== "") ? v1 : v2;
-//       if (val === undefined || val === null || val === "") return 0;
-//       const n = parseFloat(val);
+//     const parseNum = (v) => {
+//       if (v === undefined || v === null || v === "") return 0;
+//       const n = parseFloat(v);
 //       return isNaN(n) ? 0 : n;
 //     };
 
-//     const rCharge = parseNum(form.rentalCharge, form.rental_charge);
-//     const dAdvance = parseNum(form.depositAdvance, form.deposit_advance);
-//     const iCharge = parseNum(form.installationCharge, form.installation_charge);
+//     const rCharge = parseNum(form.rentalCharge);
+//     const dAdvance = parseNum(form.depositAdvance);
+//     const iCharge = parseNum(form.installationCharge);
 
 //     onSubmit({
 //       ...form, 
 //       id: form.id,
       
-//       // Dates
-//       recordDate: formatForDateInput(form.recordDate || form.record_date) || todayISO(),
-//       record_date: formatForDateInput(form.recordDate || form.record_date) || todayISO(),
-//       startDate: formatForDateInput(form.loginDate || form.startDate || form.start_date) || todayISO(),
-//       start_date: formatForDateInput(form.loginDate || form.startDate || form.start_date) || todayISO(),
+//       // Dates (Dual camelCase & snake_case)
+//       recordDate: formatForDateInput(form.recordDate) || todayISO(),
+//       record_date: formatForDateInput(form.recordDate) || todayISO(),
+//       startDate: formatForDateInput(form.loginDate) || todayISO(),
+//       start_date: formatForDateInput(form.loginDate) || todayISO(),
+//       loginDate: formatForDateInput(form.loginDate) || todayISO(),
+//       login_date: formatForDateInput(form.loginDate) || todayISO(),
 //       logoutDate: cleanLogout || null,
 //       logout_date: cleanLogout || null,
-//       notifyDate: formatForDateInput(form.notifyDate || form.notify_date) || null,
-//       notify_date: formatForDateInput(form.notifyDate || form.notify_date) || null,
-//       recallDate: formatForDateInput(form.recallDate || form.recall_date) || null,
-//       recall_date: formatForDateInput(form.recallDate || form.recall_date) || null,
+//       end_date: cleanLogout || null,
+//       notifyDate: formatForDateInput(form.notifyDate) || null,
+//       notify_date: formatForDateInput(form.notifyDate) || null,
+//       recallDate: formatForDateInput(form.recallDate) || null,
+//       recall_date: formatForDateInput(form.recallDate) || null,
 
 //       // Equipment & Center
-//       careCenterId: form.careCenterId || form.care_center_id || null,
-//       care_center_id: form.careCenterId || form.care_center_id || null,
+//       careCenterId: form.careCenterId || null,
+//       care_center_id: form.careCenterId || null,
 //       careCenterName, 
 //       care_center_name: careCenterName,
 //       equipmentId: deviceId,
@@ -995,53 +1009,63 @@
 //       quantity: 1, 
 
 //       // 💳 Commercials
-//       billingType: form.billingType || form.billing_type || "Daily",
-//       billing_type: form.billingType || form.billing_type || "Daily",
+//       billingType: form.billingType || "Daily",
+//       billing_type: form.billingType || "Daily",
 //       rentalCharge: rCharge,
 //       rental_charge: rCharge,
+//       rent: rCharge,
+//       daily_rate: rCharge,
 //       depositAdvance: dAdvance,
 //       deposit_advance: dAdvance,
+//       deposit: dAdvance,
+//       advance: dAdvance,
 //       installationCharge: iCharge,
 //       installation_charge: iCharge,
+//       installation: iCharge,
 
 //       // 👤 Patient Identity & Contact
-//       patientName: String(form.patientName || form.patient_name || "").trim(),
-//       patient_name: String(form.patientName || form.patient_name || "").trim(),
+//       patientName: String(form.patientName || "").trim(),
+//       patient_name: String(form.patientName || "").trim(),
+//       patient: String(form.patientName || "").trim(),
 //       age: String(form.age || "").trim(),
-//       attendantName: String(form.attendantName || form.attendant_name || "").trim(),
-//       attendant_name: String(form.attendantName || form.attendant_name || "").trim(),
-//       mobileNumber: String(form.mobileNumber || form.mobile_number || form.mobile || "").trim(),
-//       mobile_number: String(form.mobileNumber || form.mobile_number || form.mobile || "").trim(),
-//       altMobileNumber: String(form.altMobileNumber || form.alt_mobile_number || "").trim(),
-//       alt_mobile_number: String(form.altMobileNumber || form.alt_mobile_number || "").trim(),
-//       inchargeMobile: String(form.inchargeMobile || form.incharge_mobile || "").trim(),
-//       incharge_mobile: String(form.inchargeMobile || form.incharge_mobile || "").trim(),
-//       altMobile: String(form.altMobile || form.alt_mobile || "").trim(),
-//       alt_mobile: String(form.altMobile || form.alt_mobile || "").trim(),
-//       careAddress: String(form.careAddress || form.care_address || "").trim(),
-//       care_address: String(form.careAddress || form.care_address || "").trim(),
-//       deliveryAddress: String(form.deliveryAddress || form.delivery_address || "").trim(),
-//       delivery_address: String(form.deliveryAddress || form.delivery_address || "").trim(),
-//       bedNumber: String(form.bedNo || form.bedNumber || form.bed_number || "").trim(),
-//       bed_number: String(form.bedNo || form.bedNumber || form.bed_number || "").trim(),
-//       referralDoctor: String(form.referral || form.referralDoctor || form.referral_doctor || "").trim(),
-//       referral_doctor: String(form.referral || form.referralDoctor || form.referral_doctor || "").trim(),
-//       gstNumber: String(form.gstNo || form.gstNumber || form.gst_number || "").trim(),
-//       gst_number: String(form.gstNo || form.gstNumber || form.gst_number || "").trim(),
-//       accessory: form.accessory || form.accessories || "",
-//       accessories: form.accessory || form.accessories || "",
-//       notes: form.notes || form.note || "",
+//       attendantName: String(form.attendantName || "").trim(),
+//       attendant_name: String(form.attendantName || "").trim(),
+//       attendant: String(form.attendantName || "").trim(),
+//       mobileNumber: String(form.mobileNumber || "").trim(),
+//       mobile_number: String(form.mobileNumber || "").trim(),
+//       mobile: String(form.mobileNumber || "").trim(),
+//       phone: String(form.mobileNumber || "").trim(),
+//       altMobileNumber: String(form.altMobileNumber || "").trim(),
+//       alt_mobile_number: String(form.altMobileNumber || "").trim(),
+//       inchargeMobile: String(form.inchargeMobile || "").trim(),
+//       incharge_mobile: String(form.inchargeMobile || "").trim(),
+//       altMobile: String(form.altMobile || "").trim(),
+//       alt_mobile: String(form.altMobile || "").trim(),
+//       careAddress: String(form.careAddress || "").trim(),
+//       care_address: String(form.careAddress || "").trim(),
+//       deliveryAddress: String(form.deliveryAddress || "").trim(),
+//       delivery_address: String(form.deliveryAddress || "").trim(),
+//       bedNumber: String(form.bedNo || "").trim(),
+//       bed_number: String(form.bedNo || "").trim(),
+//       bedNo: String(form.bedNo || "").trim(),
+//       referralDoctor: String(form.referral || "").trim(),
+//       referral_doctor: String(form.referral || "").trim(),
+//       gstNumber: String(form.gstNo || "").trim(),
+//       gst_number: String(form.gstNo || "").trim(),
+//       accessory: Array.isArray(form.accessory) ? form.accessory.join(", ") : (form.accessory || ""),
+//       accessories: Array.isArray(form.accessory) ? form.accessory.join(", ") : (form.accessory || ""),
+//       notes: form.notes || "",
 
-//       // Status
-//       dealType: form.dealType || form.deal_type || "B2B",
-//       deal_type: form.dealType || form.deal_type || "B2B",
+//       // Status & Delivery
+//       dealType: form.dealType || "B2B",
+//       deal_type: form.dealType || "B2B",
 //       unit: form.unit || "ODCOM",
-//       mode: form.mode || form.paymentType || "Postpaid",
-//       paymentType: form.mode || form.paymentType || "Postpaid",
-//       payment_type: form.mode || form.paymentType || "Postpaid",
+//       mode: form.mode || "Postpaid",
+//       paymentType: form.mode || "Postpaid",
+//       payment_type: form.mode || "Postpaid",
 //       status: finalCalculatedStatus, 
-//       deliveryStatus: form.deliveryStatus || form.delivery_status || "Pending Dispatch",
-//       delivery_status: form.deliveryStatus || form.delivery_status || "Pending Dispatch",
+//       deliveryStatus: "Pending Dispatch",
+//       delivery_status: "Pending Dispatch",
 //       photoCount: photos.length
 //     });
 //   };
@@ -1457,7 +1481,7 @@
 //         const eqObj = equipmentCatalog.find((e) => e && String(e.id) === eqId);
 //         const eqName = String(l.equipmentName || eqObj?.name || eqId || "");
 
-//         const patient = String(l.patientName || l.patient_name || "");
+//         const patient = String(l.patientName || l.patient_name || l.patient || "");
 //         const inchargePhone = String(l.inchargeMobile || l.incharge_mobile || l.phone || "");
 //         const logId = String(l.id || "");
 
@@ -1468,7 +1492,7 @@
 //           ccName.toLowerCase().includes(q) || 
 //           inchargePhone.includes(q);
           
-//         const cleanLogout = formatForDateInput(l.logoutDate || l.logout_date);
+//         const cleanLogout = formatForDateInput(l.logoutDate || l.logout_date || l.end_date);
 //         const rawStatus = String(l.status || l.requisition_status || "").trim().toLowerCase();
 //         const isClosed = Boolean(cleanLogout && cleanLogout <= today);
 //         const computedStatus = rawStatus === "inactive" ? "inactive" : (isClosed ? "closed" : "active");
@@ -1504,15 +1528,12 @@
 //       });
 //   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-//   // ✅ 100% Bug-Free handleFormSubmit using `data`
+//   // ✅ Clean & Robust handleFormSubmit
 //   const handleFormSubmit = async (data) => {
 //     try {
-//       let accStr = data.accessory || data.accessories || "";
-//       if (Array.isArray(accStr)) accStr = accStr.join(", ");
-
 //       const chosenMode = data.mode || data.paymentType || data.payment_type || "Postpaid";
       
-//       const rawCenterId = data.careCenterId || data.care_center_id || data.centerId || "";
+//       const rawCenterId = data.careCenterId || data.care_center_id || "";
 //       const finalCareCenterId = isCareCenterUser 
 //         ? (matchedUserCenter?.id || loggedUser?.careCenterId || loggedUser?.id || null)
 //         : (rawCenterId === "other" || rawCenterId === "NEW" ? null : rawCenterId || null);
@@ -1523,21 +1544,20 @@
 
 //       const cleanLogout = formatForDateInput(data.logoutDate || data.logout_date);
 //       const cleanRecord = formatForDateInput(data.recordDate || data.record_date) || todayISO();
-//       const cleanStart = formatForDateInput(data.startDate || data.start_date || data.loginDate) || todayISO();
+//       const cleanStart = formatForDateInput(data.startDate || data.start_date || data.loginDate || data.login_date) || todayISO();
 //       const cleanRecall = formatForDateInput(data.recallDate || data.recall_date);
 //       const cleanNotify = formatForDateInput(data.notifyDate || data.notify_date);
 //       const today = todayISO();
 
-//       const parseVal = (v1, v2) => {
-//         const val = (v1 !== undefined && v1 !== null && v1 !== "") ? v1 : v2;
-//         if (val === undefined || val === null || val === "") return 0;
-//         const n = parseFloat(val);
+//       const parseVal = (v) => {
+//         if (v === undefined || v === null || v === "") return 0;
+//         const n = parseFloat(v);
 //         return isNaN(n) ? 0 : n;
 //       };
 
-//       const rCharge = parseVal(data.rentalCharge, data.rental_charge);
-//       const dAdvance = parseVal(data.depositAdvance, data.deposit_advance);
-//       const iCharge = parseVal(data.installationCharge, data.installation_charge);
+//       const rCharge = parseVal(data.rentalCharge ?? data.rental_charge ?? data.rent ?? data.daily_rate);
+//       const dAdvance = parseVal(data.depositAdvance ?? data.deposit_advance ?? data.deposit ?? data.advance);
+//       const iCharge = parseVal(data.installationCharge ?? data.installation_charge ?? data.installation);
 //       const bType = data.billingType || data.billing_type || "Daily";
 
 //       const payload = {
@@ -1552,35 +1572,46 @@
         
 //         patient_name: String(data.patientName || data.patient_name || "").trim(),
 //         patientName: String(data.patientName || data.patient_name || "").trim(),
+//         patient: String(data.patientName || data.patient_name || "").trim(),
 //         quantity: 1,
         
 //         start_date: cleanStart,
 //         startDate: cleanStart,
+//         login_date: cleanStart,
+//         loginDate: cleanStart,
 //         logout_date: cleanLogout || null,
 //         logoutDate: cleanLogout || null,
+//         end_date: cleanLogout || null,
 //         status: (cleanLogout && cleanLogout <= today) ? "Closed" : "Active",
         
 //         billing_type: bType,
 //         billingType: bType,
 //         rental_charge: rCharge,
 //         rentalCharge: rCharge,
+//         rent: rCharge,
+//         daily_rate: rCharge,
 //         deposit_advance: dAdvance,
 //         depositAdvance: dAdvance,
+//         deposit: dAdvance,
+//         advance: dAdvance,
 //         installation_charge: iCharge,
 //         installationCharge: iCharge,
+//         installation: iCharge,
         
 //         age: String(data.age || "").trim(),
 //         attendant_name: String(data.attendantName || data.attendant_name || "").trim(),
 //         attendantName: String(data.attendantName || data.attendant_name || "").trim(),
-//         mobile_number: String(data.mobileNumber || data.mobile_number || data.mobile || "").trim(),
-//         mobileNumber: String(data.mobileNumber || data.mobile_number || data.mobile || "").trim(),
+//         attendant: String(data.attendantName || data.attendant_name || "").trim(),
+//         mobile_number: String(data.mobileNumber || data.mobile_number || data.mobile || data.phone || "").trim(),
+//         mobileNumber: String(data.mobileNumber || data.mobile_number || data.mobile || data.phone || "").trim(),
+//         mobile: String(data.mobileNumber || data.mobile_number || data.mobile || data.phone || "").trim(),
 //         alt_mobile_number: String(data.altMobileNumber || data.alt_mobile_number || "").trim(),
 //         altMobileNumber: String(data.altMobileNumber || data.alt_mobile_number || "").trim(),
 //         delivery_address: String(data.deliveryAddress || data.delivery_address || "").trim(),
 //         deliveryAddress: String(data.deliveryAddress || data.delivery_address || "").trim(),
 
-//         incharge_mobile: String(data.inchargeMobile || data.incharge_mobile || data.phone || "").trim(),
-//         inchargeMobile: String(data.inchargeMobile || data.incharge_mobile || data.phone || "").trim(),
+//         incharge_mobile: String(data.inchargeMobile || data.incharge_mobile || "").trim(),
+//         inchargeMobile: String(data.inchargeMobile || data.incharge_mobile || "").trim(),
 //         alt_mobile: String(data.altMobile || data.alt_mobile || "").trim(),
 //         altMobile: String(data.altMobile || data.alt_mobile || "").trim(),
 //         care_address: String(data.careAddress || data.care_address || "").trim(),
@@ -1605,10 +1636,9 @@
 //         recall_date: cleanRecall,
 //         recallDate: cleanRecall,
 //         notes: data.notes || "",
-//         accessory: accStr,
-//         accessories: accStr,
+//         accessory: data.accessory || data.accessories || "",
+//         accessories: data.accessory || data.accessories || "",
 
-//         // Status & Delivery Properties
 //         deliveryStatus: data.deliveryStatus || data.delivery_status || "Pending Dispatch",
 //         delivery_status: data.deliveryStatus || data.delivery_status || "Pending Dispatch",
 //         photoCount: Number(data.photoCount || 0)
@@ -1637,7 +1667,8 @@
 //         status: "Closed",
 //         requisition_status: "Closed",
 //         logoutDate: today,
-//         logout_date: today
+//         logout_date: today,
+//         end_date: today
 //       });
 //       toast.success("Requisition marked as Closed!");
 //       await fetchLogs();
@@ -1853,10 +1884,11 @@
 //                 </tr>
 //               ) : (
 //                 filtered.map((log, i) => {
-//                   const actualLogoutDate = formatForDateInput(log?.logoutDate || log?.logout_date);
+//                   const actualLogoutDate = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
 //                   const today = todayISO();
 //                   const isClosed = Boolean(actualLogoutDate && actualLogoutDate <= today);
-//                   const dynamicDaysFormatted = getDynamicTotalDays(log?.startDate || log?.start_date || log?.loginDate, actualLogoutDate);
+//                   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate;
+//                   const dynamicDaysFormatted = getDynamicTotalDays(startDateVal, actualLogoutDate);
 //                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
 
 //                   const rowColor = currentMode === "Prepaid" 
@@ -1873,6 +1905,7 @@
 
 //                   const inchargePhone = log?.inchargeMobile || log?.incharge_mobile || log?.phone || "";
 //                   const altPhone = log?.altMobile || log?.alt_mobile || "";
+//                   const pName = log?.patientName || log?.patient_name || log?.patient || "—";
 
 //                   return (
 //                     <tr 
@@ -1883,7 +1916,7 @@
 //                         {actualDevice}
 //                       </td>
 //                       <td className="px-5 py-3.5">
-//                         <p className="font-semibold text-slate-800">{log?.patientName || log?.patient_name || "—"}</p>
+//                         <p className="font-semibold text-slate-800">{pName}</p>
 //                         {inchargePhone && (
 //                           <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
 //                             <Phone className="h-3 w-3 text-slate-400 shrink-0" /> {inchargePhone}
@@ -1892,13 +1925,12 @@
 //                         )}
 //                       </td>
 //                       <td className="px-5 py-3.5 text-slate-600 font-medium">
-//                         {formatDisplayDate(log?.startDate || log?.start_date || log?.loginDate)}
+//                         {formatDisplayDate(startDateVal)}
 //                       </td>
 //                       <td className="px-5 py-3.5 text-slate-600">
 //                         {actualLogoutDate ? formatDisplayDate(actualLogoutDate) : "—"}
 //                       </td>
                       
-//                       {/* 🧮 TOTAL DAYS COLUMN */}
 //                       <td className="px-5 py-3.5">
 //                         <span className={`font-bold px-2.5 py-1 rounded-md text-xs border shadow-xs ${
 //                           isClosed 
@@ -2015,9 +2047,7 @@ import {
   ArrowDown,
   Phone,
   Calendar,
-  CalendarDays,
   CheckCircle2,
-  Sparkles,
   RotateCcw
 } from "lucide-react";
 import { 
@@ -2044,22 +2074,21 @@ function GlobalPolish() {
       html { scroll-behavior: smooth; }
       .smooth-scroll, .smooth-scroll-x { scroll-behavior: smooth; }
       .smooth-scroll::-webkit-scrollbar,
-      .smooth-scroll-x::-webkit-scrollbar { width: 8px; height: 8px; }
+      .smooth-scroll-x::-webkit-scrollbar { width: 6px; height: 6px; }
       .smooth-scroll::-webkit-scrollbar-track,
       .smooth-scroll-x::-webkit-scrollbar-track { background: transparent; }
       .smooth-scroll::-webkit-scrollbar-thumb,
       .smooth-scroll-x::-webkit-scrollbar-thumb {
         background-color: rgba(13, 148, 136, 0.25);
         border-radius: 9999px;
-        transition: background-color 0.2s ease;
       }
       .smooth-scroll:hover::-webkit-scrollbar-thumb,
       .smooth-scroll-x:hover::-webkit-scrollbar-thumb { background-color: rgba(13, 148, 136, 0.45); }
       .smooth-scroll, .smooth-scroll-x { scrollbar-width: thin; scrollbar-color: rgba(13,148,136,0.3) transparent; }
-      @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      .rise-in { animation: riseIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
-      @keyframes fadeScaleIn { from { opacity: 0; transform: scale(0.97) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-      .fade-slide-up { animation: fadeScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+      @keyframes riseIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      .rise-in { animation: riseIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+      @keyframes fadeScaleIn { from { opacity: 0; transform: scale(0.98) translateY(4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+      .fade-slide-up { animation: fadeScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
     `}</style>
   );
 }
@@ -2101,8 +2130,8 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Universal Overlap Engine
-const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
+// 🧮 Simple & Accurate Total Days Calculation
+const getDynamicTotalDays = (loginStr, logoutStr) => {
   const s = formatForDateInput(loginStr);
   if (!s) return "—";
 
@@ -2110,55 +2139,21 @@ const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
   const startUtc = Date.UTC(sY, sM - 1, sD);
 
   const cleanOut = formatForDateInput(logoutStr);
-  const endUtc = cleanOut ? (() => {
+  let endUtc;
+
+  if (cleanOut) {
     const [eY, eM, eD] = cleanOut.split("-").map(Number);
-    return Date.UTC(eY, eM - 1, eD);
-  })() : null;
-
-  const now = new Date();
-  let refYear = now.getFullYear();
-  let refMonth = now.getMonth(); // 0-11
-
-  if (targetMonthISO) {
-    const cleanTarget = formatForDateInput(targetMonthISO);
-    if (cleanTarget) {
-      const [tY, tM] = cleanTarget.split("-").map(Number);
-      refYear = tY;
-      refMonth = tM - 1;
-    }
-  }
-
-  const monthStartUtc = Date.UTC(refYear, refMonth, 1);
-  const lastDayOfMonth = new Date(refYear, refMonth + 1, 0).getDate();
-  const monthEndUtc = Date.UTC(refYear, refMonth, lastDayOfMonth);
-
-  // Month check
-  if (endUtc !== null && endUtc < monthStartUtc) return "0 / 0";
-  if (startUtc > monthEndUtc) return "0 / 0";
-
-  const todayClean = todayISO();
-  const [tY, tM, tD] = todayClean.split("-").map(Number);
-  const todayUtc = Date.UTC(tY, tM - 1, tD);
-
-  const effectiveEndUtc = endUtc !== null ? endUtc : Math.min(todayUtc, monthEndUtc);
-
-  const interStart = Math.max(startUtc, monthStartUtc);
-  const interEnd = Math.min(effectiveEndUtc, monthEndUtc);
-
-  if (interStart > interEnd) {
-    return "0 / 0";
-  }
-
-  let diffDays = Math.floor((interEnd - interStart) / (1000 * 60 * 60 * 24)) + 1;
-  if (diffDays < 0) diffDays = 0;
-
-  if (cleanOut && cleanOut <= todayClean) {
-    return `${diffDays} / 0`;
+    endUtc = Date.UTC(eY, eM - 1, eD);
   } else {
-    const isCurrentCalendarMonth = (refYear === now.getFullYear() && refMonth === now.getMonth());
-    const displayDay = isCurrentCalendarMonth ? now.getDate() : lastDayOfMonth;
-    return `${diffDays} / ${displayDay}`;
+    const today = todayISO();
+    const [tY, tM, tD] = today.split("-").map(Number);
+    endUtc = Date.UTC(tY, tM - 1, tD);
   }
+
+  if (startUtc > endUtc) return "0 Days";
+
+  const diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
+  return diffDays > 0 ? `${diffDays} Days` : "1 Day";
 };
 
 const getOptionLabel = (item) => {
@@ -2191,188 +2186,113 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Universal Days Calculator Modal
+// 🌟 Simple & Clean Total Days Calculator Modal
 function CalculateTotalDaysModal({ onClose, onApply }) {
-  const [tempLoginDate, setTempLoginDate] = useState(() => todayISO());
+  const [tempLoginDate, setTempLoginDate] = useState("");
   const [tempLogoutDate, setTempLogoutDate] = useState("");
-  const [viewMonth, setViewMonth] = useState(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  });
 
-  const targetDateForCalc = useMemo(() => {
-    if (!viewMonth) return null;
-    return `${viewMonth}-01`;
-  }, [viewMonth]);
+  const totalDays = useMemo(() => {
+    if (!tempLoginDate) return "—";
+    return getDynamicTotalDays(tempLoginDate, tempLogoutDate);
+  }, [tempLoginDate, tempLogoutDate]);
 
-  const totalDaysDisplay = useMemo(() => {
-    return getDynamicTotalDays(tempLoginDate, tempLogoutDate, targetDateForCalc);
-  }, [tempLoginDate, tempLogoutDate, targetDateForCalc]);
-
-  const selectedMonthName = useMemo(() => {
-    if (!viewMonth) return "";
-    const [y, m] = viewMonth.split("-").map(Number);
-    const date = new Date(y, m - 1, 1);
-    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  }, [viewMonth]);
-
-  const calcStatus = useMemo(() => {
-    if (totalDaysDisplay === "0 / 0") {
-      return {
-        label: "Zero Usage",
-        desc: "Rental is outside this calendar month window",
-        tone: "amber"
-      };
+  const statusInfo = useMemo(() => {
+    if (!tempLoginDate) {
+      return { text: "Select Log In Date to calculate", color: "text-slate-400" };
     }
-    if (tempLogoutDate && tempLogoutDate <= todayISO()) {
-      return {
-        label: "Closed / Completed",
-        desc: "Asset was returned within this period",
-        tone: "slate"
-      };
+    if (tempLogoutDate) {
+      return { text: "Asset returned (Closed Period)", color: "text-slate-600" };
     }
-    return {
-      label: "Active Running",
-      desc: "Currently active with patient",
-      tone: "teal"
-    };
-  }, [totalDaysDisplay, tempLogoutDate]);
+    return { text: "Asset in use (Calculated till today)", color: "text-teal-600 font-semibold" };
+  }, [tempLoginDate, tempLogoutDate]);
 
   const handleApply = () => {
-    if (onApply) {
-      onApply(totalDaysDisplay);
+    if (onApply && totalDays !== "—") {
+      onApply(totalDays);
     }
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/10">
-        <div className="border-b border-slate-100 bg-gradient-to-r from-teal-500/10 via-slate-50 to-white px-6 py-4.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-teal-600 text-white shadow-md shadow-teal-500/20">
-                <Calculator className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-display text-base font-bold text-slate-800">
-                  Universal Days Calculator
-                </h3>
-                <p className="text-xs font-semibold text-teal-700">
-                  {selectedMonthName}
-                </p>
-              </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+      <div className="fade-slide-up w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 bg-slate-50/70">
+          <div className="flex items-center gap-2.5">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-teal-600 text-white">
+              <Calculator className="h-4 w-4" />
             </div>
-            <button 
-              onClick={onClose} 
-              className="grid h-8 w-8 place-items-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
-            >
-              <X className="h-4.5 w-4.5" />
-            </button>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">Days Calculator</h3>
+              <p className="text-[11px] text-slate-400">Calculate rental usage duration</p>
+            </div>
           </div>
+          <button 
+            onClick={onClose} 
+            className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition cursor-pointer"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          <div className="rounded-2xl border border-teal-100 bg-teal-50/50 p-3.5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-teal-600" />
-              <span className="text-xs font-bold uppercase tracking-wider text-teal-900">
-                Inspection Month:
-              </span>
-            </div>
+        {/* Inputs */}
+        <div className="p-5 space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-teal-600" /> Log In Date
+            </label>
             <input 
-              type="month" 
-              value={viewMonth} 
-              onChange={(e) => setViewMonth(e.target.value)} 
-              className="rounded-lg border border-teal-200 bg-white px-2 py-1 text-xs font-bold text-teal-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 cursor-pointer shadow-2xs"
+              type="date" 
+              value={tempLoginDate} 
+              onChange={(e) => setTempLoginDate(e.target.value)} 
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div className="space-y-1">
-              <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <Calendar className="h-3.5 w-3.5 text-slate-400" /> LOG IN DATE
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-slate-400" /> Log Out Date
               </label>
-              <input 
-                type="date" 
-                value={tempLoginDate} 
-                onChange={(e) => setTempLoginDate(e.target.value)} 
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20 shadow-2xs" 
-              />
-              <button 
-                type="button" 
-                onClick={() => setTempLoginDate(todayISO())} 
-                className="text-[11px] font-semibold text-teal-600 hover:text-teal-800 cursor-pointer"
-              >
-                Set Today
-              </button>
+              {tempLogoutDate && (
+                <button 
+                  type="button" 
+                  onClick={() => setTempLogoutDate("")} 
+                  className="text-[11px] font-medium text-rose-500 hover:underline cursor-pointer"
+                >
+                  Clear
+                </button>
+              )}
             </div>
-
-            <div className="space-y-1">
-              <label className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <Calendar className="h-3.5 w-3.5 text-slate-400" /> LOG OUT DATE
-              </label>
-              <input 
-                type="date" 
-                value={tempLogoutDate} 
-                min={tempLoginDate}
-                onChange={(e) => setTempLogoutDate(e.target.value)} 
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-semibold text-slate-800 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20 shadow-2xs" 
-              />
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400">Optional</span>
-                {tempLogoutDate && (
-                  <button 
-                    type="button" 
-                    onClick={() => setTempLogoutDate("")} 
-                    className="font-semibold text-rose-500 hover:text-rose-700 cursor-pointer"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
+            <input 
+              type="date" 
+              value={tempLogoutDate} 
+              min={tempLoginDate || undefined}
+              onChange={(e) => setTempLogoutDate(e.target.value)} 
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+            />
+            <p className="text-[11px] text-slate-400">Leave blank if asset is currently active</p>
           </div>
 
-          <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-5 text-white shadow-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-teal-400">
-                  <Sparkles className="h-3.5 w-3.5 text-teal-400" /> Overlap Result
-                </span>
-                <p className="mt-1 font-display text-4xl font-extrabold tracking-tight text-white">
-                  {totalDaysDisplay}
-                </p>
-              </div>
-
-              <div className="text-right">
-                <span className={`inline-block rounded-md px-2.5 py-1 text-[11px] font-bold border ${
-                  calcStatus.tone === "amber" 
-                    ? "bg-amber-400/10 text-amber-300 border-amber-400/20" 
-                    : calcStatus.tone === "slate"
-                    ? "bg-slate-800 text-slate-300 border-slate-700"
-                    : "bg-teal-400/15 text-teal-300 border-teal-400/30"
-                }`}>
-                  {calcStatus.label}
-                </span>
-                <p className="text-[10px] text-slate-400 mt-1 max-w-[140px]">
-                  {calcStatus.desc}
-                </p>
-              </div>
-            </div>
+          {/* Clean Result Card */}
+          <div className="rounded-xl border border-teal-100 bg-teal-50/60 p-4 text-center">
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-700">Total Calculated Duration</span>
+            <p className="mt-1 font-display text-3xl font-extrabold text-teal-950">
+              {totalDays}
+            </p>
+            <p className={`mt-1 text-xs ${statusInfo.color}`}>
+              {statusInfo.text}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/80 px-6 py-3.5">
+        {/* Footer */}
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 px-5 py-3">
           <button 
             type="button" 
-            onClick={() => {
-              setTempLoginDate(todayISO());
-              setTempLogoutDate("");
-              const d = new Date();
-              setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-            }} 
-            className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-700 cursor-pointer"
+            onClick={() => { setTempLoginDate(""); setTempLogoutDate(""); }} 
+            className="flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer"
           >
             <RotateCcw className="h-3.5 w-3.5" /> Reset
           </button>
@@ -2381,19 +2301,21 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             <button 
               type="button" 
               onClick={onClose} 
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              className="rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
             >
               Cancel
             </button>
             <button 
               type="button" 
               onClick={handleApply} 
-              className="flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
+              disabled={totalDays === "—"}
+              className="flex items-center gap-1 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white px-4 py-1.5 text-xs font-semibold shadow-xs transition cursor-pointer"
             >
-              <CheckCircle2 className="h-4 w-4" /> Apply
+              <CheckCircle2 className="h-3.5 w-3.5" /> Apply
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );
@@ -2436,7 +2358,7 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
         <div className="flex flex-wrap gap-1.5 items-center flex-1">
           {safeSelected.length === 0 && <span className="text-slate-400">{placeholder}</span>}
           {safeSelected.map((sel) => (
-            <span key={sel} className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 border border-amber-200 shadow-sm">
+            <span key={sel} className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 border border-amber-200 shadow-xs">
               {sel}
               {!disabled && (
                 <X className="h-3.5 w-3.5 cursor-pointer hover:text-amber-900 transition-colors" onClick={(e) => removeOption(e, sel)} />
@@ -2501,10 +2423,10 @@ function KpiCards({ logs = [] }) {
   ];
 
   const toneMap = {
-    teal: { chip: "bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-teal-500/30", bar: "from-teal-400 to-teal-600", glow: "bg-teal-400/10" },
-    slate: { chip: "bg-gradient-to-br from-slate-600 to-slate-700 text-white shadow-slate-500/30", bar: "from-slate-400 to-slate-600", glow: "bg-slate-400/10" },
-    rose: { chip: "bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-rose-500/30", bar: "from-rose-400 to-rose-600", glow: "bg-rose-400/10" },
-    amber: { chip: "bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-amber-500/30", bar: "from-amber-300 to-amber-500", glow: "bg-amber-400/10" },
+    teal: { chip: "bg-teal-600 text-white", bar: "bg-teal-600" },
+    slate: { chip: "bg-slate-700 text-white", bar: "bg-slate-600" },
+    rose: { chip: "bg-rose-600 text-white", bar: "bg-rose-500" },
+    amber: { chip: "bg-amber-500 text-white", bar: "bg-amber-500" },
   };
 
   return (
@@ -2515,16 +2437,15 @@ function KpiCards({ logs = [] }) {
         return (
           <div 
             key={c.label} 
-            style={{ animationDelay: `${i * 60}ms` }} 
-            className="rise-in group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/70 sm:p-5"
+            style={{ animationDelay: `${i * 50}ms` }} 
+            className="rise-in group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-5"
           >
-            <span className={`absolute inset-x-0 top-0 h-1 scale-x-0 bg-gradient-to-r transition-transform duration-300 group-hover:scale-x-100 ${t.bar}`} />
-            <div className={`pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100 ${t.glow}`} />
-            <div className={`relative grid h-11 w-11 place-items-center rounded-xl shadow-lg transition-transform duration-300 group-hover:scale-105 ${t.chip}`}>
+            <span className={`absolute inset-x-0 top-0 h-1 ${t.bar}`} />
+            <div className={`grid h-10 w-10 place-items-center rounded-xl shadow-xs ${t.chip}`}>
               <Icon className="h-5 w-5" strokeWidth={2.25} />
             </div>
-            <p className="relative mt-3.5 font-display text-2xl font-extrabold tracking-tight text-slate-800 sm:text-3xl">{c.value}</p>
-            <p className="relative mt-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{c.label}</p>
+            <p className="mt-3.5 font-display text-2xl font-extrabold tracking-tight text-slate-800 sm:text-3xl">{c.value}</p>
+            <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{c.label}</p>
           </div>
         );
       })}
@@ -2541,7 +2462,7 @@ function SectionHeading({ icon: Icon, children }) {
   );
 }
 
-// 🔍 Requisition Detail View (100% Fallback Safe)
+// 🔍 Requisition Detail View
 function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], onBack }) {
   const eqId = log?.equipmentId || log?.equipment_id || log?.deviceModel;
   const equipmentName = equipmentCatalog.find(e => String(e?.id) === String(eqId))?.name || log?.equipmentName || log?.equipment_name || eqId || "—";
@@ -2563,16 +2484,14 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
     ? "bg-amber-50 text-amber-700 border-amber-200"
     : "bg-emerald-50 text-emerald-700 border-emerald-200";
 
-  // Commercials Fallback
   const billingTypeVal = log?.billingType || log?.billing_type || log?.billing || "Daily";
-  const rentalChargeVal = Number(log?.rentalCharge ?? log?.rental_charge ?? log?.rent ?? log?.daily_rate ?? log?.dailyRate ?? log?.amount ?? log?.rental ?? 0).toFixed(2);
-  const depositAdvanceVal = Number(log?.depositAdvance ?? log?.deposit_advance ?? log?.deposit ?? log?.advance ?? log?.advance_amount ?? 0).toFixed(2);
-  const installationChargeVal = Number(log?.installationCharge ?? log?.installation_charge ?? log?.installation ?? log?.install_charge ?? 0).toFixed(2);
+  const rentalChargeVal = Number(log?.rentalCharge ?? log?.rental_charge ?? log?.rent ?? log?.daily_rate ?? log?.dailyRate ?? 0).toFixed(2);
+  const depositAdvanceVal = Number(log?.depositAdvance ?? log?.deposit_advance ?? log?.deposit ?? log?.advance ?? 0).toFixed(2);
+  const installationChargeVal = Number(log?.installationCharge ?? log?.installation_charge ?? log?.installation ?? 0).toFixed(2);
 
-  // Patient Identity Fallback
   const patientNameVal = log?.patientName || log?.patient_name || log?.patient || "—";
-  const mobileNumberVal = log?.mobileNumber || log?.mobile_number || log?.mobile || log?.phone || log?.contact || log?.patient_mobile || "—";
-  const attendantNameVal = log?.attendantName || log?.attendant_name || log?.attendant || log?.guardian_name || log?.care_taker || "—";
+  const mobileNumberVal = log?.mobileNumber || log?.mobile_number || log?.mobile || log?.phone || "—";
+  const attendantNameVal = log?.attendantName || log?.attendant_name || log?.attendant || "—";
   const deliveryAddressVal = log?.deliveryAddress || log?.delivery_address || log?.address || "—";
 
   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate || log?.record_date;
@@ -2595,13 +2514,13 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
           </p>
         </div>
 
-        <button type="button" onClick={onBack} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer w-fit">
+        <button type="button" onClick={onBack} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 cursor-pointer w-fit">
           <ArrowLeft className="h-4 w-4" /> Back to Listing
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-700">
             📦 Logistics &amp; Device Matrix
           </p>
@@ -2658,7 +2577,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-600">
             💳 Commercial Parameters
           </p>
@@ -2692,7 +2611,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-600">
             👤 Patient Identity Details
           </p>
@@ -2716,7 +2635,7 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-600">
             🏥 Care Center Context
           </p>
@@ -2726,10 +2645,10 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             <div><p className="font-bold text-slate-800">{careCenterName}</p></div>
 
             <div><p className="text-xs font-medium text-slate-400">Incharge Mobile:</p></div>
-            <div><p className="font-bold text-slate-800">{log?.inchargeMobile || log?.incharge_mobile || log?.phone || careCenterObj?.phone || careCenterObj?.incharge_mobile || "—"}</p></div>
+            <div><p className="font-bold text-slate-800">{log?.inchargeMobile || log?.incharge_mobile || log?.phone || careCenterObj?.phone || "—"}</p></div>
 
             <div><p className="text-xs font-medium text-slate-400">Bed No:</p></div>
-            <div><p className="font-bold text-slate-800">{log?.bedNumber || log?.bed_number || log?.bedNo || log?.bed_no || "—"}</p></div>
+            <div><p className="font-bold text-slate-800">{log?.bedNumber || log?.bed_number || log?.bedNo || "—"}</p></div>
 
             <div className="col-span-2 pt-2">
               <p className="text-xs font-medium text-slate-400 mb-1.5">Care Address:</p>
@@ -2802,7 +2721,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         deviceModel: initial.equipmentId || initial.equipment_id || initial.deviceModel || "",
         accessory: parsedAcc,
         recordDate: formatForDateInput(initial.recordDate || initial.record_date) || todayISO(),
-        loginDate: formatForDateInput(initial.startDate || initial.start_date || initial.loginDate || initial.login_date) || todayISO(),
+        loginDate: formatForDateInput(initial.startDate || initial.start_date || initial.loginDate || initial.login_date) || "",
         notifyDate: formatForDateInput(initial.notifyDate || initial.notify_date) || "",
         logoutDate: parsedLogoutDate || "",
         recallDate: formatForDateInput(initial.recallDate || initial.recall_date) || "",
@@ -2814,7 +2733,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || cc?.phone || "",
         altMobile: initial.altMobile || initial.alt_mobile || "",
         careAddress: initial.careAddress || initial.care_address || initial.address || cc?.address || "",
-        bedNo: initial.bedNumber || initial.bed_number || initial.bedNo || initial.bed_no || "",
+        bedNo: initial.bedNumber || initial.bed_number || initial.bedNo || "",
         referral: initial.referralDoctor || initial.referral_doctor || initial.referral || "",
         patientName: initial.patientName || initial.patient_name || initial.patient || "",
         age: initial.age || "",
@@ -2826,14 +2745,15 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       };
     }
 
+    // 🟢 NEW REQUISITION INITIAL STATE (Record Date = Today, Log In Date = Empty)
     return {
       dealType: "B2B",
       unit: "ODCOM",
       mode: "Postpaid",
       deviceModel: "",
       accessory: [],
-      recordDate: todayISO(),
-      loginDate: todayISO(),
+      recordDate: todayISO(), // 👈 Only Record Date is Automatic Today
+      loginDate: "",          // 👈 Log In Date starts EMPTY (User selects manually)
       notifyDate: "",
       logoutDate: "",
       recallDate: "",
@@ -2966,7 +2886,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       ...form, 
       id: form.id,
       
-      // Dates (Dual camelCase & snake_case)
       recordDate: formatForDateInput(form.recordDate) || todayISO(),
       record_date: formatForDateInput(form.recordDate) || todayISO(),
       startDate: formatForDateInput(form.loginDate) || todayISO(),
@@ -2981,7 +2900,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       recallDate: formatForDateInput(form.recallDate) || null,
       recall_date: formatForDateInput(form.recallDate) || null,
 
-      // Equipment & Center
       careCenterId: form.careCenterId || null,
       care_center_id: form.careCenterId || null,
       careCenterName, 
@@ -2993,7 +2911,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       category: equipment?.category || "General", 
       quantity: 1, 
 
-      // 💳 Commercials
       billingType: form.billingType || "Daily",
       billing_type: form.billingType || "Daily",
       rentalCharge: rCharge,
@@ -3008,7 +2925,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       installation_charge: iCharge,
       installation: iCharge,
 
-      // 👤 Patient Identity & Contact
       patientName: String(form.patientName || "").trim(),
       patient_name: String(form.patientName || "").trim(),
       patient: String(form.patientName || "").trim(),
@@ -3041,7 +2957,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       accessories: Array.isArray(form.accessory) ? form.accessory.join(", ") : (form.accessory || ""),
       notes: form.notes || "",
 
-      // Status & Delivery
       dealType: form.dealType || "B2B",
       deal_type: form.dealType || "B2B",
       unit: form.unit || "ODCOM",
@@ -3081,7 +2996,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       </div>
 
       {/* Section 1: Record Types */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <SectionHeading icon={Tag}>Record Types</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Deal Type" required error={errors.dealType}>
@@ -3106,7 +3021,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       </div>
 
       {/* Section 2: Asset Allocation & Logistics */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <SectionHeading icon={Truck}>Asset Allocation &amp; Logistics</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-4">
           <Field label="Select Device Model" required error={errors.deviceModel}>
@@ -3171,7 +3086,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       </div>
 
       {/* Section 3: Commercials & Billing */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <SectionHeading icon={CreditCard}>Commercials &amp; Billing</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-4">
           <Field label="Billing Type" required error={errors.billingType}>
@@ -3194,7 +3109,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       </div>
 
       {/* Section 4: Care Center & Patient Details */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <div className="grid gap-8 lg:grid-cols-2">
           <div>
             <SectionHeading icon={Building2}>Care Center Contact Info</SectionHeading>
@@ -3270,7 +3185,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       </div>
 
       {/* Section 5: Notes */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <Field label="Notes">
           <textarea rows={3} value={form.notes} onChange={(e) => set({ notes: e.target.value })} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" />
         </Field>
@@ -3281,7 +3196,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         <Field label="Asset Handover Photo Verification (Up to 10 photos/PDFs)">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-xs transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700">
                 <ImagePlus className="h-4 w-4" /> Choose files
                 <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={handleFileChange} />
               </label>
@@ -3293,7 +3208,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
                 {photos.map((file, idx) => {
                   const isImage = file.type?.startsWith("image/");
                   return (
-                    <div key={idx} className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:ring-2 hover:ring-teal-500/50">
+                    <div key={idx} className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs transition hover:ring-2 hover:ring-teal-500/50">
                       {isImage ? (
                         <img src={URL.createObjectURL(file)} alt="preview" className="h-full w-full object-cover" />
                       ) : (
@@ -3315,7 +3230,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       </div>
 
       <div className="mt-8 flex items-center justify-end border-t border-slate-200 pt-6 pb-4">
-        <PrimaryButton onClick={handleSubmit} className="px-6 py-2.5 shadow-md hover:shadow-lg transition-all cursor-pointer">
+        <PrimaryButton onClick={handleSubmit} className="px-6 py-2.5 shadow-sm hover:shadow-md transition-all cursor-pointer">
           <Save className="h-4.5 w-4.5" /> {isEdit ? "Update Requisition Details" : "Save Requisition & Deploy"}
         </PrimaryButton>
       </div>
@@ -3513,7 +3428,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  // ✅ Clean & Robust handleFormSubmit
   const handleFormSubmit = async (data) => {
     try {
       const chosenMode = data.mode || data.paymentType || data.payment_type || "Postpaid";
@@ -3710,7 +3624,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         </div>
 
         {permissions.canAdd && (
-          <PrimaryButton onClick={() => setPageForm({ mode: "add", data: null })} className="shrink-0 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98] px-4.5 py-2.5 cursor-pointer">
+          <PrimaryButton onClick={() => setPageForm({ mode: "add", data: null })} className="shrink-0 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] px-4.5 py-2.5 cursor-pointer">
             <Plus className="h-4 w-4" /> New Log Requisition
           </PrimaryButton>
         )}
@@ -3719,7 +3633,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       <KpiCards logs={scopedLogs} />
       
       {/* Filter Bar */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
           <div className="group relative flex-[2] min-w-[200px]">
@@ -3727,7 +3641,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <input 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
-              autoComplete="off"
+              autoComplete="off" 
               placeholder="Search by ID, patient, device, mobile…" 
               className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" 
             />
@@ -3776,7 +3690,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             type="button"
             onClick={() => setIsCalcModalOpen(true)}
             title="Open Total Days Calculator"
-            className="flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-300 transition cursor-pointer shrink-0 shadow-2xs"
+            className="flex items-center justify-center h-9 w-9 rounded-lg border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-300 transition cursor-pointer shrink-0 shadow-2xs"
           >
             <Calculator className="h-4 w-4" />
           </button>
@@ -3797,7 +3711,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               toast.success("Filters reset");
             }}
             title="Reset all filters"
-            className="flex items-center justify-center h-9.5 w-9.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition cursor-pointer shrink-0"
+            className="flex items-center justify-center h-9 w-9 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition cursor-pointer shrink-0"
           >
             <X className="h-4 w-4" />
           </button>
@@ -3805,7 +3719,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       </div>
 
       {/* Main Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
         <div className="smooth-scroll-x overflow-x-auto">
           <table className="w-full text-left text-sm" style={{ minWidth: 800 }}>
             <thead>
@@ -3877,9 +3791,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
 
                   const rowColor = currentMode === "Prepaid" 
-                    ? "bg-emerald-50/70 hover:bg-emerald-100" 
+                    ? "bg-emerald-50/70 hover:bg-emerald-100/70" 
                     : currentMode === "Postpaid" 
-                    ? "bg-rose-50/70 hover:bg-rose-100"        
+                    ? "bg-rose-50/70 hover:bg-rose-100/70"        
                     : "hover:bg-teal-50/40";                
 
                   const eqId = log?.equipmentId || log?.equipment_id;
@@ -3917,7 +3831,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                       </td>
                       
                       <td className="px-5 py-3.5">
-                        <span className={`font-bold px-2.5 py-1 rounded-md text-xs border shadow-xs ${
+                        <span className={`font-bold px-2.5 py-1 rounded-md text-xs border shadow-2xs ${
                           isClosed 
                             ? "bg-slate-100 text-slate-700 border-slate-200" 
                             : "bg-teal-50 text-teal-800 border-teal-200"
