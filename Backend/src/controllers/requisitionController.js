@@ -468,26 +468,11 @@ const createRequisition = async (req, res) => {
   }
 };
 
+// PUT: Update Requisition (CommonJS Format - No Syntax Error)
 const updateRequisition = async (req, res) => {
   try {
     const { id } = req.params;
     const d = req.body || {};
-
-    console.log("=== INCOMING UPDATE REQUISITION PAYLOAD ===");
-    console.log("ID:", id);
-    console.log("Body:", JSON.stringify(d, null, 2));
-
-    const rentalCharge = parseFloat(d.rental_charge ?? d.rentalCharge ?? d.rent ?? 0) || 0;
-    const depositAdvance = parseFloat(d.deposit_advance ?? d.depositAdvance ?? d.deposit ?? 0) || 0;
-    const installationCharge = parseFloat(d.installation_charge ?? d.installationCharge ?? d.installation ?? 0) || 0;
-    const mobileNumber = String(d.mobile_number || d.mobileNumber || d.mobile || d.phone || "").trim();
-    const attendantName = String(d.attendant_name || d.attendantName || d.attendant || "").trim();
-    const patientName = String(d.patient_name || d.patientName || d.patient || "").trim();
-    const ageVal = String(d.age || "").trim();
-    const deliveryAddress = String(d.delivery_address || d.deliveryAddress || "").trim();
-    const bedNumber = String(d.bed_number || d.bedNumber || d.bedNo || d.bed_no || "").trim();
-    const accessoryVal = String(d.accessory || d.accessories || "").trim();
-    const billingType = String(d.billing_type || d.billingType || "Daily").trim();
 
     const query = `
       UPDATE requisitions SET 
@@ -524,54 +509,39 @@ const updateRequisition = async (req, res) => {
     const values = [
       d.care_center_id || d.careCenterId || null,
       d.equipment_id || d.equipmentId || null,
-      patientName,
+      String(d.patient_name || d.patientName || "").trim(),
       d.start_date || d.startDate || null,
       d.logout_date || d.logoutDate || null,
       d.deal_type || d.dealType || "B2B",
       d.unit || "ODCOM",
       d.mode || d.payment_type || "Postpaid",
       d.payment_type || d.mode || "Postpaid",
-      billingType,
-      rentalCharge,
-      depositAdvance,
-      installationCharge,
-      ageVal,
-      attendantName,
-      mobileNumber,
+      d.billing_type || d.billingType || "Daily",
+      parseFloat(d.rental_charge ?? d.rentalCharge ?? d.rent ?? 0) || 0,
+      parseFloat(d.deposit_advance ?? d.depositAdvance ?? d.deposit ?? 0) || 0,
+      parseFloat(d.installation_charge ?? d.installationCharge ?? 0) || 0,
+      String(d.age || "").trim(),
+      String(d.attendant_name || d.attendantName || "").trim(),
+      String(d.mobile_number || d.mobileNumber || d.mobile || "").trim(),
       String(d.alt_mobile_number || d.altMobileNumber || "").trim(),
       String(d.incharge_mobile || d.inchargeMobile || "").trim(),
       String(d.alt_mobile || d.altMobile || "").trim(),
       String(d.care_address || d.careAddress || "").trim(),
-      deliveryAddress,
-      bedNumber,
+      String(d.delivery_address || d.deliveryAddress || "").trim(),
+      String(d.bed_number || d.bedNumber || d.bedNo || "").trim(),
       String(d.referral_doctor || d.referralDoctor || "").trim(),
       String(d.gst_number || d.gstNumber || "").trim(),
-      accessoryVal,
+      String(d.accessory || d.accessories || "").trim(),
       String(d.notes || "").trim(),
       d.status || "Active",
       id
     ];
 
-    const [result] = await pool.query(query, values);
-    console.log("SQL UPDATE RESULT:", result);
-
-    return res.status(200).json({ 
-      message: "Requisition updated successfully!",
-      updatedData: {
-        id,
-        rental_charge: rentalCharge,
-        deposit_advance: depositAdvance,
-        installation_charge: installationCharge,
-        mobile_number: mobileNumber,
-        attendant_name: attendantName
-      }
-    });
+    await pool.query(query, values);
+    return res.status(200).json({ message: "Requisition updated successfully!" });
   } catch (error) {
-    console.error("CRITICAL UPDATE REQUISITION ERROR:", error);
-    return res.status(500).json({ 
-      message: error.sqlMessage || error.message,
-      sql_error: error.code 
-    });
+    console.error("Update Requisition Error:", error);
+    return res.status(500).json({ message: error.sqlMessage || error.message });
   }
 };
 
