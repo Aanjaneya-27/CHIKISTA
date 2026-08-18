@@ -222,14 +222,38 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/database");
 
-const getSafeDate = (dateStr) => {
-  if (!dateStr || String(dateStr).trim() === "" || dateStr === "null" || dateStr === "undefined" || dateStr === "0000-00-00") {
+// const getSafeDate = (dateStr) => {
+//   if (!dateStr || String(dateStr).trim() === "" || dateStr === "null" || dateStr === "undefined" || dateStr === "0000-00-00") {
+//     return null;
+//   }
+//   const str = String(dateStr).trim().slice(0, 10);
+//   return /^\d{4}-\d{2}-\d{2}$/.test(str) ? str : null;
+// };
+
+const getSafeDate = (val) => {
+  if (!val || val === "" || val === "null" || val === "undefined" || val === "0000-00-00") {
     return null;
   }
-  const str = String(dateStr).trim().slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(str) ? str : null;
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return null;
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, "0");
+    const d = String(val.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  const str = String(val).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    return str.slice(0, 10);
+  }
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    const y = parsed.getFullYear();
+    const m = String(parsed.getMonth() + 1).padStart(2, "0");
+    const d = String(parsed.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  return null;
 };
-
 const getSafeNum = (v1, v2) => {
   const val = (v1 !== undefined && v1 !== null && v1 !== "") ? v1 : v2;
   if (val === null || val === undefined || val === "") return 0;
@@ -248,6 +272,66 @@ const cleanFk = (val) => {
 };
 
 // 🟢 1. GET ALL REQUISITIONS
+// router.get("/requisitions", async (req, res) => {
+//   try {
+//     const [rows] = await pool.query(`
+//       SELECT r.*, 
+//              c.name AS careCenterName, 
+//              e.name AS equipmentName
+//       FROM requisitions r
+//       LEFT JOIN care_centers c ON r.care_center_id = c.id
+//       LEFT JOIN equipment e ON r.equipment_id = e.id
+//       ORDER BY r.created_at DESC
+//     `);
+
+//     const data = rows.map((r) => ({
+//       ...r,
+//       billingType: r.billing_type || "Daily",
+//       billing_type: r.billing_type || "Daily",
+//       rentalCharge: getSafeNum(r.rental_charge),
+//       rental_charge: getSafeNum(r.rental_charge),
+//       depositAdvance: getSafeNum(r.deposit_advance),
+//       deposit_advance: getSafeNum(r.deposit_advance),
+//       installationCharge: getSafeNum(r.installation_charge),
+//       installation_charge: getSafeNum(r.installation_charge),
+//       patientName: r.patient_name || "",
+//       patient_name: r.patient_name || "",
+//       attendantName: r.attendant_name || "",
+//       attendant_name: r.attendant_name || "",
+//       mobileNumber: r.mobile_number || "",
+//       mobile_number: r.mobile_number || "",
+//       altMobileNumber: r.alt_mobile_number || "",
+//       alt_mobile_number: r.alt_mobile_number || "",
+//       inchargeMobile: r.incharge_mobile || "",
+//       incharge_mobile: r.incharge_mobile || "",
+//       altMobile: r.alt_mobile || "",
+//       alt_mobile: r.alt_mobile || "",
+//       careAddress: r.care_address || "",
+//       care_address: r.care_address || "",
+//       bedNumber: r.bed_number || "",
+//       bed_number: r.bed_number || "",
+//       bedNo: r.bed_number || "",
+//       referralDoctor: r.referral_doctor || "",
+//       referral_doctor: r.referral_doctor || "",
+//       startDate: getSafeDate(r.start_date),
+//       start_date: getSafeDate(r.start_date),
+//       logoutDate: getSafeDate(r.logout_date),
+//       logout_date: getSafeDate(r.logout_date),
+//       recordDate: getSafeDate(r.record_date),
+//       record_date: getSafeDate(r.record_date),
+//       recallDate: getSafeDate(r.recall_date),
+//       recall_date: getSafeDate(r.recall_date),
+//       notifyDate: getSafeDate(r.notify_date),
+//       notify_date: getSafeDate(r.notify_date)
+//     }));
+
+//     res.json(data);
+//   } catch (err) {
+//     console.error("Fetch Error:", err);
+//     res.status(500).json({ message: "Error fetching data", error: err.message });
+//   }
+// });
+
 router.get("/requisitions", async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -260,46 +344,73 @@ router.get("/requisitions", async (req, res) => {
       ORDER BY r.created_at DESC
     `);
 
-    const data = rows.map((r) => ({
-      ...r,
-      billingType: r.billing_type || "Daily",
-      billing_type: r.billing_type || "Daily",
-      rentalCharge: getSafeNum(r.rental_charge),
-      rental_charge: getSafeNum(r.rental_charge),
-      depositAdvance: getSafeNum(r.deposit_advance),
-      deposit_advance: getSafeNum(r.deposit_advance),
-      installationCharge: getSafeNum(r.installation_charge),
-      installation_charge: getSafeNum(r.installation_charge),
-      patientName: r.patient_name || "",
-      patient_name: r.patient_name || "",
-      attendantName: r.attendant_name || "",
-      attendant_name: r.attendant_name || "",
-      mobileNumber: r.mobile_number || "",
-      mobile_number: r.mobile_number || "",
-      altMobileNumber: r.alt_mobile_number || "",
-      alt_mobile_number: r.alt_mobile_number || "",
-      inchargeMobile: r.incharge_mobile || "",
-      incharge_mobile: r.incharge_mobile || "",
-      altMobile: r.alt_mobile || "",
-      alt_mobile: r.alt_mobile || "",
-      careAddress: r.care_address || "",
-      care_address: r.care_address || "",
-      bedNumber: r.bed_number || "",
-      bed_number: r.bed_number || "",
-      bedNo: r.bed_number || "",
-      referralDoctor: r.referral_doctor || "",
-      referral_doctor: r.referral_doctor || "",
-      startDate: getSafeDate(r.start_date),
-      start_date: getSafeDate(r.start_date),
-      logoutDate: getSafeDate(r.logout_date),
-      logout_date: getSafeDate(r.logout_date),
-      recordDate: getSafeDate(r.record_date),
-      record_date: getSafeDate(r.record_date),
-      recallDate: getSafeDate(r.recall_date),
-      recall_date: getSafeDate(r.recall_date),
-      notifyDate: getSafeDate(r.notify_date),
-      notify_date: getSafeDate(r.notify_date)
-    }));
+    const data = rows.map((r) => {
+      const start = getSafeDate(r.start_date);
+      const end = getSafeDate(r.logout_date);
+
+      // Calculate Total Days
+      let totalDays = 0;
+      if (start) {
+        const s = new Date(start);
+        const e = end ? new Date(end) : new Date();
+        const diffTime = e.getTime() - s.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        totalDays = diffDays >= 0 ? diffDays + 1 : 1;
+      }
+
+      return {
+        ...r,
+        billingType: r.billing_type || "Daily",
+        billing_type: r.billing_type || "Daily",
+        rentalCharge: getSafeNum(r.rental_charge),
+        rental_charge: getSafeNum(r.rental_charge),
+        depositAdvance: getSafeNum(r.deposit_advance),
+        deposit_advance: getSafeNum(r.deposit_advance),
+        installationCharge: getSafeNum(r.installation_charge),
+        installation_charge: getSafeNum(r.installation_charge),
+        patientName: r.patient_name || "",
+        patient_name: r.patient_name || "",
+        attendantName: r.attendant_name || "",
+        attendant_name: r.attendant_name || "",
+        mobileNumber: r.mobile_number || "",
+        mobile_number: r.mobile_number || "",
+        altMobileNumber: r.alt_mobile_number || "",
+        alt_mobile_number: r.alt_mobile_number || "",
+        inchargeMobile: r.incharge_mobile || "",
+        incharge_mobile: r.incharge_mobile || "",
+        altMobile: r.alt_mobile || "",
+        alt_mobile: r.alt_mobile || "",
+        careAddress: r.care_address || "",
+        care_address: r.care_address || "",
+        bedNumber: r.bed_number || "",
+        bed_number: r.bed_number || "",
+        bedNo: r.bed_number || "",
+        referralDoctor: r.referral_doctor || "",
+        referral_doctor: r.referral_doctor || "",
+
+        // 📅 All Date Keys & Aliases
+        startDate: start,
+        start_date: start,
+        loginDate: start,
+        login_date: start,
+
+        logoutDate: end,
+        logout_date: end,
+        endDate: end,
+        end_date: end,
+
+        recordDate: getSafeDate(r.record_date),
+        record_date: getSafeDate(r.record_date),
+        recallDate: getSafeDate(r.recall_date),
+        recall_date: getSafeDate(r.recall_date),
+        notifyDate: getSafeDate(r.notify_date),
+        notify_date: getSafeDate(r.notify_date),
+
+        // 🔢 Total Days
+        totalDays: totalDays,
+        total_days: totalDays
+      };
+    });
 
     res.json(data);
   } catch (err) {
