@@ -2047,6 +2047,7 @@ import {
   ArrowDown,
   Phone,
   Calendar,
+  CalendarDays,
   CheckCircle2,
   RotateCcw
 } from "lucide-react";
@@ -2130,8 +2131,8 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Simple & Accurate Total Days Calculation
-const getDynamicTotalDays = (loginStr, logoutStr) => {
+// 🧮 Universal Overlap Engine (X / Y Format)
+const getDynamicTotalDays = (loginStr, logoutStr, targetMonthISO = null) => {
   const s = formatForDateInput(loginStr);
   if (!s) return "—";
 
@@ -2139,21 +2140,54 @@ const getDynamicTotalDays = (loginStr, logoutStr) => {
   const startUtc = Date.UTC(sY, sM - 1, sD);
 
   const cleanOut = formatForDateInput(logoutStr);
-  let endUtc;
-
-  if (cleanOut) {
+  const endUtc = cleanOut ? (() => {
     const [eY, eM, eD] = cleanOut.split("-").map(Number);
-    endUtc = Date.UTC(eY, eM - 1, eD);
-  } else {
-    const today = todayISO();
-    const [tY, tM, tD] = today.split("-").map(Number);
-    endUtc = Date.UTC(tY, tM - 1, tD);
+    return Date.UTC(eY, eM - 1, eD);
+  })() : null;
+
+  const now = new Date();
+  let refYear = now.getFullYear();
+  let refMonth = now.getMonth(); // 0-11
+
+  if (targetMonthISO) {
+    const cleanTarget = formatForDateInput(targetMonthISO);
+    if (cleanTarget) {
+      const [tY, tM] = cleanTarget.split("-").map(Number);
+      refYear = tY;
+      refMonth = tM - 1;
+    }
   }
 
-  if (startUtc > endUtc) return "0 Days";
+  const monthStartUtc = Date.UTC(refYear, refMonth, 1);
+  const lastDayOfMonth = new Date(refYear, refMonth + 1, 0).getDate();
+  const monthEndUtc = Date.UTC(refYear, refMonth, lastDayOfMonth);
 
-  const diffDays = Math.floor((endUtc - startUtc) / (1000 * 60 * 60 * 24)) + 1;
-  return diffDays > 0 ? `${diffDays} Days` : "1 Day";
+  if (endUtc !== null && endUtc < monthStartUtc) return "0 / 0";
+  if (startUtc > monthEndUtc) return "0 / 0";
+
+  const todayClean = todayISO();
+  const [tY, tM, tD] = todayClean.split("-").map(Number);
+  const todayUtc = Date.UTC(tY, tM - 1, tD);
+
+  const effectiveEndUtc = endUtc !== null ? endUtc : Math.min(todayUtc, monthEndUtc);
+
+  const interStart = Math.max(startUtc, monthStartUtc);
+  const interEnd = Math.min(effectiveEndUtc, monthEndUtc);
+
+  if (interStart > interEnd) {
+    return "0 / 0";
+  }
+
+  let diffDays = Math.floor((interEnd - interStart) / (1000 * 60 * 60 * 24)) + 1;
+  if (diffDays < 0) diffDays = 0;
+
+  if (cleanOut && cleanOut <= todayClean) {
+    return `${diffDays} / 0`;
+  } else {
+    const isCurrentCalendarMonth = (refYear === now.getFullYear() && refMonth === now.getMonth());
+    const displayDay = isCurrentCalendarMonth ? now.getDate() : lastDayOfMonth;
+    return `${diffDays} / ${displayDay}`;
+  }
 };
 
 const getOptionLabel = (item) => {
@@ -2186,29 +2220,35 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Simple & Clean Total Days Calculator Modal
+// 🌟 Simple & Clean Total Days Calculator Modal (With X / Y Result)
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const [tempLoginDate, setTempLoginDate] = useState("");
   const [tempLogoutDate, setTempLogoutDate] = useState("");
+  const [viewMonth, setViewMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
 
-  const totalDays = useMemo(() => {
+  const targetDateForCalc = useMemo(() => {
+    if (!viewMonth) return null;
+    return `${viewMonth}-01`;
+  }, [viewMonth]);
+
+  const totalDaysDisplay = useMemo(() => {
     if (!tempLoginDate) return "—";
-    return getDynamicTotalDays(tempLoginDate, tempLogoutDate);
-  }, [tempLoginDate, tempLogoutDate]);
+    return getDynamicTotalDays(tempLoginDate, tempLogoutDate, targetDateForCalc);
+  }, [tempLoginDate, tempLogoutDate, targetDateForCalc]);
 
-  const statusInfo = useMemo(() => {
-    if (!tempLoginDate) {
-      return { text: "Select Log In Date to calculate", color: "text-slate-400" };
-    }
-    if (tempLogoutDate) {
-      return { text: "Asset returned (Closed Period)", color: "text-slate-600" };
-    }
-    return { text: "Asset in use (Calculated till today)", color: "text-teal-600 font-semibold" };
-  }, [tempLoginDate, tempLogoutDate]);
+  const selectedMonthName = useMemo(() => {
+    if (!viewMonth) return "";
+    const [y, m] = viewMonth.split("-").map(Number);
+    const date = new Date(y, m - 1, 1);
+    return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  }, [viewMonth]);
 
   const handleApply = () => {
-    if (onApply && totalDays !== "—") {
-      onApply(totalDays);
+    if (onApply && totalDaysDisplay !== "—") {
+      onApply(totalDaysDisplay);
     }
     onClose();
   };
@@ -2220,12 +2260,12 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 bg-slate-50/70">
           <div className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-teal-600 text-white">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-teal-600 text-white shadow-xs">
               <Calculator className="h-4 w-4" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-800">Days Calculator</h3>
-              <p className="text-[11px] text-slate-400">Calculate rental usage duration</p>
+              <p className="text-[11px] font-semibold text-teal-700">{selectedMonthName} Window</p>
             </div>
           </div>
           <button 
@@ -2237,8 +2277,20 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
         </div>
 
         {/* Inputs */}
-        <div className="p-5 space-y-4">
-          <div className="space-y-1.5">
+        <div className="p-5 space-y-3.5">
+          <div className="flex items-center justify-between rounded-lg border border-teal-100 bg-teal-50/50 p-2.5">
+            <span className="text-xs font-semibold text-teal-900 flex items-center gap-1.5">
+              <CalendarDays className="h-3.5 w-3.5 text-teal-600" /> Target Month:
+            </span>
+            <input 
+              type="month" 
+              value={viewMonth} 
+              onChange={(e) => setViewMonth(e.target.value)} 
+              className="rounded-md border border-teal-200 bg-white px-2 py-1 text-xs font-bold text-teal-800 outline-none cursor-pointer shadow-2xs"
+            />
+          </div>
+
+          <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 text-teal-600" /> Log In Date
             </label>
@@ -2246,11 +2298,11 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
               type="date" 
               value={tempLoginDate} 
               onChange={(e) => setTempLoginDate(e.target.value)} 
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 shadow-2xs"
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-slate-400" /> Log Out Date
@@ -2259,7 +2311,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
                 <button 
                   type="button" 
                   onClick={() => setTempLogoutDate("")} 
-                  className="text-[11px] font-medium text-rose-500 hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-rose-500 hover:underline cursor-pointer"
                 >
                   Clear
                 </button>
@@ -2270,19 +2322,18 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
               value={tempLogoutDate} 
               min={tempLoginDate || undefined}
               onChange={(e) => setTempLogoutDate(e.target.value)} 
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 shadow-2xs"
             />
-            <p className="text-[11px] text-slate-400">Leave blank if asset is currently active</p>
           </div>
 
-          {/* Clean Result Card */}
+          {/* Overlap Result Display */}
           <div className="rounded-xl border border-teal-100 bg-teal-50/60 p-4 text-center">
-            <span className="text-xs font-bold uppercase tracking-wider text-teal-700">Total Calculated Duration</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-700">Calculated Overlap Days</span>
             <p className="mt-1 font-display text-3xl font-extrabold text-teal-950">
-              {totalDays}
+              {totalDaysDisplay}
             </p>
-            <p className={`mt-1 text-xs ${statusInfo.color}`}>
-              {statusInfo.text}
+            <p className="mt-1 text-[11px] text-slate-500">
+              {tempLogoutDate ? "Asset Returned (Closed Period)" : "Asset In-Use (Active Running)"}
             </p>
           </div>
         </div>
@@ -2291,7 +2342,12 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
         <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 px-5 py-3">
           <button 
             type="button" 
-            onClick={() => { setTempLoginDate(""); setTempLogoutDate(""); }} 
+            onClick={() => {
+              setTempLoginDate("");
+              setTempLogoutDate("");
+              const d = new Date();
+              setViewMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+            }} 
             className="flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-slate-600 transition cursor-pointer"
           >
             <RotateCcw className="h-3.5 w-3.5" /> Reset
@@ -2308,7 +2364,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             <button 
               type="button" 
               onClick={handleApply} 
-              disabled={totalDays === "—"}
+              disabled={totalDaysDisplay === "—"}
               className="flex items-center gap-1 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white px-4 py-1.5 text-xs font-semibold shadow-xs transition cursor-pointer"
             >
               <CheckCircle2 className="h-3.5 w-3.5" /> Apply
@@ -2752,8 +2808,8 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       mode: "Postpaid",
       deviceModel: "",
       accessory: [],
-      recordDate: todayISO(), // 👈 Only Record Date is Automatic Today
-      loginDate: "",          // 👈 Log In Date starts EMPTY (User selects manually)
+      recordDate: todayISO(),
+      loginDate: "",
       notifyDate: "",
       logoutDate: "",
       recallDate: "",

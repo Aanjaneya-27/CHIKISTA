@@ -638,7 +638,7 @@ import {
   ArrowUpRight, 
   ArrowDownRight, 
   Phone, 
-  CheckCircle2,
+  CheckCircle2 
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -680,6 +680,7 @@ function GlobalPolish() {
   );
 }
 
+// 📅 Timezone-Safe Date Formatter
 const formatForDateInput = (d) => {
   if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || String(d).trim() === "") return "";
   const str = String(d).trim();
@@ -701,6 +702,7 @@ const formatForDateInput = (d) => {
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+// 🧮 Synchronized Status Resolver
 const getLogStatus = (l) => {
   if (!l) return "Pending";
   const rawStatus = String(l.status || l.requisition_status || "").trim().toLowerCase();
@@ -810,7 +812,6 @@ export default function AdminDashboard({
   const closedCount = scopedLogs.filter((l) => getLogStatus(l) === "Closed").length;
   const inactiveCount = scopedLogs.filter((l) => getLogStatus(l) === "Inactive").length;
 
-  // Accurate Revenue (Direct DB Rental Charge First)
   const revenue = scopedLogs.reduce((sum, l) => {
     const eqId = l.equipmentId || l.equipment_id;
     const eq = equipmentCatalog.find((e) => String(e.id) === String(eqId));
@@ -956,12 +957,13 @@ export default function AdminDashboard({
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs lg:col-span-2">
           
-          {/* Header with Navigation Link */}
+          {/* Header with Working View All Button */}
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <h3 className="font-display text-sm font-bold text-slate-700">
               {isCareCenterUser ? "My Center's Recent Requisitions" : "Recent Requisitions"}
             </h3>
             <button 
+              type="button"
               onClick={handleNavigateToRental} 
               className="flex items-center gap-1 text-xs font-bold text-teal-600 hover:text-teal-700 hover:underline transition cursor-pointer"
             >
