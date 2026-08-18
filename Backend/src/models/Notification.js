@@ -92,19 +92,20 @@ class Notification {
   static async getAll(careCenterId = null, role = null) {
     try {
       const isAdmin = role === "super_admin" || role === "admin" || !careCenterId || careCenterId === "All";
-
-      // Yeh query requisitions table se hi saare active reminders aur recent updates utha legi
       let query = `
         SELECT 
           id,
-          'DUE_REMINDER' AS type,
+          CASE 
+            WHEN status = 'Closed' THEN 'CLOSED'
+            ELSE 'UPDATE'
+          END AS type,
           CONCAT('Requisition #', id) AS title,
           CONCAT('Patient: ', patient_name, ' (', COALESCE(equipment_name, 'Device'), ') - Status: ', COALESCE(status, 'Active')) AS message,
           care_center_id,
-          COALESCE(notify_date, start_date, NOW()) AS created_at,
+          COALESCE(start_date, NOW()) AS created_at,
           0 AS is_read
         FROM requisitions
-        WHERE (status IS NULL OR LOWER(status) != 'closed')
+        WHERE 1=1
       `;
 
       const params = [];
@@ -120,13 +121,13 @@ class Notification {
       const [rows] = await pool.query(query, params);
       return rows;
     } catch (error) {
-      console.error("Notification Fetch Error:", error.message);
+      console.error("Notification DB Error:", error.message);
       return [];
     }
   }
 
   static async create(type, title, message, careCenterId = null) {
-    return true; 
+    return true;
   }
 }
 
