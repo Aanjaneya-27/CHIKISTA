@@ -844,26 +844,20 @@ const updateRequisition = async (req, res) => {
 
     const [result] = await pool.query(query, values);
     console.log("👉 [UPDATE RESULT]: Affected rows =", result.affectedRows);
-   try {
-  const patient = cleanStr(data.patient_name || data.patientName || "Patient");
-  const notifTitle = `Requisition Updated: ${patient}`;
-  const notifMsg = `Requisition #${targetId} for ${patient} updated. Status: ${finalStatus}.`;
-
-  try {
-    await pool.query(
-      "INSERT INTO notifications (type, title, message, care_center_id, created_at) VALUES (?, ?, ?, ?, NOW())",
-      ["UPDATED", notifTitle, notifMsg, careCenterId || null]
-    );
-  } catch {
-    await pool.query(
-      "INSERT INTO notifications (type, title, message) VALUES (?, ?, ?)",
-      ["UPDATED", notifTitle, notifMsg]
-    );
+    try {
+      await pool.query(
+        "INSERT INTO notifications (type, title, message, care_center_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())",
+        [
+          "UPDATED",
+          `Requisition Updated: ${patientName}`,
+          `Requisition #${targetId} for ${patientName} updated. Status: ${finalStatus}.`,
+          careCenterId || null
+        ]
+      );
+      console.log("✅ Update notification inserted successfully into DB!");
+    } catch (dbErr) {
+      console.error(" Notification Insert Failed:", dbErr.message);
   }
-  console.log(" Update Notification successfully written to DB for ID:", targetId);
-} catch (notifErr) {
-  console.error("Notification DB Insert Failed:", notifErr.message);
-}
 
     return res.status(200).json({ 
       message: "Requisition updated successfully!", 
@@ -887,33 +881,17 @@ const deleteRequisition = async (req, res) => {
 };
 
 // 5. NOTIFICATIONS
-// const getNotifications = async (req, res) => {
-//   try {
-//     return res.status(200).json([]);
-//   } catch (error) {
-//     return res.status(500).json({ message: error.message });
-//   }
-// };
-
+// 5. GET NOTIFICATIONS (Direct DB Query)
 const getNotifications = async (req, res) => {
   try {
-    const careCenterId = req.query.careCenterId || req.user?.careCenterId || req.user?.id || null;
-    const role = req.query.role || req.user?.role || null;
-    
-    let data = [];
-    if (Notification && typeof Notification.getAll === "function") {
-      data = await Notification.getAll(careCenterId, role);
-    } else {
-      const [rows] = await pool.query("SELECT * FROM notifications ORDER BY id DESC LIMIT 30");
-      data = rows;
-    }
-    
-    return res.status(200).json(data);
+    const [rows] = await pool.query("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 50");
+    return res.status(200).json(rows);
   } catch (error) {
     console.error("Get Notifications Error:", error);
     return res.status(500).json({ message: error.message });
   }
 };
+
 const deleteNotification = async (req, res) => {
   const { id } = req.params;
   try {
