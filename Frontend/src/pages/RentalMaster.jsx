@@ -973,6 +973,9 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       delivery_status: "Pending Dispatch",
       photoCount: photos.length
     });
+    setTimeout(() => {
+      window.dispatchEvent(new Event("notification-updated"));
+    }, 500);
   };
 
   return (
@@ -1556,7 +1559,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         await API.post("/rental/requisitions", payload);
         toast.success("Requisition created successfully!");
       }
-
+      window.dispatchEvent(new Event("notification-updated"));
       await fetchLogs();
       setPageForm(null);
     } catch (err) {
