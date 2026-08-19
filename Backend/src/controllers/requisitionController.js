@@ -349,7 +349,7 @@
 const pool = require("../config/database");
 const Notification = require("../models/Notification");
 
-// 📅 Timezone-safe date helper
+//  Timezone-safe date helper
 const cleanDate = (val) => {
   if (!val || val === "" || val === "null" || val === "undefined" || val === "0000-00-00") return null;
   const str = String(val).trim().slice(0, 10);
@@ -501,12 +501,21 @@ const createRequisition = async (req, res) => {
     await pool.query(sql, values);
 
     //  STEP 4 TRIGGER: Notification Create
-    await Notification.create({
-      type: "CREATED",
-      title: `New Requisition: ${patientName}`,
-      message: `Requisition #${reqId} logged for ${patientName}. Status: ${finalStatus}.`,
-      careCenterId: careCenterId
-    });
+    try {
+  const notifCcId = (careCenterId && !isNaN(parseInt(careCenterId))) ? parseInt(careCenterId) : null;
+  await pool.query(
+    "INSERT INTO notifications (type, title, message, care_center_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())",
+    [
+      "CREATED",
+      `New Requisition: ${patientName}`,
+      `New requisition #${reqId} logged for ${patientName}. Status: ${finalStatus}.`,
+      notifCcId
+    ]
+  );
+  console.log(`🔔 [SUCCESS] Notification created for #${reqId}`);
+} catch (notifErr) {
+  console.error("❌ Notif Create Error:", notifErr.message);
+}
 
     return res.status(201).json({ message: "Requisition created successfully!", id: reqId });
   } catch (error) {
@@ -617,12 +626,21 @@ const updateRequisition = async (req, res) => {
     await pool.query(query, values);
 
     //  STEP 4 TRIGGER: Notification Update (Clean variable used!)
-    await Notification.create({
-      type: "UPDATED",
-      title: `Requisition Updated: ${patientName}`,
-      message: `Requisition #${targetId} for ${patientName} updated. Status: ${finalStatus}.`,
-      careCenterId: careCenterId
-    });
+   try {
+  const notifCcId = (careCenterId && !isNaN(parseInt(careCenterId))) ? parseInt(careCenterId) : null;
+  await pool.query(
+    "INSERT INTO notifications (type, title, message, care_center_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())",
+    [
+      "UPDATED",
+      `Requisition Updated: ${patientName}`,
+      `Requisition #${targetId} for ${patientName} updated. Status: ${finalStatus}.`,
+      notifCcId
+    ]
+  );
+  console.log(` [SUCCESS] Notification updated for #${targetId}`);
+} catch (notifErr) {
+  console.error(" Notif Update Error:", notifErr.message);
+}
 
     return res.status(200).json({ 
       message: "Requisition updated successfully!", 
