@@ -1,6 +1,22 @@
 // import { useState, useRef, useEffect, useMemo } from "react";
 // import { useNavigate, useLocation } from "react-router-dom";
-// import { HeartPulse, ClipboardList, Database, ChevronRight, Bell, Menu, User, LogOut, ChevronDown, X, CheckCircle2, AlertTriangle, Trash2, CheckCheck } from "lucide-react";
+// import { 
+//   HeartPulse, 
+//   ClipboardList, 
+//   Database, 
+//   ChevronRight, 
+//   Bell, 
+//   Menu, 
+//   User, 
+//   LogOut, 
+//   ChevronDown, 
+//   X, 
+//   CheckCircle2,  
+//   Trash2, 
+//   CheckCheck,
+//   Clock,
+//   RefreshCw
+// } from "lucide-react";
 // import { ROLES, DEMO_USER_NAMES } from "../../data/MockData";
 
 // export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount = 0, onOpenNotifications }) {
@@ -133,7 +149,11 @@
 //       <div className="flex items-center gap-2 sm:gap-3">
 //         <button onClick={onOpenNotifications} className="relative grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 cursor-pointer">
 //           <Bell className="h-4 w-4" />
-//           {unreadCount > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />}
+//           {unreadCount > 0 && (
+//             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white">
+//               {unreadCount > 9 ? "9+" : unreadCount}
+//             </span>
+//           )}
 //         </button>
 
 //         <div className="relative" ref={profileMenuRef}>
@@ -179,18 +199,28 @@
 //   );
 // }
 
-// function notifStyle(type) {
-//   switch (type) {
-//     case "warning": return { bg: "bg-amber-50", text: "text-amber-600", icon: AlertTriangle };
-//     case "success": return { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2 };
-//     default: return { bg: "bg-teal-50", text: "text-teal-600", icon: Bell };
+// function notifStyle(type = "") {
+//   const t = String(type).toUpperCase();
+//   switch (t) {
+//     case "DUE_REMINDER":
+//     case "WARNING":
+//       return { bg: "bg-amber-50", text: "text-amber-600", icon: Clock };
+//     case "CREATED":
+//     case "SUCCESS":
+//       return { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2 };
+//     case "UPDATED":
+//       return { bg: "bg-blue-50", text: "text-blue-600", icon: RefreshCw };
+//     default:
+//       return { bg: "bg-teal-50", text: "text-teal-600", icon: Bell };
 //   }
 // }
 
 // export function NotificationsPanel({ open, onClose, notifications = [], onMarkRead, onMarkAllRead, onDeleteNotif }) {
 //   if (!open) return null;
 //   const list = Array.isArray(notifications) ? notifications : [];
-//   const unreadCount = list.filter((n) => !n.read).length;
+  
+//   // Checking both n.is_read (MySQL 0/1) and n.read (Boolean)
+//   const unreadCount = list.filter((n) => n.is_read === 0 || n.is_read === false || (!n.read && n.is_read === undefined)).length;
 
 //   return (
 //     <div className="fixed inset-0 z-50">
@@ -237,10 +267,12 @@
 //               {list.map((n) => {
 //                 const s = notifStyle(n.type);
 //                 const Icon = s.icon;
+//                 const isUnread = n.is_read === 0 || n.is_read === false || (!n.read && n.is_read === undefined);
+
 //                 return (
 //                   <div 
 //                     key={n.id} 
-//                     className={`group relative flex items-start justify-between gap-3 px-5 py-4 transition hover:bg-slate-50/80 ${!n.read ? "bg-teal-50/30" : ""}`}
+//                     className={`group relative flex items-start justify-between gap-3 px-5 py-4 transition hover:bg-slate-50/80 ${isUnread ? "bg-teal-50/30" : ""}`}
 //                   >
 //                     <div 
 //                       onClick={() => onMarkRead && onMarkRead(n.id)} 
@@ -252,7 +284,7 @@
 //                       <div className="min-w-0 flex-1">
 //                         <div className="flex items-center gap-2">
 //                           <p className="truncate text-sm font-semibold text-slate-700">{n.title}</p>
-//                           {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />}
+//                           {isUnread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />}
 //                         </div>
 //                         <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.message}</p>
 //                         <p className="mt-1 text-[11px] font-medium text-slate-400">
@@ -336,7 +368,8 @@ import {
   Trash2, 
   CheckCheck,
   Clock,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from "lucide-react";
 import { ROLES, DEMO_USER_NAMES } from "../../data/MockData";
 
@@ -523,14 +556,16 @@ export function Topbar({ role, setMobileOpen, unreadCount = 0, onOpenNotificatio
 function notifStyle(type = "") {
   const t = String(type).toUpperCase();
   switch (t) {
-    case "DUE_REMINDER":
-    case "WARNING":
-      return { bg: "bg-amber-50", text: "text-amber-600", icon: Clock };
     case "CREATED":
     case "SUCCESS":
       return { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2 };
     case "UPDATED":
       return { bg: "bg-blue-50", text: "text-blue-600", icon: RefreshCw };
+    case "DELETED":
+    case "WARNING":
+      return { bg: "bg-rose-50", text: "text-rose-600", icon: AlertCircle };
+    case "DUE_REMINDER":
+      return { bg: "bg-amber-50", text: "text-amber-600", icon: Clock };
     default:
       return { bg: "bg-teal-50", text: "text-teal-600", icon: Bell };
   }
@@ -540,7 +575,6 @@ export function NotificationsPanel({ open, onClose, notifications = [], onMarkRe
   if (!open) return null;
   const list = Array.isArray(notifications) ? notifications : [];
   
-  // Checking both n.is_read (MySQL 0/1) and n.read (Boolean)
   const unreadCount = list.filter((n) => n.is_read === 0 || n.is_read === false || (!n.read && n.is_read === undefined)).length;
 
   return (

@@ -398,36 +398,29 @@ router.delete("/requisitions/:id", async (req, res) => {
   }
 });
 
-// 🟣 5. NOTIFICATIONS
-// router.get("/notifications", async (req, res) => {
-//   try {
-//     const [rows] = await pool.query(`SELECT * FROM notifications ORDER BY created_at DESC LIMIT 10`);
-//     res.json(rows);
-//   } catch (err) {
-//     res.status(500).json({ message: "Error fetching notifications", error: err.message });
-//   }
-// });
-
-// router.delete("/notifications/:id", async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     await pool.query(`DELETE FROM notifications WHERE id = ?`, [id]);
-//     res.status(200).json({ message: "Notification Deleted Successfully!" });
-//   } catch (err) {
-//     res.status(500).json({ message: "Error deleting notification", error: err.message });
-//   }
-// });
 
 // 1. GET All Notifications + Live Due Date Reminders
 router.get("/notifications", async (req, res) => {
   try {
-    const careCenterId = req.user?.careCenterId || req.user?.care_center_id || req.query.careCenterId || null;
-    const role = req.user?.role || req.query.role || null;
-    const notifications = await Notification.getAll(careCenterId, role);
-    res.status(200).json(notifications);
+    const careCenterId = req.query.careCenterId || req.user?.careCenterId || null;
+    const role = req.query.role || req.user?.role || null;
+
+    const data = await Notification.getAll(careCenterId, role);
+    return res.status(200).json(data);
   } catch (err) {
-    console.error("Error fetching notifications:", err.message);
-    res.status(500).json({ message: "Error fetching notifications", error: err.message });
+    console.error("Route Error /notifications:", err.message);
+    return res.status(500).json({ message: "Failed to fetch notifications", error: err.message });
+  }
+});
+
+router.put("/notifications/:id/read", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const success = await Notification.markAsRead(id);
+    return res.status(200).json({ success });
+  } catch (err) {
+    console.error("Route Error /notifications/read:", err.message);
+    return res.status(500).json({ message: "Failed to update notification", error: err.message });
   }
 });
 
