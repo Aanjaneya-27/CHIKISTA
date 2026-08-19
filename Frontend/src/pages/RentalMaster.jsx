@@ -1948,7 +1948,6 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Phone,
   Calendar,
   RotateCcw
 } from "lucide-react";
@@ -2060,7 +2059,7 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
   if (totalDays < 1) totalDays = 1;
 
-  // 2. RIGHT SIDE: Current Month Usage (Actual days used within the current calendar month)
+  // 2. RIGHT SIDE: Current Month Usage (Actual days used within current calendar month)
   let actualUsageEndUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -3724,8 +3723,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                   const catMatch = equipmentCatalog.find(e => e?.id === eqId);
                   if (catMatch) actualDevice = catMatch.name;
 
-                  const inchargePhone = log?.inchargeMobile || log?.incharge_mobile || log?.phone || "";
-                  const altPhone = log?.altMobile || log?.alt_mobile || "";
                   const pName = log?.patientName || log?.patient_name || log?.patient || "—";
 
                   return (
@@ -3736,14 +3733,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                       <td className="px-5 py-3.5 font-bold text-slate-800">
                         {actualDevice}
                       </td>
-                      <td className="px-5 py-3.5">
-                        <p className="font-semibold text-slate-800">{pName}</p>
-                        {inchargePhone && (
-                          <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                            <Phone className="h-3 w-3 text-slate-400 shrink-0" /> {inchargePhone}
-                            {altPhone && <span className="text-slate-400">/ {altPhone}</span>}
-                          </p>
-                        )}
+                      <td className="px-5 py-3.5 font-semibold text-slate-800">
+                        {pName}
                       </td>
                       <td className="px-5 py-3.5 text-slate-600 font-medium">
                         {formatDisplayDate(startDateVal)}
