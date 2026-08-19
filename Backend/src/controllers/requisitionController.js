@@ -501,21 +501,20 @@ const createRequisition = async (req, res) => {
     await pool.query(sql, values);
 
     //  STEP 4 TRIGGER: Notification Create
-    try {
-  const notifCcId = (careCenterId && !isNaN(parseInt(careCenterId))) ? parseInt(careCenterId) : null;
-  await pool.query(
-    "INSERT INTO notifications (type, title, message, care_center_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())",
-    [
-      "CREATED",
-      `New Requisition: ${patientName}`,
-      `New requisition #${reqId} logged for ${patientName}. Status: ${finalStatus}.`,
-      notifCcId
-    ]
-  );
-  console.log(`🔔 [SUCCESS] Notification created for #${reqId}`);
-} catch (notifErr) {
-  console.error("❌ Notif Create Error:", notifErr.message);
-}
+  try {
+      await pool.query(
+        "INSERT INTO notifications (type, title, message, care_center_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())",
+        [
+          "CREATED",
+          `New Requisition: ${patientName}`,
+          `New requisition #${reqId} logged for ${patientName}.`,
+          careCenterId || null
+        ]
+      );
+      console.log("🔔 Notification Inserted for New Requisition:", reqId);
+    } catch (err) {
+      console.error("❌ Notif Insert Error:", err.message);
+    }
 
     return res.status(201).json({ message: "Requisition created successfully!", id: reqId });
   } catch (error) {
@@ -627,20 +626,19 @@ const updateRequisition = async (req, res) => {
 
     //  STEP 4 TRIGGER: Notification Update (Clean variable used!)
    try {
-  const notifCcId = (careCenterId && !isNaN(parseInt(careCenterId))) ? parseInt(careCenterId) : null;
-  await pool.query(
-    "INSERT INTO notifications (type, title, message, care_center_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())",
-    [
-      "UPDATED",
-      `Requisition Updated: ${patientName}`,
-      `Requisition #${targetId} for ${patientName} updated. Status: ${finalStatus}.`,
-      notifCcId
-    ]
-  );
-  console.log(` [SUCCESS] Notification updated for #${targetId}`);
-} catch (notifErr) {
-  console.error(" Notif Update Error:", notifErr.message);
-}
+      await pool.query(
+        "INSERT INTO notifications (type, title, message, care_center_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())",
+        [
+          "UPDATED",
+          `Requisition Updated: ${patientName}`,
+          `Requisition #${targetId} for ${patientName} updated to ${finalStatus}.`,
+          careCenterId || null
+        ]
+      );
+      console.log("🔔 Notification Inserted for Update:", targetId);
+    } catch (err) {
+      console.error("❌ Notif Update Error:", err.message);
+    }
 
     return res.status(200).json({ 
       message: "Requisition updated successfully!", 
