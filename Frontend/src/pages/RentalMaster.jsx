@@ -1931,6 +1931,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+ 
 } from "lucide-react";
 import { 
   PrimaryButton, 
@@ -2105,26 +2106,15 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Matching Exact Design from Screenshot
-function CalculateTotalDaysModal({ log = null, onClose, onApply }) {
-  const [tempLoginDate, setTempLoginDate] = useState(() => {
-    return formatForDateInput(log?.startDate || log?.start_date || log?.loginDate || log?.login_date) || todayISO();
-  });
-  const [tempLogoutDate, setTempLogoutDate] = useState(() => {
-    return formatForDateInput(log?.logoutDate || log?.logout_date || log?.endDate || log?.end_date) || "";
-  });
+// 🌟 Clean & Modern Days Calculator Modal (Exact Screenshot Match)
+function CalculateTotalDaysModal({ onClose, onApply }) {
+  const [tempLoginDate, setTempLoginDate] = useState(() => todayISO());
+  const [tempLogoutDate, setTempLogoutDate] = useState("");
 
   const totalDaysDisplay = useMemo(() => {
     if (!tempLoginDate) return "—";
     return getCalculatorDays(tempLoginDate, tempLogoutDate);
   }, [tempLoginDate, tempLogoutDate]);
-
-  const subtitle = useMemo(() => {
-    if (!log || typeof log !== "object" || !log.id) return "General Calculator";
-    const cat = log.category || "General";
-    const dev = log.equipmentName || log.equipment_name || log.equipmentId || "5 Para-Maestros";
-    return `${cat} • ${dev}`;
-  }, [log]);
 
   const handleApply = () => {
     if (onApply) {
@@ -2144,7 +2134,7 @@ function CalculateTotalDaysModal({ log = null, onClose, onApply }) {
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div>
             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
-            <p className="text-xs font-medium text-slate-400 mt-0.5">{subtitle}</p>
+            <p className="text-xs font-medium text-slate-400 mt-0.5">General • Estimation Tool</p>
           </div>
           <button 
             type="button" 
@@ -3234,7 +3224,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [pageForm, setPageForm] = useState(null); 
 
   // 🧮 Calculator Modal State
-  const [calcModalTarget, setCalcModalTarget] = useState(null);
+  const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   const handleSort = (field) => {
@@ -3330,29 +3320,21 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  // 🧮 Apply Temporary Calculator Changes on Screen
+  // 🧮 Silent Apply: Temporary in-memory change without toast alerts
   const handleApplyCalc = (updatedDates) => {
-    if (calcModalTarget && calcModalTarget.id) {
-      setLogs((prevLogs) =>
-        prevLogs.map((item) =>
-          item.id === calcModalTarget.id
-            ? {
-                ...item,
-                startDate: updatedDates.loginDate,
-                start_date: updatedDates.loginDate,
-                loginDate: updatedDates.loginDate,
-                login_date: updatedDates.loginDate,
-                logoutDate: updatedDates.logoutDate,
-                logout_date: updatedDates.logoutDate,
-                endDate: updatedDates.logoutDate,
-                end_date: updatedDates.logoutDate
-              }
-            : item
-        )
-      );
-      toast.success(`Temporary days calculated for #${calcModalTarget.id}`);
-    }
-    setCalcModalTarget(null);
+    setLogs((prevLogs) =>
+      prevLogs.map((item) => ({
+        ...item,
+        startDate: updatedDates.loginDate,
+        start_date: updatedDates.loginDate,
+        loginDate: updatedDates.loginDate,
+        login_date: updatedDates.loginDate,
+        logoutDate: updatedDates.logoutDate,
+        logout_date: updatedDates.logoutDate,
+        endDate: updatedDates.logoutDate,
+        end_date: updatedDates.logoutDate
+      }))
+    );
   };
 
   const handleFormSubmit = async (data) => {
@@ -3616,7 +3598,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
           <button 
             type="button" 
-            onClick={() => setCalcModalTarget(scopedLogs[0] || {})} 
+            onClick={() => setIsCalcModalOpen(true)} 
             title="Open Total Days Calculator" 
             className="flex items-center justify-center h-9 w-9 rounded-lg border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-300 transition cursor-pointer shrink-0 shadow-2xs"
           >
@@ -3763,14 +3745,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1">
 
-                          <IconAction 
-                            title="Calculate / Test Days" 
-                            tone="teal" 
-                            onClick={() => setCalcModalTarget(log)}
-                          >
-                            <Calculator className="h-4 w-4 text-teal-600" />
-                          </IconAction>
-
                           {!isClosed && (
                             <IconAction 
                               title="Mark as Closed" 
@@ -3823,10 +3797,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         </div>
       </div>
 
-      {calcModalTarget && (
+      {isCalcModalOpen && (
         <CalculateTotalDaysModal 
-          log={calcModalTarget}
-          onClose={() => setCalcModalTarget(null)} 
+          onClose={() => setIsCalcModalOpen(false)} 
           onApply={handleApplyCalc}
         />
       )}
