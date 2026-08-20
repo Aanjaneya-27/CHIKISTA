@@ -747,19 +747,43 @@ router.delete("/requisitions/:id", async (req, res) => {
   }
 });
 
-// 🔔 5. GET NOTIFICATIONS
+// router.get("/notifications", async (req, res) => {
+//   try {
+//     const careCenterId = req.query.careCenterId || null;
+//     const role = req.query.role || null;
+//     const isAdmin = role === "super_admin" || role === "admin" || !careCenterId || careCenterId === "All";
+
+//     let query = "SELECT * FROM notifications";
+//     const params = [];
+
+//     if (!isAdmin && !isNaN(parseInt(careCenterId))) {
+//       query += " WHERE (care_center_id = ? OR care_center_id IS NULL)";
+//       params.push(parseInt(careCenterId));
+//     }
+
+//     query += " ORDER BY created_at DESC, id DESC LIMIT 50";
+
+//     const [rows] = await pool.query(query, params);
+//     return res.status(200).json(rows);
+//   } catch (err) {
+//     console.error("Route Error /notifications:", err.message);
+//     return res.status(500).json({ message: "Failed to fetch notifications", error: err.message });
+//   }
+// });
+
+//  GET NOTIFICATIONS (Care Center Scoped)
 router.get("/notifications", async (req, res) => {
   try {
-    const careCenterId = req.query.careCenterId || null;
-    const role = req.query.role || null;
-    const isAdmin = role === "super_admin" || role === "admin" || !careCenterId || careCenterId === "All";
+    const careCenterId = req.query.careCenterId;
+    const role = req.query.role;
+    const isSuperAdmin = role === "super_admin" || role === "admin" || !careCenterId || careCenterId === "All";
 
     let query = "SELECT * FROM notifications";
     const params = [];
 
-    if (!isAdmin && !isNaN(parseInt(careCenterId))) {
-      query += " WHERE (care_center_id = ? OR care_center_id IS NULL)";
-      params.push(parseInt(careCenterId));
+    if (!isSuperAdmin) {
+      query += " WHERE care_center_id = ?";
+      params.push(careCenterId);
     }
 
     query += " ORDER BY created_at DESC, id DESC LIMIT 50";
@@ -767,7 +791,6 @@ router.get("/notifications", async (req, res) => {
     const [rows] = await pool.query(query, params);
     return res.status(200).json(rows);
   } catch (err) {
-    console.error("Route Error /notifications:", err.message);
     return res.status(500).json({ message: "Failed to fetch notifications", error: err.message });
   }
 });
