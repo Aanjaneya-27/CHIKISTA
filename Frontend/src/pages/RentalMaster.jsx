@@ -2005,7 +2005,7 @@ function GlobalPolish() {
       html { scroll-behavior: smooth; }
       .smooth-scroll, .smooth-scroll-x { scroll-behavior: smooth; }
       .smooth-scroll::-webkit-scrollbar,
-      .smooth-scroll-x::-webkit-scrollbar { width: 4px; height: 4px; }
+      .smooth-scroll-x::-webkit-scrollbar { width: 5px; height: 5px; }
       .smooth-scroll::-webkit-scrollbar-track,
       .smooth-scroll-x::-webkit-scrollbar-track { background: transparent; }
       .smooth-scroll::-webkit-scrollbar-thumb,
@@ -2154,7 +2154,7 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Mobile-Optimized Calculator Modal
+// 🌟 Calculator Modal with Strict 3-Month & Boundary Rules
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const threeMonthsAgoISO = useMemo(() => {
     const d = new Date();
@@ -2210,8 +2210,10 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="fade-slide-up w-full max-w-sm sm:max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
-        <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
+      <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
+        
+        {/* Header */}
+        <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div>
             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
             <p className="text-xs font-medium text-slate-400 mt-0.5">General • Estimation Tool</p>
@@ -2219,14 +2221,15 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           <button 
             type="button" 
             onClick={onClose} 
-            className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
+            className="grid h-6 w-6 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="p-5 space-y-3.5">
-          <div className="space-y-1">
+        {/* Body Inputs */}
+        <div className="p-6 space-y-4">
+          <div className="space-y-1.5">
             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               LOG IN DATE
             </label>
@@ -2235,12 +2238,12 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
               value={tempLoginDate} 
               min={threeMonthsAgoISO}
               onChange={handleLoginChange} 
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
             />
-            <p className="text-[10px] text-slate-400">Max last 3 months allowed</p>
+            <p className="text-[11px] text-slate-400">Allowed within last 3 months only</p>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               LOG OUT DATE
             </label>
@@ -2249,9 +2252,9 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
               value={tempLogoutDate} 
               min={tempLoginDate || threeMonthsAgoISO}
               onChange={handleLogoutChange} 
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
             />
-            <p className="text-[10px] text-slate-400">Leave empty to calculate until today</p>
+            <p className="text-[11px] text-slate-400">Leave empty to calculate until today</p>
           </div>
 
           {errorMsg && (
@@ -2260,19 +2263,21 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             </p>
           )}
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 text-center">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS</span>
-            <p className="mt-0.5 font-display text-3xl font-extrabold text-slate-800 tracking-tight">
+          {/* Result Box */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS</span>
+            <p className="mt-1 font-display text-3xl font-extrabold text-slate-800 tracking-tight">
               {totalDaysDisplay}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-3">
+        {/* Footer Buttons */}
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
           <button 
             type="button" 
             onClick={onClose} 
-            className="rounded-lg px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+            className="rounded-lg px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
           >
             Cancel
           </button>
@@ -2280,11 +2285,12 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           <button 
             type="button" 
             onClick={handleApply} 
-            className="rounded-lg bg-teal-900 hover:bg-teal-950 text-white px-4 py-1.5 text-xs font-bold shadow-sm transition cursor-pointer"
+            className="rounded-lg bg-teal-900 hover:bg-teal-950 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
           >
             Apply Changes
           </button>
         </div>
+
       </div>
     </div>
   );
@@ -2401,7 +2407,7 @@ function KpiCards({ logs = [] }) {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       {cards.map((c, i) => {
         const Icon = c.icon;
         const t = toneMap[c.tone];
@@ -2409,14 +2415,14 @@ function KpiCards({ logs = [] }) {
           <div 
             key={c.label} 
             style={{ animationDelay: `${i * 50}ms` }} 
-            className="rise-in group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            className="rise-in group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-5"
           >
             <span className={`absolute inset-x-0 top-0 h-1 ${t.bar}`} />
-            <div className={`grid h-8 w-8 sm:h-10 sm:w-10 place-items-center rounded-xl shadow-xs ${t.chip}`}>
-              <Icon className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.25} />
+            <div className={`grid h-10 w-10 place-items-center rounded-xl shadow-xs ${t.chip}`}>
+              <Icon className="h-5 w-5" strokeWidth={2.25} />
             </div>
-            <p className="mt-2.5 sm:mt-3.5 font-display text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-800">{c.value}</p>
-            <p className="mt-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-slate-400">{c.label}</p>
+            <p className="mt-3.5 font-display text-2xl font-extrabold tracking-tight text-slate-800 sm:text-3xl">{c.value}</p>
+            <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-slate-400">{c.label}</p>
           </div>
         );
       })}
@@ -3404,7 +3410,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  // 🧮 Silent Apply: Temporary in-memory change without toast alerts
+  // 🧮 Silent Apply
   const handleApplyCalc = (updatedDates) => {
     setLogs((prevLogs) =>
       prevLogs.map((item) => ({
@@ -3608,17 +3614,17 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   }
 
   return (
-    <div className="space-y-3.5 sm:space-y-5 fade-slide-up">
+    <div className="space-y-4 sm:space-y-5 fade-slide-up">
       <GlobalPolish />
       
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-slate-800">Rental Master Sheet</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-800">Rental Master Sheet</h1>
           <p className="text-xs font-medium text-slate-400 mt-0.5">Live view &amp; allocation of equipment requisitions</p>
         </div>
 
         {permissions.canAdd && (
-          <PrimaryButton onClick={() => setPageForm({ mode: "add", data: null })} className="w-full sm:w-auto shrink-0 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] px-4 py-2 sm:px-4.5 sm:py-2.5 cursor-pointer justify-center">
+          <PrimaryButton onClick={() => setPageForm({ mode: "add", data: null })} className="shrink-0 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] px-4.5 py-2.5 cursor-pointer">
             <Plus className="h-4 w-4" /> New Log Requisition
           </PrimaryButton>
         )}
@@ -3626,105 +3632,95 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       <KpiCards logs={scopedLogs} />
       
-      {/* 📱 Mobile Optimized Filter Bar */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-3.5 shadow-xs">
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+      {/* 🖥️ Desktop & Mobile Perfect Single-Line Filter Bar */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
+        <div className="flex flex-wrap items-center gap-2.5 w-full">
           
-          {/* Search Bar (Full Width on Mobile) */}
-          <div className="group relative w-full sm:flex-[2] sm:min-w-[200px]">
+          <div className="group relative flex-[2] min-w-[200px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-teal-500" />
             <input 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
               autoComplete="off" 
-              placeholder="Search by ID, patient, device…" 
-              className="w-full rounded-xl sm:rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-3 text-xs sm:text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" 
+              placeholder="Search by ID, patient, device, mobile…" 
+              className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" 
             />
           </div>
 
-          <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400 hidden lg:block" />
+          <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400 hidden xl:block" />
 
-          {/* Filters Grid for Mobile */}
-          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:flex-1 sm:w-auto sm:flex-wrap sm:items-center">
-            <select 
-              value={careCenterFilter} 
-              onChange={(e) => setCareCenterFilter(e.target.value)} 
-              className="w-full sm:w-auto sm:flex-1 sm:min-w-[130px] rounded-xl sm:rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer truncate"
-            >
-              {!isCareCenterUser && <option value="All">All Care Centers</option>}
-              {filterBarDropdownCareCenters.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+          <select 
+            value={careCenterFilter} 
+            onChange={(e) => setCareCenterFilter(e.target.value)} 
+            className="flex-1 min-w-[130px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+          >
+            {!isCareCenterUser && <option value="All">All Care Centers</option>}
+            {filterBarDropdownCareCenters.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
 
-            <select 
-              value={statusFilter} 
-              onChange={(e) => setStatusFilter(e.target.value)} 
-              className="w-full sm:w-auto sm:flex-1 sm:min-w-[110px] rounded-xl sm:rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
-            >
-              <option value="Both">Status: Both</option>
-              <option value="Active">Active</option>
-              <option value="Closed">Closed</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-            
-            <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="w-full sm:w-auto sm:flex-1 sm:min-w-[100px] rounded-xl sm:rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
-              <option value="All">All Deals</option>
-              {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-            
-            <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="w-full sm:w-auto sm:flex-1 sm:min-w-[95px] rounded-xl sm:rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
-              <option value="All">All Units</option>
-              {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
-            </select>
+          <select 
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)} 
+            className="flex-1 min-w-[115px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+          >
+            <option value="Both">Status: Both</option>
+            <option value="Active">Active</option>
+            <option value="Closed">Closed</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+          
+          <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+            <option value="All">All Deals</option>
+            {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          
+          <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="flex-1 min-w-[100px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+            <option value="All">All Units</option>
+            {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+          </select>
 
-            <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="w-full sm:w-auto sm:flex-1 sm:min-w-[100px] rounded-xl sm:rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
-              <option value="All">All Modes</option>
-              {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
+          <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+            <option value="All">All Modes</option>
+            {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
 
-            {/* Quick Action Buttons */}
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <button 
-                type="button" 
-                onClick={() => setIsCalcModalOpen(true)} 
-                title="Open Total Days Calculator" 
-                className="flex-1 sm:flex-none flex items-center justify-center h-8 sm:h-9 px-3 sm:w-9 rounded-xl sm:rounded-lg border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-300 transition cursor-pointer shrink-0 shadow-2xs text-xs font-semibold gap-1.5"
-              >
-                <Calculator className="h-4 w-4" />
-                <span className="sm:hidden">Calc</span>
-              </button>
+          <button 
+            type="button" 
+            onClick={() => setIsCalcModalOpen(true)} 
+            title="Open Total Days Calculator" 
+            className="flex items-center justify-center h-9 w-9 rounded-lg border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-300 transition cursor-pointer shrink-0 shadow-2xs"
+          >
+            <Calculator className="h-4 w-4" />
+          </button>
 
-              <button 
-                type="button" 
-                onClick={() => {
-                  setSearch("");
-                  setStatusFilter("Both");
-                  setDealTypeFilter("All");
-                  setUnitFilter("All");
-                  setModeFilter("All");
-                  setCareCenterFilter("All");
-                  setSortField("startDate");
-                  setSortOrder("desc");
-                  fetchLogs();
-                  toast.success("Filters reset");
-                }} 
-                title="Reset all filters" 
-                className="flex-1 sm:flex-none flex items-center justify-center h-8 sm:h-9 px-3 sm:w-9 rounded-xl sm:rounded-lg border border-slate-200 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition cursor-pointer shrink-0 text-xs font-semibold gap-1.5"
-              >
-                <X className="h-4 w-4" />
-                <span className="sm:hidden">Reset</span>
-              </button>
-            </div>
-          </div>
-
+          <button 
+            type="button" 
+            onClick={() => {
+              setSearch("");
+              setStatusFilter("Both");
+              setDealTypeFilter("All");
+              setUnitFilter("All");
+              setModeFilter("All");
+              setCareCenterFilter("All");
+              setSortField("startDate");
+              setSortOrder("desc");
+              fetchLogs();
+              toast.success("Filters reset");
+            }} 
+            title="Reset all filters" 
+            className="flex items-center justify-center h-9 w-9 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition cursor-pointer shrink-0"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
-      {/* 📱 Main Table (Smooth Horizontal Scroll & No Text Break) */}
+      {/* Main Table */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
         <div className="smooth-scroll-x overflow-x-auto">
-          <table className="w-full text-left text-sm" style={{ minWidth: 680 }}>
+          <table className="w-full text-left text-sm" style={{ minWidth: 800 }}>
             <thead>
               <tr className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 text-xs font-bold uppercase tracking-wide text-slate-400 backdrop-blur whitespace-nowrap">
                 <th className="px-5 py-3">Device</th>
@@ -3826,7 +3822,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         {actualLogoutDate ? formatDisplayDate(actualLogoutDate) : "—"}
                       </td>
                       
-                      {/* 🛡️ No Text-Breaking for Total Days */}
                       <td className="px-5 py-3.5">
                         <span className={`font-bold px-2.5 py-1 rounded-md text-xs border shadow-2xs inline-block whitespace-nowrap ${
                           isClosed 
