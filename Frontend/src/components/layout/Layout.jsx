@@ -15,7 +15,8 @@
 //   Trash2, 
 //   CheckCheck,
 //   Clock,
-//   RefreshCw
+//   RefreshCw,
+//   AlertCircle
 // } from "lucide-react";
 // import { ROLES, DEMO_USER_NAMES } from "../../data/MockData";
 
@@ -202,14 +203,16 @@
 // function notifStyle(type = "") {
 //   const t = String(type).toUpperCase();
 //   switch (t) {
-//     case "DUE_REMINDER":
-//     case "WARNING":
-//       return { bg: "bg-amber-50", text: "text-amber-600", icon: Clock };
 //     case "CREATED":
 //     case "SUCCESS":
 //       return { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2 };
 //     case "UPDATED":
 //       return { bg: "bg-blue-50", text: "text-blue-600", icon: RefreshCw };
+//     case "DELETED":
+//     case "WARNING":
+//       return { bg: "bg-rose-50", text: "text-rose-600", icon: AlertCircle };
+//     case "DUE_REMINDER":
+//       return { bg: "bg-amber-50", text: "text-amber-600", icon: Clock };
 //     default:
 //       return { bg: "bg-teal-50", text: "text-teal-600", icon: Bell };
 //   }
@@ -219,7 +222,6 @@
 //   if (!open) return null;
 //   const list = Array.isArray(notifications) ? notifications : [];
   
-//   // Checking both n.is_read (MySQL 0/1) and n.read (Boolean)
 //   const unreadCount = list.filter((n) => n.is_read === 0 || n.is_read === false || (!n.read && n.is_read === undefined)).length;
 
 //   return (
@@ -373,11 +375,30 @@ import {
 } from "lucide-react";
 import { ROLES, DEMO_USER_NAMES } from "../../data/MockData";
 
+
+function useBellRing(unreadCount) {
+  const [ringing, setRinging] = useState(false);
+  const prevCount = useRef(unreadCount);
+
+  useEffect(() => {
+    if (unreadCount > prevCount.current) {
+      setRinging(true);
+      const timer = setTimeout(() => setRinging(false), 800); // matches bell-ring animation duration
+      prevCount.current = unreadCount;
+      return () => clearTimeout(timer);
+    }
+    prevCount.current = unreadCount;
+  }, [unreadCount]);
+
+  return ringing;
+}
+
 export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount = 0, onOpenNotifications }) {
   const navigate = useNavigate();
   const location = useLocation();
 
   const isSuperAdmin = role === "super_admin" || role === "admin";
+  const bellRinging = useBellRing(unreadCount);
 
   const items = [
     { key: "/rental", label: "Rental Master", icon: ClipboardList, show: true },
@@ -392,6 +413,19 @@ export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount = 0, onOp
         @keyframes heartbeat-color { 0%, 100% { background-color: #14b8a6; } 15% { background-color: #2dd4bf; } 30% { background-color: #14b8a6; } 45% { background-color: #5eead4; } 60% { background-color: #14b8a6; } }
         .animate-heartbeat { animation: heartbeat 1.4s ease-in-out infinite; transform-origin: center; }
         .heartbeat-wrapper { animation: heartbeat-glow 1.4s ease-in-out infinite, heartbeat-color 1.4s ease-in-out infinite; }
+
+        @keyframes bell-ring {
+          0%, 100% { transform: rotate(0deg); }
+          10% { transform: rotate(14deg); }
+          20% { transform: rotate(-12deg); }
+          30% { transform: rotate(10deg); }
+          40% { transform: rotate(-8deg); }
+          50% { transform: rotate(6deg); }
+          60% { transform: rotate(-4deg); }
+          70% { transform: rotate(2deg); }
+          80%, 100% { transform: rotate(0deg); }
+        }
+        .animate-bell-ring { animation: bell-ring 0.8s ease-in-out; transform-origin: top center; }
       `}</style>
 
       {mobileOpen && <div className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden" onClick={() => setMobileOpen(false)} />}
@@ -423,7 +457,7 @@ export function Sidebar({ role, mobileOpen, setMobileOpen, unreadCount = 0, onOp
           <div className="my-3 border-t border-white/10" />
 
           <button onClick={() => { onOpenNotifications(); setMobileOpen(false); }} className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-400 transition hover:bg-white/5 hover:text-white cursor-pointer">
-            <Bell className="h-4 w-4 text-slate-500 group-hover:text-slate-300" />
+            <Bell className={`h-4 w-4 text-slate-500 group-hover:text-slate-300 ${bellRinging ? "animate-bell-ring" : ""}`} />
             <span className="flex-1 text-left">Notifications</span>
             {unreadCount > 0 && <span className="grid h-5 place-items-center rounded-full bg-rose-500 px-1.5 text-xs font-bold text-white" style={{ minWidth: 20 }}>{unreadCount}</span>}
           </button>
@@ -438,6 +472,7 @@ export function Topbar({ role, setMobileOpen, unreadCount = 0, onOpenNotificatio
   const profileMenuRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate(); 
+  const bellRinging = useBellRing(unreadCount);
   
   const loggedUser = useMemo(() => {
     try {
@@ -491,6 +526,20 @@ export function Topbar({ role, setMobileOpen, unreadCount = 0, onOpenNotificatio
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3.5 sm:px-6">
+      <style>{`
+        @keyframes bell-ring {
+          0%, 100% { transform: rotate(0deg); }
+          10% { transform: rotate(14deg); }
+          20% { transform: rotate(-12deg); }
+          30% { transform: rotate(10deg); }
+          40% { transform: rotate(-8deg); }
+          50% { transform: rotate(6deg); }
+          60% { transform: rotate(-4deg); }
+          70% { transform: rotate(2deg); }
+          80%, 100% { transform: rotate(0deg); }
+        }
+        .animate-bell-ring { animation: bell-ring 0.8s ease-in-out; transform-origin: top center; }
+      `}</style>
       <div className="flex items-center gap-3">
         <button onClick={() => setMobileOpen(true)} className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-500 lg:hidden cursor-pointer">
           <Menu className="h-4 w-4" />
@@ -502,7 +551,7 @@ export function Topbar({ role, setMobileOpen, unreadCount = 0, onOpenNotificatio
 
       <div className="flex items-center gap-2 sm:gap-3">
         <button onClick={onOpenNotifications} className="relative grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 cursor-pointer">
-          <Bell className="h-4 w-4" />
+          <Bell className={`h-4 w-4 ${bellRinging ? "animate-bell-ring" : ""}`} />
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white">
               {unreadCount > 9 ? "9+" : unreadCount}
