@@ -952,10 +952,11 @@ const getLogStatus = (l) => {
   return "Active";
 };
 
-// 🔍 Dedicated Details Page for clicked requisition
+// 🔍 Dedicated Details Page for Clicked Requisition (Complete Safe Mapping)
 function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], onBack }) {
   const eqId = log?.equipmentId || log?.equipment_id || log?.deviceModel;
-  const equipmentName = equipmentCatalog.find(e => String(e?.id) === String(eqId))?.name || log?.equipmentName || log?.equipment_name || eqId || "—";
+  const eqObj = equipmentCatalog.find(e => String(e?.id) === String(eqId));
+  const equipmentName = log?.equipmentName || log?.equipment_name || eqObj?.name || eqId || "—";
   
   const ccId = log?.careCenterId || log?.care_center_id;
   const careCenterObj = careCenters.find(c => String(c?.id) === String(ccId));
@@ -975,15 +976,43 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
     : "bg-amber-50 text-amber-700 border-amber-200";
 
+  // Robust parsing for accessories (handles string, array, or fallback)
+  let accessoryVal = log?.accessory || log?.accessories || log?.accessory_name || "";
+  if (Array.isArray(accessoryVal)) {
+    accessoryVal = accessoryVal.join(", ");
+  }
+  if (!accessoryVal || String(accessoryVal).trim() === "") {
+    accessoryVal = "—";
+  }
+
+  const dealTypeVal = log?.dealType || log?.deal_type || "B2B";
+  const unitVal = log?.unit || "ODCOM";
+  const modeVal = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
+
   const billingTypeVal = log?.billingType || log?.billing_type || log?.billing || "Daily";
-  const rentalChargeVal = Number(log?.rentalCharge ?? log?.rental_charge ?? log?.rent ?? log?.daily_rate ?? log?.dailyRate ?? 0).toFixed(2);
-  const depositAdvanceVal = Number(log?.depositAdvance ?? log?.deposit_advance ?? log?.deposit ?? log?.advance ?? 0).toFixed(2);
-  const installationChargeVal = Number(log?.installationCharge ?? log?.installation_charge ?? log?.installation ?? 0).toFixed(2);
+
+  // Safe number parser
+  const getSafeNumber = (...vals) => {
+    for (const v of vals) {
+      if (v !== undefined && v !== null && v !== "" && !isNaN(Number(v))) {
+        return Number(v);
+      }
+    }
+    return 0;
+  };
+
+  const rentalChargeVal = getSafeNumber(log?.rentalCharge, log?.rental_charge, log?.rent, log?.daily_rate, log?.dailyRate, eqObj?.dailyRate, eqObj?.daily_rate).toFixed(2);
+  const depositAdvanceVal = getSafeNumber(log?.depositAdvance, log?.deposit_advance, log?.deposit, log?.advance, log?.advance_amount).toFixed(2);
+  const installationChargeVal = getSafeNumber(log?.installationCharge, log?.installation_charge, log?.installation, log?.install_charge).toFixed(2);
 
   const patientNameVal = log?.patientName || log?.patient_name || log?.patient || "—";
   const mobileNumberVal = log?.mobileNumber || log?.mobile_number || log?.mobile || log?.phone || "—";
   const attendantNameVal = log?.attendantName || log?.attendant_name || log?.attendant || "—";
   const deliveryAddressVal = log?.deliveryAddress || log?.delivery_address || log?.address || "—";
+
+  const inchargeMobileVal = log?.inchargeMobile || log?.incharge_mobile || log?.incharge_phone || log?.phone || careCenterObj?.phone || "—";
+  const bedNumberVal = log?.bedNumber || log?.bed_number || log?.bedNo || log?.bed_no || "—";
+  const careAddressVal = log?.careAddress || log?.care_address || log?.address || careCenterObj?.address || "—";
 
   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate || log?.record_date;
   const totalDaysFormatted = getDynamicTotalDays(startDateVal, cleanLogout, cleanRecall);
@@ -1027,21 +1056,21 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Accessory</p>
-              <p className="font-bold text-slate-800 mt-0.5">{log?.accessory || log?.accessories || "—"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{accessoryVal}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Deal Type</p>
-              <p className="font-bold text-slate-800 mt-0.5">{log?.dealType || log?.deal_type || "B2B"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{dealTypeVal}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Unit</p>
-              <p className="font-bold text-slate-800 mt-0.5">{log?.unit || "ODCOM"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{unitVal}</p>
             </div>
 
             <div>
               <p className="text-xs font-medium text-slate-400">Mode</p>
-              <p className="font-bold text-slate-800 mt-0.5">{log?.mode || log?.paymentType || log?.payment_type || "Postpaid"}</p>
+              <p className="font-bold text-slate-800 mt-0.5">{modeVal}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Log In Date</p>
@@ -1140,15 +1169,15 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
             <div><p className="font-bold text-slate-800">{careCenterName}</p></div>
 
             <div><p className="text-xs font-medium text-slate-400">Incharge Mobile:</p></div>
-            <div><p className="font-bold text-slate-800">{log?.inchargeMobile || log?.incharge_mobile || log?.phone || careCenterObj?.phone || "—"}</p></div>
+            <div><p className="font-bold text-slate-800">{inchargeMobileVal}</p></div>
 
             <div><p className="text-xs font-medium text-slate-400">Bed No:</p></div>
-            <div><p className="font-bold text-slate-800">{log?.bedNumber || log?.bed_number || log?.bedNo || "—"}</p></div>
+            <div><p className="font-bold text-slate-800">{bedNumberVal}</p></div>
 
             <div className="col-span-2 pt-2">
               <p className="text-xs font-medium text-slate-400 mb-1.5">Care Address:</p>
               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
-                {log?.careAddress || log?.care_address || log?.address || careCenterObj?.address || "—"}
+                {careAddressVal}
               </div>
             </div>
           </div>
@@ -1325,7 +1354,7 @@ export default function AdminDashboard({
     }
   };
 
-  // If a user clicks on any requisition name, show the full details view
+  // 🔍 If a user clicks on any requisition row, render the full details page view
   if (viewDetailLog !== null) {
     return (
       <RequisitionDetailView 
@@ -1514,7 +1543,6 @@ export default function AdminDashboard({
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="panel-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs lg:col-span-2 rise-in" style={{ animationDelay: "220ms" }}>
           
-          {/* Header with Direct Route Navigation */}
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <h3 className="font-display text-sm font-bold text-slate-700">
               {isCareCenterUser ? "My Center's Recent Requisitions" : "Recent Requisitions"}
@@ -1547,20 +1575,17 @@ export default function AdminDashboard({
                 return (
                   <div
                     key={log.id}
-                    className="req-row row-in flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-slate-50/70"
+                    onClick={() => setViewDetailLog(log)}
+                    title="Click to view full requisition details"
+                    className="req-row row-in group flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-teal-50/50 cursor-pointer transition-colors"
                     style={{ animationDelay: `${260 + i * 60}ms` }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-teal-50 to-teal-100 text-teal-600 ring-1 ring-teal-100/70">
+                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-teal-50 to-teal-100 text-teal-600 ring-1 ring-teal-100/70 group-hover:scale-105 transition-transform">
                         <Package className="h-4.5 w-4.5" />
                       </div>
                       <div>
-                        {/* 🔍 Clickable Name with Cursor Pointer */}
-                        <p 
-                          onClick={() => setViewDetailLog(log)}
-                          title="Click to view full requisition details"
-                          className="text-sm font-semibold text-slate-800 hover:text-teal-600 hover:underline cursor-pointer transition-colors inline-block"
-                        >
+                        <p className="text-sm font-semibold text-slate-800 group-hover:text-teal-700 transition-colors">
                           {eqName} <span className="font-normal text-slate-400">({pName})</span>
                         </p>
                         <p className="text-xs text-slate-400">
