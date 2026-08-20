@@ -952,9 +952,9 @@ const getLogStatus = (l) => {
   return "Active";
 };
 
-// 🔍 Dedicated Details Page for Clicked Requisition (Complete Safe Mapping)
+// 🔍 Dedicated Details Page for Clicked Requisition (Fully Synchronized with DB & CamelCase/SnakeCase)
 function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], onBack }) {
-  const eqId = log?.equipmentId || log?.equipment_id || log?.deviceModel;
+  const eqId = log?.equipmentId || log?.equipment_id || log?.deviceModel || log?.device_model;
   const eqObj = equipmentCatalog.find(e => String(e?.id) === String(eqId));
   const equipmentName = log?.equipmentName || log?.equipment_name || eqObj?.name || eqId || "—";
   
@@ -962,10 +962,10 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   const careCenterObj = careCenters.find(c => String(c?.id) === String(ccId));
   const careCenterName = log?.careCenterName || log?.care_center_name || careCenterObj?.name || ccId || "—";
 
-  const cleanLogout = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
+  const cleanLogout = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date || log?.endDate);
   const cleanRecall = formatForDateInput(log?.recallDate || log?.recall_date);
   const today = todayISO();
-  const isInactive = String(log?.status || "").toLowerCase() === "inactive";
+  const isInactive = String(log?.status || log?.requisition_status || "").toLowerCase() === "inactive";
   const isClosed = Boolean(cleanRecall && cleanRecall <= today);
   
   const statusLabel = isInactive ? "Inactive" : (isClosed ? "Closed" : "Active");
@@ -976,23 +976,23 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
     : "bg-amber-50 text-amber-700 border-amber-200";
 
-  // Robust parsing for accessories (handles string, array, or fallback)
+  // 1. Accessory Fallback
   let accessoryVal = log?.accessory || log?.accessories || log?.accessory_name || "";
   if (Array.isArray(accessoryVal)) {
     accessoryVal = accessoryVal.join(", ");
   }
-  if (!accessoryVal || String(accessoryVal).trim() === "") {
+  if (!accessoryVal || String(accessoryVal).trim() === "" || accessoryVal === "null") {
     accessoryVal = "—";
   }
 
+  // 2. Types & Modes
   const dealTypeVal = log?.dealType || log?.deal_type || "B2B";
   const unitVal = log?.unit || "ODCOM";
   const modeVal = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
-
   const billingTypeVal = log?.billingType || log?.billing_type || log?.billing || "Daily";
 
-  // Safe number parser
-  const getSafeNumber = (...vals) => {
+  // 3. Safe Numeric Formatter
+  const getSafeNum = (...vals) => {
     for (const v of vals) {
       if (v !== undefined && v !== null && v !== "" && !isNaN(Number(v))) {
         return Number(v);
@@ -1001,19 +1001,30 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
     return 0;
   };
 
-  const rentalChargeVal = getSafeNumber(log?.rentalCharge, log?.rental_charge, log?.rent, log?.daily_rate, log?.dailyRate, eqObj?.dailyRate, eqObj?.daily_rate).toFixed(2);
-  const depositAdvanceVal = getSafeNumber(log?.depositAdvance, log?.deposit_advance, log?.deposit, log?.advance, log?.advance_amount).toFixed(2);
-  const installationChargeVal = getSafeNumber(log?.installationCharge, log?.installation_charge, log?.installation, log?.install_charge).toFixed(2);
+  const rentalChargeVal = getSafeNum(
+    log?.rentalCharge, log?.rental_charge, log?.rent, log?.daily_rate, log?.dailyRate, eqObj?.dailyRate, eqObj?.daily_rate
+  ).toFixed(2);
 
+  const depositAdvanceVal = getSafeNum(
+    log?.depositAdvance, log?.deposit_advance, log?.deposit, log?.advance, log?.advance_amount
+  ).toFixed(2);
+
+  const installationChargeVal = getSafeNum(
+    log?.installationCharge, log?.installation_charge, log?.installation, log?.install_charge
+  ).toFixed(2);
+
+  // 4. Patient Info Fallback
   const patientNameVal = log?.patientName || log?.patient_name || log?.patient || "—";
-  const mobileNumberVal = log?.mobileNumber || log?.mobile_number || log?.mobile || log?.phone || "—";
-  const attendantNameVal = log?.attendantName || log?.attendant_name || log?.attendant || "—";
-  const deliveryAddressVal = log?.deliveryAddress || log?.delivery_address || log?.address || "—";
+  const mobileNumberVal = log?.mobileNumber || log?.mobile_number || log?.mobile || log?.phone || log?.patient_mobile || log?.patient_phone || "—";
+  const attendantNameVal = log?.attendantName || log?.attendant_name || log?.attendant || log?.caretaker || "—";
+  const deliveryAddressVal = log?.deliveryAddress || log?.delivery_address || log?.address || log?.patient_address || "—";
 
-  const inchargeMobileVal = log?.inchargeMobile || log?.incharge_mobile || log?.incharge_phone || log?.phone || careCenterObj?.phone || "—";
+  // 5. Care Center Info Fallback
+  const inchargeMobileVal = log?.inchargeMobile || log?.incharge_mobile || log?.phone || careCenterObj?.phone || careCenterObj?.mobile || "—";
   const bedNumberVal = log?.bedNumber || log?.bed_number || log?.bedNo || log?.bed_no || "—";
   const careAddressVal = log?.careAddress || log?.care_address || log?.address || careCenterObj?.address || "—";
 
+  // 6. Dates & Duration
   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate || log?.record_date;
   const totalDaysFormatted = getDynamicTotalDays(startDateVal, cleanLogout, cleanRecall);
 
@@ -1354,7 +1365,6 @@ export default function AdminDashboard({
     }
   };
 
-  // 🔍 If a user clicks on any requisition row, render the full details page view
   if (viewDetailLog !== null) {
     return (
       <RequisitionDetailView 
