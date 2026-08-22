@@ -2175,7 +2175,7 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🧮 Standalone Safe Calculator Tool
+// 🌟 Top-Bar Standalone Calculator Modal
 function CalculateTotalDaysModal({ onClose }) {
   const threeMonthsAgoISO = useMemo(() => {
     const d = new Date();
@@ -2218,6 +2218,7 @@ function CalculateTotalDaysModal({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
+        
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div>
             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
@@ -2277,9 +2278,10 @@ function CalculateTotalDaysModal({ onClose }) {
             onClick={onClose} 
             className="rounded-lg bg-teal-900 hover:bg-teal-950 text-white px-6 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
           >
-            Close
+            Done
           </button>
         </div>
+
       </div>
     </div>
   );
@@ -2856,7 +2858,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       rent: rCharge,
       daily_rate: rCharge,
       depositAdvance: dAdvance,
-      deposit_advance: dAdvance,
+      depositAdvance_advance: dAdvance,
       deposit: dAdvance,
       advance: dAdvance,
       installationCharge: iCharge,
@@ -3270,6 +3272,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [viewDetailLog, setViewDetailLog] = useState(null); 
   const [pageForm, setPageForm] = useState(null); 
 
+  // 🧮 Standalone Top Bar Calculator Modal State
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
@@ -3369,7 +3372,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   // 📄 Derived Safe Pagination (0 Warnings, 0 Crash)
   const totalItems = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-  const activePage = currentPage > totalPages ? 1 : currentPage;
+  const activePage = Math.min(currentPage, totalPages);
   const indexOfLastItem = activePage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentLogs = useMemo(() => {
@@ -3581,6 +3584,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       <KpiCards logs={scopedLogs} />
       
+      {/* 🖥️ Single Calculator in Top Filter Bar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -3646,6 +3650,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
 
+          {/* 🧮 Top Bar Calculator Button */}
           <button 
             type="button" 
             onClick={() => setIsCalcModalOpen(true)} 
