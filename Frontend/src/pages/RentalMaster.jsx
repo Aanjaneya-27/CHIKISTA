@@ -51,7 +51,7 @@
 //       html { scroll-behavior: smooth; }
 //       .smooth-scroll, .smooth-scroll-x { scroll-behavior: smooth; }
 //       .smooth-scroll::-webkit-scrollbar,
-//       .smooth-scroll-x::-webkit-scrollbar { width: 6px; height: 6px; }
+//       .smooth-scroll-x::-webkit-scrollbar { width: 5px; height: 5px; }
 //       .smooth-scroll::-webkit-scrollbar-track,
 //       .smooth-scroll-x::-webkit-scrollbar-track { background: transparent; }
 //       .smooth-scroll::-webkit-scrollbar-thumb,
@@ -107,7 +107,7 @@
 //   return dt.toISOString().split("T")[0];
 // };
 
-// // 🧮 Unified Pure Calculation Logic (Total Days / Current Month Days)
+// // 🧮 Unified Pure Calculation Logic
 // const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
 //   const cleanLogin = formatForDateInput(loginStr);
 //   if (!cleanLogin) return "—";
@@ -122,7 +122,7 @@
 //   const [tY, tM, tD] = todayStr.split("-").map(Number);
 //   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
-//   // 1. LEFT SIDE: Total Duration (Start to End/Logout/Recall/Today)
+//   // 1. LEFT SIDE: Total Duration
 //   let endUtc = todayUtc;
 //   if (cleanRecall) {
 //     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -135,7 +135,7 @@
 //   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
 //   if (totalDays < 1) totalDays = 1;
 
-//   // 2. RIGHT SIDE: Current Month Usage (Actual days used within current calendar month)
+//   // 2. RIGHT SIDE: Current Month Usage
 //   let actualUsageEndUtc = todayUtc;
 //   if (cleanRecall) {
 //     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -200,9 +200,8 @@
 //   return isNaN(t) ? 0 : t;
 // };
 
-// // 🌟 Mobile-Responsive Days Calculator Modal with Strict 3-Month Rules
+// // 🌟 Calculator Modal with Strict 3-Month & Boundary Rules
 // function CalculateTotalDaysModal({ onClose, onApply }) {
-//   // 📅 Calculate 3 months ago limit
 //   const threeMonthsAgoISO = useMemo(() => {
 //     const d = new Date();
 //     d.setMonth(d.getMonth() - 3);
@@ -256,11 +255,11 @@
 //   };
 
 //   return (
-//     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-3.5 sm:p-4 animate-in fade-in duration-200">
-//       <div className="fade-slide-up w-full max-w-md mx-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
+//     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+//       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
         
 //         {/* Header */}
-//         <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+//         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
 //           <div>
 //             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
 //             <p className="text-xs font-medium text-slate-400 mt-0.5">General • Estimation Tool</p>
@@ -268,14 +267,14 @@
 //           <button 
 //             type="button" 
 //             onClick={onClose} 
-//             className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
+//             className="grid h-6 w-6 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
 //           >
 //             <X className="h-4 w-4" />
 //           </button>
 //         </div>
 
 //         {/* Body Inputs */}
-//         <div className="p-5 sm:p-6 space-y-4">
+//         <div className="p-6 space-y-4">
 //           <div className="space-y-1.5">
 //             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
 //               LOG IN DATE
@@ -285,7 +284,7 @@
 //               value={tempLoginDate} 
 //               min={threeMonthsAgoISO}
 //               onChange={handleLoginChange} 
-//               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 sm:py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+//               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
 //             />
 //             <p className="text-[11px] text-slate-400">Allowed within last 3 months only</p>
 //           </div>
@@ -299,13 +298,13 @@
 //               value={tempLogoutDate} 
 //               min={tempLoginDate || threeMonthsAgoISO}
 //               onChange={handleLogoutChange} 
-//               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 sm:py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+//               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
 //             />
 //             <p className="text-[11px] text-slate-400">Leave empty to calculate until today</p>
 //           </div>
 
 //           {errorMsg && (
-//             <p className="text-xs font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-lg p-2.5">
+//             <p className="text-xs font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-lg p-2">
 //               ⚠️ {errorMsg}
 //             </p>
 //           )}
@@ -313,14 +312,14 @@
 //           {/* Result Box */}
 //           <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center">
 //             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS</span>
-//             <p className="mt-1 font-display text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight">
+//             <p className="mt-1 font-display text-3xl font-extrabold text-slate-800 tracking-tight">
 //               {totalDaysDisplay}
 //             </p>
 //           </div>
 //         </div>
 
 //         {/* Footer Buttons */}
-//         <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-3.5 sm:px-6">
+//         <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
 //           <button 
 //             type="button" 
 //             onClick={onClose} 
@@ -332,7 +331,7 @@
 //           <button 
 //             type="button" 
 //             onClick={handleApply} 
-//             className="rounded-lg bg-teal-900 hover:bg-teal-950 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer active:scale-95"
+//             className="rounded-lg bg-teal-900 hover:bg-teal-950 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
 //           >
 //             Apply Changes
 //           </button>
@@ -1457,7 +1456,7 @@
 //       });
 //   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-//   // 🧮 Silent Apply: Temporary in-memory change without toast alerts
+//   // 🧮 Silent Apply
 //   const handleApplyCalc = (updatedDates) => {
 //     setLogs((prevLogs) =>
 //       prevLogs.map((item) => ({
@@ -1679,7 +1678,7 @@
 
 //       <KpiCards logs={scopedLogs} />
       
-//       {/* Filter Bar */}
+//       {/* 🖥️ Desktop & Mobile Perfect Single-Line Filter Bar */}
 //       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
 //         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -1694,7 +1693,7 @@
 //             />
 //           </div>
 
-//           <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400 hidden sm:block" />
+//           <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-400 hidden xl:block" />
 
 //           <select 
 //             value={careCenterFilter} 
@@ -1710,7 +1709,7 @@
 //           <select 
 //             value={statusFilter} 
 //             onChange={(e) => setStatusFilter(e.target.value)} 
-//             className="flex-1 min-w-[120px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+//             className="flex-1 min-w-[115px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
 //           >
 //             <option value="Both">Status: Both</option>
 //             <option value="Active">Active</option>
@@ -1718,7 +1717,7 @@
 //             <option value="Inactive">Inactive</option>
 //           </select>
           
-//           <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[110px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+//           <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
 //             <option value="All">All Deals</option>
 //             {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
 //           </select>
@@ -1769,7 +1768,7 @@
 //         <div className="smooth-scroll-x overflow-x-auto">
 //           <table className="w-full text-left text-sm" style={{ minWidth: 800 }}>
 //             <thead>
-//               <tr className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 text-xs font-bold uppercase tracking-wide text-slate-400 backdrop-blur">
+//               <tr className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 text-xs font-bold uppercase tracking-wide text-slate-400 backdrop-blur whitespace-nowrap">
 //                 <th className="px-5 py-3">Device</th>
 //                 <th className="px-5 py-3">Patient</th>
                 
@@ -1854,7 +1853,7 @@
 //                   return (
 //                     <tr 
 //                       key={log?.id || i} 
-//                       className={`rise-in group/row relative transition-colors duration-150 ${rowColor}`}
+//                       className={`rise-in group/row relative transition-colors duration-150 ${rowColor} whitespace-nowrap`}
 //                     >
 //                       <td className="px-5 py-3.5 font-bold text-slate-800">
 //                         {actualDevice}
@@ -1870,7 +1869,7 @@
 //                       </td>
                       
 //                       <td className="px-5 py-3.5">
-//                         <span className={`font-bold px-2.5 py-1 rounded-md text-xs border shadow-2xs ${
+//                         <span className={`font-bold px-2.5 py-1 rounded-md text-xs border shadow-2xs inline-block whitespace-nowrap ${
 //                           isClosed 
 //                             ? "bg-slate-100 text-slate-700 border-slate-200" 
 //                             : "bg-teal-50 text-teal-800 border-teal-200"
@@ -1881,7 +1880,6 @@
 
 //                       <td className="px-5 py-3.5">
 //                         <div className="flex items-center justify-end gap-1">
-
 //                           {!isClosed && (
 //                             <IconAction 
 //                               title="Mark as Closed" 
@@ -2024,7 +2022,6 @@ function GlobalPolish() {
   );
 }
 
-// 📅 Timezone-Safe Date Formatters
 const formatForDateInput = (d) => {
   if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || String(d).trim() === "") return "";
   const str = String(d).trim();
@@ -2061,7 +2058,6 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Unified Pure Calculation Logic
 const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   const cleanLogin = formatForDateInput(loginStr);
   if (!cleanLogin) return "—";
@@ -2076,7 +2072,6 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   const [tY, tM, tD] = todayStr.split("-").map(Number);
   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
-  // 1. LEFT SIDE: Total Duration
   let endUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -2089,7 +2084,6 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
   if (totalDays < 1) totalDays = 1;
 
-  // 2. RIGHT SIDE: Current Month Usage
   let actualUsageEndUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -2154,7 +2148,6 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Calculator Modal with Strict 3-Month & Boundary Rules
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const threeMonthsAgoISO = useMemo(() => {
     const d = new Date();
@@ -2211,8 +2204,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
-        
-        {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div>
             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
@@ -2227,12 +2218,9 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           </button>
         </div>
 
-        {/* Body Inputs */}
         <div className="p-6 space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              LOG IN DATE
-            </label>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">LOG IN DATE</label>
             <input 
               type="date" 
               value={tempLoginDate} 
@@ -2244,9 +2232,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              LOG OUT DATE
-            </label>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">LOG OUT DATE</label>
             <input 
               type="date" 
               value={tempLogoutDate} 
@@ -2263,7 +2249,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             </p>
           )}
 
-          {/* Result Box */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS</span>
             <p className="mt-1 font-display text-3xl font-extrabold text-slate-800 tracking-tight">
@@ -2272,7 +2257,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           </div>
         </div>
 
-        {/* Footer Buttons */}
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
           <button 
             type="button" 
@@ -2281,7 +2265,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           >
             Cancel
           </button>
-
           <button 
             type="button" 
             onClick={handleApply} 
@@ -2290,7 +2273,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             Apply Changes
           </button>
         </div>
-
       </div>
     </div>
   );
@@ -2477,7 +2459,6 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
   return (
     <div className="fade-slide-up space-y-6">
       <GlobalPolish />
-      
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
@@ -2501,7 +2482,6 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-700">
             📦 Logistics &amp; Device Matrix
           </p>
-          
           <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
             <div>
               <p className="text-xs font-medium text-slate-400">Assigned Model</p>
@@ -2511,7 +2491,6 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
               <p className="text-xs font-medium text-slate-400">Accessory</p>
               <p className="font-bold text-slate-800 mt-0.5">{log?.accessory || log?.accessories || "—"}</p>
             </div>
-
             <div>
               <p className="text-xs font-medium text-slate-400">Deal Type</p>
               <p className="font-bold text-slate-800 mt-0.5">{log?.dealType || log?.deal_type || "B2B"}</p>
@@ -2520,31 +2499,22 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
               <p className="text-xs font-medium text-slate-400">Unit</p>
               <p className="font-bold text-slate-800 mt-0.5">{log?.unit || "ODCOM"}</p>
             </div>
-
             <div>
               <p className="text-xs font-medium text-slate-400">Mode</p>
               <p className="font-bold text-slate-800 mt-0.5">{log?.mode || log?.paymentType || log?.payment_type || "Postpaid"}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Log In Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">
-                {formatDisplayDate(startDateVal)}
-              </p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(startDateVal)}</p>
             </div>
-
             <div>
               <p className="text-xs font-medium text-slate-400">Log Out Date</p>
-              <p className="font-bold text-slate-800 mt-0.5">
-                {formatDisplayDate(cleanLogout)}
-              </p>
+              <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(cleanLogout)}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Total Days</p>
-              <p className="font-bold text-teal-700 mt-0.5">
-                {totalDaysFormatted}
-              </p>
+              <p className="font-bold text-teal-700 mt-0.5">{totalDaysFormatted}</p>
             </div>
-
             <div className="col-span-2 pt-1">
               <p className="text-xs font-medium text-slate-400 mb-1">Status</p>
               <span className={`inline-block rounded-md px-3 py-1 text-xs font-bold border ${statusColor}`}>
@@ -2558,32 +2528,22 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-600">
             💳 Commercial Parameters
           </p>
-
           <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
             <div>
               <p className="text-xs font-medium text-slate-400">Billing Type</p>
-              <p className="font-extrabold text-teal-600 uppercase mt-0.5">
-                {billingTypeVal}
-              </p>
+              <p className="font-extrabold text-teal-600 uppercase mt-0.5">{billingTypeVal}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Rental Charge</p>
-              <p className="font-extrabold text-slate-800 mt-0.5">
-                ₹{rentalChargeVal}
-              </p>
+              <p className="font-extrabold text-slate-800 mt-0.5">₹{rentalChargeVal}</p>
             </div>
-
             <div>
               <p className="text-xs font-medium text-slate-400">Deposit / Advance</p>
-              <p className="font-extrabold text-slate-800 mt-0.5">
-                ₹{depositAdvanceVal}
-              </p>
+              <p className="font-extrabold text-slate-800 mt-0.5">₹{depositAdvanceVal}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400">Installation Charge</p>
-              <p className="font-extrabold text-slate-800 mt-0.5">
-                ₹{installationChargeVal}
-              </p>
+              <p className="font-extrabold text-slate-800 mt-0.5">₹{installationChargeVal}</p>
             </div>
           </div>
         </div>
@@ -2592,17 +2552,13 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-600">
             👤 Patient Identity Details
           </p>
-
           <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-sm">
             <div><p className="text-xs font-medium text-slate-400">Patient Name:</p></div>
             <div><p className="font-bold text-slate-800">{patientNameVal}</p></div>
-
             <div><p className="text-xs font-medium text-slate-400">Mobile:</p></div>
             <div><p className="font-bold text-slate-800">{mobileNumberVal}</p></div>
-
             <div><p className="text-xs font-medium text-slate-400">Attendant:</p></div>
             <div><p className="font-bold text-slate-800">{attendantNameVal}</p></div>
-
             <div className="col-span-2 pt-2">
               <p className="text-xs font-medium text-slate-400 mb-1.5">Delivery Address:</p>
               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
@@ -2616,17 +2572,13 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-600">
             🏥 Care Center Context
           </p>
-
           <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-sm">
             <div><p className="text-xs font-medium text-slate-400">Care Center:</p></div>
             <div><p className="font-bold text-slate-800">{careCenterName}</p></div>
-
             <div><p className="text-xs font-medium text-slate-400">Incharge Mobile:</p></div>
             <div><p className="font-bold text-slate-800">{log?.inchargeMobile || log?.incharge_mobile || log?.phone || careCenterObj?.phone || "—"}</p></div>
-
             <div><p className="text-xs font-medium text-slate-400">Bed No:</p></div>
             <div><p className="font-bold text-slate-800">{log?.bedNumber || log?.bed_number || log?.bedNo || "—"}</p></div>
-
             <div className="col-span-2 pt-2">
               <p className="text-xs font-medium text-slate-400 mb-1.5">Care Address:</p>
               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
@@ -2864,7 +2816,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     onSubmit({
       ...form, 
       id: form.id,
-      
       recordDate: formatForDateInput(form.recordDate) || todayISO(),
       record_date: formatForDateInput(form.recordDate) || todayISO(),
       startDate: formatForDateInput(form.loginDate) || todayISO(),
@@ -2977,7 +2928,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         </div>
       </div>
 
-      {/* Section 1: Record Types */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <SectionHeading icon={Tag}>Record Types</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-3">
@@ -3002,7 +2952,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         </div>
       </div>
 
-      {/* Section 2: Asset Allocation & Logistics */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <SectionHeading icon={Truck}>Asset Allocation &amp; Logistics</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-4">
@@ -3067,7 +3016,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         </div>
       </div>
 
-      {/* Section 3: Commercials & Billing */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <SectionHeading icon={CreditCard}>Commercials &amp; Billing</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-4">
@@ -3090,7 +3038,6 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         </div>
       </div>
 
-      {/* Section 4: Care Center & Patient Details */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <div className="grid gap-8 lg:grid-cols-2">
           <div>
@@ -3166,14 +3113,12 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         </div>
       </div>
 
-      {/* Section 5: Notes */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <Field label="Notes">
           <textarea rows={3} value={form.notes} onChange={(e) => set({ notes: e.target.value })} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" />
         </Field>
       </div>
 
-      {/* Section 6: Photo Verification */}
       <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-6 transition-colors hover:border-teal-300 hover:bg-teal-50/30">
         <Field label="Asset Handover Photo Verification (Up to 10 photos/PDFs)">
           <div className="flex flex-col gap-4">
@@ -3310,10 +3255,13 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [sortField, setSortField] = useState("startDate");
   const [sortOrder, setSortOrder] = useState("desc");
 
+  // 📄 Pagination Setup
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
   const [viewDetailLog, setViewDetailLog] = useState(null); 
   const [pageForm, setPageForm] = useState(null); 
 
-  // 🧮 Calculator Modal State
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
@@ -3410,7 +3358,16 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  // 🧮 Silent Apply
+  // 📄 Derived Safe Pagination (No useEffect = 0 Warnings/Errors)
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const activePage = currentPage > totalPages ? 1 : currentPage;
+  const indexOfLastItem = activePage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentLogs = useMemo(() => {
+    return filtered.slice(indexOfFirstItem, indexOfLastItem);
+  }, [filtered, indexOfFirstItem, indexOfLastItem]);
+
   const handleApplyCalc = (updatedDates) => {
     setLogs((prevLogs) =>
       prevLogs.map((item) => ({
@@ -3632,7 +3589,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       <KpiCards logs={scopedLogs} />
       
-      {/* 🖥️ Desktop & Mobile Perfect Single-Line Filter Bar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -3640,7 +3596,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-teal-500" />
             <input 
               value={search} 
-              onChange={(e) => setSearch(e.target.value)} 
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} 
               autoComplete="off" 
               placeholder="Search by ID, patient, device, mobile…" 
               className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" 
@@ -3651,7 +3607,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
           <select 
             value={careCenterFilter} 
-            onChange={(e) => setCareCenterFilter(e.target.value)} 
+            onChange={(e) => { setCareCenterFilter(e.target.value); setCurrentPage(1); }} 
             className="flex-1 min-w-[130px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
           >
             {!isCareCenterUser && <option value="All">All Care Centers</option>}
@@ -3662,7 +3618,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
           <select 
             value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)} 
+            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }} 
             className="flex-1 min-w-[115px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
           >
             <option value="Both">Status: Both</option>
@@ -3671,17 +3627,29 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <option value="Inactive">Inactive</option>
           </select>
           
-          <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+          <select 
+            value={dealTypeFilter} 
+            onChange={(e) => { setDealTypeFilter(e.target.value); setCurrentPage(1); }} 
+            className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+          >
             <option value="All">All Deals</option>
             {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           
-          <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="flex-1 min-w-[100px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+          <select 
+            value={unitFilter} 
+            onChange={(e) => { setUnitFilter(e.target.value); setCurrentPage(1); }} 
+            className="flex-1 min-w-[100px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+          >
             <option value="All">All Units</option>
             {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
           </select>
 
-          <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+          <select 
+            value={modeFilter} 
+            onChange={(e) => { setModeFilter(e.target.value); setCurrentPage(1); }} 
+            className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+          >
             <option value="All">All Modes</option>
             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
@@ -3706,6 +3674,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               setCareCenterFilter("All");
               setSortField("startDate");
               setSortOrder("desc");
+              setCurrentPage(1);
               fetchLogs();
               toast.success("Filters reset");
             }} 
@@ -3717,7 +3686,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         </div>
       </div>
 
-      {/* Main Table */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
         <div className="smooth-scroll-x overflow-x-auto">
           <table className="w-full text-left text-sm" style={{ minWidth: 800 }}>
@@ -3781,7 +3749,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                   </td>
                 </tr>
               ) : (
-                filtered.map((log, i) => {
+                currentLogs.map((log, i) => {
                   const actualLogoutDate = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
                   const actualRecallDate = formatForDateInput(log?.recallDate || log?.recall_date);
                   const today = todayISO();
@@ -3880,9 +3848,56 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/40 px-5 py-3 text-xs text-slate-400">
-          <span>Showing {filtered.length} of {scopedLogs.length} requisitions</span>
-          <span className="hidden sm:inline">Chikitsa · Live data</span>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/40 px-5 py-3 text-xs text-slate-500">
+          <div>
+            Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1}–{Math.min(indexOfLastItem, totalItems)} of {totalItems} records
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={activePage === 1}
+                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+                  activePage === 1
+                    ? "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100 shadow-2xs"
+                }`}
+              >
+                Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`h-7 w-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    activePage === pageNum
+                      ? "bg-[#0b3b4f] text-white shadow-xs"
+                      : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 shadow-2xs"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                disabled={activePage === totalPages || totalPages === 0}
+                className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+                  activePage === totalPages || totalPages === 0
+                    ? "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100 shadow-2xs"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
