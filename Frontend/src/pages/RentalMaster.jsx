@@ -2175,7 +2175,7 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Calculator Modal
+// 🌟 Calculator Modal with "Apply Changes" & "Cancel"
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const threeMonthsAgoISO = useMemo(() => {
     const d = new Date();
@@ -2233,6 +2233,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
+        
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div>
             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
@@ -2302,6 +2303,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             Apply Changes
           </button>
         </div>
+
       </div>
     </div>
   );
@@ -2878,11 +2880,11 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       rent: rCharge,
       daily_rate: rCharge,
       depositAdvance: dAdvance,
-      deposit_advance: dAdvance,
+      depositAdvance_advance: dAdvance,
       deposit: dAdvance,
       advance: dAdvance,
       installationCharge: iCharge,
-      installation_charge: iCharge,
+      installationCharge_charge: iCharge,
       installation: iCharge,
 
       patientName: String(form.patientName || "").trim(),
@@ -3469,57 +3471,55 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         rent: rCharge,
         daily_rate: rCharge,
         deposit_advance: dAdvance,
-        depositAdvance: dAdvance,
+        depositAdvance_advance: dAdvance,
         deposit: dAdvance,
         advance: dAdvance,
         installation_charge: iCharge,
-        installationCharge: iCharge,
+        installationCharge_charge: iCharge,
         installation: iCharge,
-        
-        age: String(data.age || "").trim(),
-        attendant_name: String(data.attendantName || data.attendant_name || "").trim(),
-        attendantName: String(data.attendantName || data.attendant_name || "").trim(),
-        attendant: String(data.attendantName || data.attendant_name || "").trim(),
-        mobile_number: String(data.mobileNumber || data.mobile_number || data.mobile || data.phone || "").trim(),
-        mobileNumber: String(data.mobileNumber || data.mobile_number || data.mobile || data.phone || "").trim(),
-        mobile: String(data.mobileNumber || data.mobile_number || data.mobile || data.phone || "").trim(),
-        alt_mobile_number: String(data.altMobileNumber || data.alt_mobile_number || "").trim(),
-        altMobileNumber: String(data.altMobileNumber || data.alt_mobile_number || "").trim(),
-        delivery_address: String(data.deliveryAddress || data.delivery_address || "").trim(),
-        deliveryAddress: String(data.deliveryAddress || data.delivery_address || "").trim(),
 
-        incharge_mobile: String(data.inchargeMobile || data.incharge_mobile || "").trim(),
-        inchargeMobile: String(data.inchargeMobile || data.incharge_mobile || "").trim(),
-        alt_mobile: String(data.altMobile || data.alt_mobile || "").trim(),
-        altMobile: String(data.altMobile || data.alt_mobile || "").trim(),
-        care_address: String(data.careAddress || data.care_address || "").trim(),
-        careAddress: String(data.careAddress || data.care_address || "").trim(),
-        bed_number: String(data.bedNo || data.bedNumber || data.bed_number || "").trim(),
-        bedNo: String(data.bedNo || data.bedNumber || data.bed_number || "").trim(),
-        referral_doctor: String(data.referral || data.referralDoctor || data.referral_doctor || "").trim(),
-        referral: String(data.referral || data.referralDoctor || data.referral_doctor || "").trim(),
-        gst_number: String(data.gstNo || data.gstNumber || data.gst_number || "").trim(),
-        gstNo: String(data.gstNo || data.gstNumber || data.gst_number || "").trim(),
-        
-        deal_type: data.dealType || data.deal_type || "B2B",
-        dealType: data.dealType || data.deal_type || "B2B",
-        unit: data.unit || "ODCOM",
+        patientName: String(form.patientName || "").trim(),
+        patient_name: String(form.patientName || "").trim(),
+        patient: String(form.patientName || "").trim(),
+        age: String(form.age || "").trim(),
+        attendantName: String(form.attendantName || "").trim(),
+        attendant_name: String(form.attendantName || "").trim(),
+        attendant: String(form.attendantName || "").trim(),
+        mobileNumber: String(form.mobileNumber || "").trim(),
+        mobile_number: String(form.mobileNumber || "").trim(),
+        mobile: String(form.mobileNumber || "").trim(),
+        phone: String(form.mobileNumber || "").trim(),
+        altMobileNumber: String(form.altMobileNumber || "").trim(),
+        alt_mobile_number: String(form.altMobileNumber || "").trim(),
+        inchargeMobile: String(form.inchargeMobile || "").trim(),
+        incharge_mobile: String(form.inchargeMobile || "").trim(),
+        altMobile: String(form.altMobile || "").trim(),
+        alt_mobile: String(form.altMobile || "").trim(),
+        careAddress: String(form.careAddress || "").trim(),
+        care_address: String(form.careAddress || "").trim(),
+        deliveryAddress: String(form.deliveryAddress || "").trim(),
+        delivery_address: String(form.deliveryAddress || "").trim(),
+        bedNumber: String(form.bedNo || "").trim(),
+        bed_number: String(form.bedNo || "").trim(),
+        bedNo: String(form.bedNo || "").trim(),
+        referralDoctor: String(form.referral || "").trim(),
+        referral_doctor: String(form.referral || "").trim(),
+        gstNumber: String(form.gstNo || "").trim(),
+        gst_number: String(form.gstNo || "").trim(),
+        accessory: Array.isArray(form.accessory) ? form.accessory.join(", ") : (form.accessory || ""),
+        accessories: Array.isArray(form.accessory) ? form.accessory.join(", ") : (form.accessory || ""),
+        notes: form.notes || "",
+
+        dealType: form.dealType || "B2B",
+        deal_type: form.dealType || "B2B",
+        unit: form.unit || "ODCOM",
         mode: modeVal,
         paymentType: modeVal,
         payment_type: modeVal,
-        record_date: cleanRecord,
-        recordDate: cleanRecord,
-        notify_date: cleanNotify,
-        notifyDate: cleanNotify,
-        recall_date: cleanRecall,
-        recallDate: cleanRecall,
-        notes: data.notes || "",
-        accessory: Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || ""),
-        accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || ""),
-
-        deliveryStatus: data.deliveryStatus || data.delivery_status || "Pending Dispatch",
-        delivery_status: data.deliveryStatus || data.delivery_status || "Pending Dispatch",
-        photoCount: Number(data.photoCount || 0)
+        status: finalCalculatedStatus, 
+        deliveryStatus: "Pending Dispatch",
+        delivery_status: "Pending Dispatch",
+        photoCount: photos.length
       };
 
       if (data.id) {
@@ -3810,21 +3810,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         {formatDisplayDate(startDateVal)}
                       </td>
                       
-                      {/* 🌟 Highlighted Logout Date until Recall */}
-                      <td className="px-5 py-3.5">
-                        {actualLogoutDate ? (
-                          <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold border shadow-2xs ${
-                            !isClosed 
-                              ? "bg-amber-100 text-amber-900 border-amber-300" 
-                              : "text-slate-600 bg-slate-50 border-slate-200"
-                          }`}>
-                            {formatDisplayDate(actualLogoutDate)}
-                          </span>
-                        ) : (
-                          <span className="inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
-                            — (Until Recall)
-                          </span>
-                        )}
+                      {/* Clean Logout Date */}
+                      <td className="px-5 py-3.5 text-slate-600">
+                        {actualLogoutDate ? formatDisplayDate(actualLogoutDate) : "—"}
                       </td>
                       
                       <td className="px-5 py-3.5">
