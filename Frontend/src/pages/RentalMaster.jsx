@@ -2175,7 +2175,7 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Calculator Modal with "Apply Changes" & "Cancel"
+// 🌟 Calculator Modal
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const threeMonthsAgoISO = useMemo(() => {
     const d = new Date();
@@ -2233,7 +2233,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
-        
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div>
             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
@@ -2287,7 +2286,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           </div>
         </div>
 
-        {/* Cancel and Apply Changes Buttons */}
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
           <button 
             type="button" 
@@ -2304,7 +2302,6 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
             Apply Changes
           </button>
         </div>
-
       </div>
     </div>
   );
@@ -2881,7 +2878,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       rent: rCharge,
       daily_rate: rCharge,
       depositAdvance: dAdvance,
-      depositAdvance_advance: dAdvance,
+      deposit_advance: dAdvance,
       deposit: dAdvance,
       advance: dAdvance,
       installationCharge: iCharge,
@@ -3613,7 +3610,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       <KpiCards logs={scopedLogs} />
       
-      {/* 🖥️ Single Calculator Button in Top Filter Bar */}
+      {/* 🖥️ Top Single Line Filter Bar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -3812,8 +3809,22 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                       <td className="px-5 py-3.5 text-slate-600 font-medium">
                         {formatDisplayDate(startDateVal)}
                       </td>
-                      <td className="px-5 py-3.5 text-slate-600">
-                        {actualLogoutDate ? formatDisplayDate(actualLogoutDate) : "—"}
+                      
+                      {/* 🌟 Highlighted Logout Date until Recall */}
+                      <td className="px-5 py-3.5">
+                        {actualLogoutDate ? (
+                          <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold border shadow-2xs ${
+                            !isClosed 
+                              ? "bg-amber-100 text-amber-900 border-amber-300" 
+                              : "text-slate-600 bg-slate-50 border-slate-200"
+                          }`}>
+                            {formatDisplayDate(actualLogoutDate)}
+                          </span>
+                        ) : (
+                          <span className="inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                            — (Until Recall)
+                          </span>
+                        )}
                       </td>
                       
                       <td className="px-5 py-3.5">
