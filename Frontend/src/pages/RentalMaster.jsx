@@ -1,3 +1,4 @@
+
 // import { useState, useEffect, useMemo, useCallback } from "react";
 // import { 
 //   Search, 
@@ -70,6 +71,7 @@
 //   );
 // }
 
+// // 📅 Safe Date Formatter
 // const formatForDateInput = (d) => {
 //   if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || String(d).trim() === "") return "";
 //   const str = String(d).trim();
@@ -106,6 +108,7 @@
 //   return dt.toISOString().split("T")[0];
 // };
 
+// // 🧮 Pure Calculation Logic: Total Days / Current Month Days
 // const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
 //   const cleanLogin = formatForDateInput(loginStr);
 //   if (!cleanLogin) return "—";
@@ -116,10 +119,11 @@
 //   const cleanRecall = formatForDateInput(recallStr);
 //   const cleanLogout = formatForDateInput(logoutStr);
 
-//   const todayStr = todayISO();
-//   const [tY, tM, tD] = todayStr.split("-").map(Number);
+//   const safeTodayStr = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
+//   const [tY, tM, tD] = safeTodayStr.split("-").map(Number);
 //   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
+//   // 1. LEFT SIDE: Total Duration (Login to Logout / Recall / Today)
 //   let endUtc = todayUtc;
 //   if (cleanRecall) {
 //     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -132,6 +136,7 @@
 //   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
 //   if (totalDays < 1) totalDays = 1;
 
+//   // 2. RIGHT SIDE: Current Month Active Days
 //   let actualUsageEndUtc = todayUtc;
 //   if (cleanRecall) {
 //     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -206,7 +211,7 @@
 //     return `${y}-${m}-${day}`;
 //   }, []);
 
-//   const [tempLoginDate, setTempLoginDate] = useState(() => todayISO());
+//   const [tempLoginDate, setTempLoginDate] = useState(() => (typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0]));
 //   const [tempLogoutDate, setTempLogoutDate] = useState("");
 //   const [errorMsg, setErrorMsg] = useState("");
 
@@ -255,7 +260,7 @@
 //         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
 //           <div>
 //             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
-//             <p className="text-xs font-medium text-slate-400 mt-0.5">General • Estimation Tool</p>
+//             <p className="text-xs font-medium text-slate-400 mt-0.5">Total Days / Current Month Usage</p>
 //           </div>
 //           <button 
 //             type="button" 
@@ -288,7 +293,7 @@
 //               onChange={handleLogoutChange} 
 //               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
 //             />
-//             <p className="text-[11px] text-slate-400">Leave empty to calculate until today</p>
+//             <p className="text-[11px] text-slate-400">Leave empty to calculate until today (NA)</p>
 //           </div>
 
 //           {errorMsg && (
@@ -298,7 +303,7 @@
 //           )}
 
 //           <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center">
-//             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS</span>
+//             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS / THIS MONTH</span>
 //             <p className="mt-1 font-display text-3xl font-extrabold text-slate-800 tracking-tight">
 //               {totalDaysDisplay}
 //             </p>
@@ -405,18 +410,18 @@
 // }
 
 // function KpiCards({ logs = [] }) {
-//   const today = todayISO();
+//   const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
 //   const countActive = logs.filter((l) => {
 //     const isInactive = String(l?.status || "").toLowerCase() === "inactive";
 //     const cleanRecall = formatForDateInput(l?.recallDate || l?.recall_date);
-//     const hasEnded = Boolean(cleanRecall && cleanRecall <= today);
+//     const hasEnded = Boolean(cleanRecall && cleanRecall <= safeToday);
 //     return !isInactive && !hasEnded;
 //   }).length;
 
 //   const countClosed = logs.filter((l) => {
 //     const isInactive = String(l?.status || "").toLowerCase() === "inactive";
 //     const cleanRecall = formatForDateInput(l?.recallDate || l?.recall_date);
-//     const hasEnded = Boolean(cleanRecall && cleanRecall <= today);
+//     const hasEnded = Boolean(cleanRecall && cleanRecall <= safeToday);
 //     return !isInactive && hasEnded;
 //   }).length;
 
@@ -479,9 +484,9 @@
 
 //   const cleanLogout = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
 //   const cleanRecall = formatForDateInput(log?.recallDate || log?.recall_date);
-//   const today = todayISO();
+//   const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
 //   const isInactive = String(log?.status || "").toLowerCase() === "inactive";
-//   const isClosed = Boolean(cleanRecall && cleanRecall <= today);
+//   const isClosed = Boolean(cleanRecall && cleanRecall <= safeToday);
   
 //   const statusLabel = isInactive ? "Inactive" : (isClosed ? "Closed" : "Active");
 
@@ -673,6 +678,7 @@
 //   }, [careCenters, isCareCenterUser, matchedUserCenter]);
 
 //   const [form, setForm] = useState(() => {
+//     const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
 //     if (initial) {
 //       const rawAcc = initial.accessory || initial.accessories;
 //       let parsedAcc = [];
@@ -697,7 +703,7 @@
 //         mode: initial.mode || initial.paymentType || initial.payment_type || "Postpaid",
 //         deviceModel: initial.equipmentId || initial.equipment_id || initial.deviceModel || "",
 //         accessory: parsedAcc,
-//         recordDate: formatForDateInput(initial.recordDate || initial.record_date) || todayISO(),
+//         recordDate: formatForDateInput(initial.recordDate || initial.record_date) || safeToday,
 //         loginDate: formatForDateInput(initial.startDate || initial.start_date || initial.loginDate || initial.login_date) || "",
 //         notifyDate: formatForDateInput(initial.notifyDate || initial.notify_date) || "",
 //         logoutDate: parsedLogoutDate || "",
@@ -728,7 +734,7 @@
 //       mode: "Postpaid",
 //       deviceModel: "",
 //       accessory: [],
-//       recordDate: todayISO(),
+//       recordDate: safeToday,
 //       loginDate: "",
 //       notifyDate: "",
 //       logoutDate: "",
@@ -846,8 +852,8 @@
 
 //     const cleanLogout = formatForDateInput(form.logoutDate || form.logout_date);
 //     const cleanRecall = formatForDateInput(form.recallDate || form.recall_date);
-//     const today = todayISO();
-//     const isClosed = Boolean(cleanRecall && cleanRecall <= today);
+//     const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
+//     const isClosed = Boolean(cleanRecall && cleanRecall <= safeToday);
 //     const finalCalculatedStatus = isClosed ? "Closed" : "Active";
 
 //     const parseNum = (v) => {
@@ -864,12 +870,12 @@
 //     onSubmit({
 //       ...form, 
 //       id: form.id,
-//       recordDate: formatForDateInput(form.recordDate) || todayISO(),
-//       record_date: formatForDateInput(form.recordDate) || todayISO(),
-//       startDate: formatForDateInput(form.loginDate) || todayISO(),
-//       start_date: formatForDateInput(form.loginDate) || todayISO(),
-//       loginDate: formatForDateInput(form.loginDate) || todayISO(),
-//       login_date: formatForDateInput(form.loginDate) || todayISO(),
+//       recordDate: formatForDateInput(form.recordDate) || safeToday,
+//       record_date: formatForDateInput(form.recordDate) || safeToday,
+//       startDate: formatForDateInput(form.loginDate) || safeToday,
+//       start_date: formatForDateInput(form.loginDate) || safeToday,
+//       loginDate: formatForDateInput(form.loginDate) || safeToday,
+//       login_date: formatForDateInput(form.loginDate) || safeToday,
 //       logoutDate: cleanLogout || null,
 //       logout_date: cleanLogout || null,
 //       end_date: cleanLogout || null,
@@ -1303,7 +1309,7 @@
 //   const [sortField, setSortField] = useState("startDate");
 //   const [sortOrder, setSortOrder] = useState("desc");
 
-//   // 📄 Pagination Setup
+//   // 📄 Pagination Setup (8 records limit per page)
 //   const [currentPage, setCurrentPage] = useState(1);
 //   const itemsPerPage = 8;
 
@@ -1345,7 +1351,7 @@
 //   const filtered = useMemo(() => {
 //     const q = String(search || "").toLowerCase().trim();
 //     const sFilter = String(statusFilter || "Both").trim().toLowerCase();
-//     const today = todayISO();
+//     const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
 
 //     return (scopedLogs || [])
 //       .filter((l) => {
@@ -1372,7 +1378,7 @@
           
 //         const cleanRecall = formatForDateInput(l.recallDate || l.recall_date);
 //         const rawStatus = String(l.status || l.requisition_status || "").trim().toLowerCase();
-//         const isClosed = Boolean(cleanRecall && cleanRecall <= today);
+//         const isClosed = Boolean(cleanRecall && cleanRecall <= safeToday);
 //         const computedStatus = rawStatus === "inactive" ? "inactive" : (isClosed ? "closed" : "active");
         
 //         let isStatusMatch = false;
@@ -1406,7 +1412,7 @@
 //       });
 //   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-//   // 📄 Derived Safe Pagination (No useEffect = 0 Warnings/Errors)
+//   // 📄 Derived Safe Pagination (0 Warnings, 0 Crash)
 //   const totalItems = filtered.length;
 //   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 //   const activePage = currentPage > totalPages ? 1 : currentPage;
@@ -1447,10 +1453,10 @@
 
 //       const cleanLogout = formatForDateInput(data.logoutDate || data.logout_date);
 //       const cleanRecall = formatForDateInput(data.recallDate || data.recall_date);
-//       const cleanRecord = formatForDateInput(data.recordDate || data.record_date) || todayISO();
-//       const cleanStart = formatForDateInput(data.startDate || data.start_date || data.loginDate || data.login_date) || todayISO();
+//       const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
+//       const cleanRecord = formatForDateInput(data.recordDate || data.record_date) || safeToday;
+//       const cleanStart = formatForDateInput(data.startDate || data.start_date || data.loginDate || data.login_date) || safeToday;
 //       const cleanNotify = formatForDateInput(data.notifyDate || data.notify_date);
-//       const today = todayISO();
 
 //       const parseVal = (v) => {
 //         if (v === undefined || v === null || v === "") return 0;
@@ -1463,7 +1469,7 @@
 //       const iCharge = parseVal(data.installationCharge ?? data.installation_charge ?? data.installation);
 //       const bType = data.billingType || data.billing_type || "Daily";
 
-//       const isClosed = Boolean(cleanRecall && cleanRecall <= today);
+//       const isClosed = Boolean(cleanRecall && cleanRecall <= safeToday);
 
 //       const payload = {
 //         id: data.id,
@@ -1566,13 +1572,13 @@
   
 //   const handleFastClose = async (log) => {
 //     try {
-//       const today = todayISO();
+//       const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
 //       await API.put(`/rental/requisitions/${log.id}`, {
 //         ...log,
 //         status: "Closed",
 //         requisition_status: "Closed",
-//         recallDate: today,
-//         recall_date: today
+//         recallDate: safeToday,
+//         recall_date: safeToday
 //       });
 //       toast.success("Requisition marked as Closed!");
 //       await fetchLogs();
@@ -1800,8 +1806,8 @@
 //                 currentLogs.map((log, i) => {
 //                   const actualLogoutDate = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
 //                   const actualRecallDate = formatForDateInput(log?.recallDate || log?.recall_date);
-//                   const today = todayISO();
-//                   const isClosed = Boolean(actualRecallDate && actualRecallDate <= today);
+//                   const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
+//                   const isClosed = Boolean(actualRecallDate && actualRecallDate <= safeToday);
 //                   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate;
 //                   const dynamicDaysFormatted = getDynamicTotalDays(startDateVal, actualLogoutDate, actualRecallDate);
 //                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
@@ -2091,7 +2097,7 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   const [tY, tM, tD] = safeTodayStr.split("-").map(Number);
   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
-  // 1. LEFT SIDE: Total Duration (Login to Logout / Recall / Today)
+  // 1. Total Duration
   let endUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -2104,7 +2110,7 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
   if (totalDays < 1) totalDays = 1;
 
-  // 2. RIGHT SIDE: Current Month Active Days
+  // 2. Current Month Usage
   let actualUsageEndUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -2169,7 +2175,8 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-function CalculateTotalDaysModal({ onClose, onApply }) {
+// 🧮 Standalone Safe Calculator Tool
+function CalculateTotalDaysModal({ onClose }) {
   const threeMonthsAgoISO = useMemo(() => {
     const d = new Date();
     d.setMonth(d.getMonth() - 3);
@@ -2208,27 +2215,13 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
     return getCalculatorDays(tempLoginDate, tempLogoutDate);
   }, [tempLoginDate, tempLogoutDate]);
 
-  const handleApply = () => {
-    if (tempLogoutDate && tempLogoutDate < tempLoginDate) {
-      setErrorMsg("Log Out Date must be on or after Log In Date.");
-      return;
-    }
-    if (onApply) {
-      onApply({
-        loginDate: tempLoginDate,
-        logoutDate: tempLogoutDate
-      });
-    }
-    onClose();
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div>
             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
-            <p className="text-xs font-medium text-slate-400 mt-0.5">Total Days / Current Month Usage</p>
+            <p className="text-xs font-medium text-slate-400 mt-0.5">Quick Duration &amp; Monthly Estimator</p>
           </div>
           <button 
             type="button" 
@@ -2278,20 +2271,13 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
+        <div className="flex items-center justify-end border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
           <button 
             type="button" 
             onClick={onClose} 
-            className="rounded-lg px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+            className="rounded-lg bg-teal-900 hover:bg-teal-950 text-white px-6 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
           >
-            Cancel
-          </button>
-          <button 
-            type="button" 
-            onClick={handleApply} 
-            className="rounded-lg bg-teal-900 hover:bg-teal-950 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
-          >
-            Apply Changes
+            Close
           </button>
         </div>
       </div>
@@ -3390,22 +3376,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     return filtered.slice(indexOfFirstItem, indexOfLastItem);
   }, [filtered, indexOfFirstItem, indexOfLastItem]);
 
-  const handleApplyCalc = (updatedDates) => {
-    setLogs((prevLogs) =>
-      prevLogs.map((item) => ({
-        ...item,
-        startDate: updatedDates.loginDate,
-        start_date: updatedDates.loginDate,
-        loginDate: updatedDates.loginDate,
-        login_date: updatedDates.loginDate,
-        logoutDate: updatedDates.logoutDate,
-        logout_date: updatedDates.logoutDate,
-        endDate: updatedDates.logoutDate,
-        end_date: updatedDates.logoutDate
-      }))
-    );
-  };
-
   const handleFormSubmit = async (data) => {
     try {
       const modeVal = data.mode || data.paymentType || "Postpaid";
@@ -3926,7 +3896,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       {isCalcModalOpen && (
         <CalculateTotalDaysModal 
           onClose={() => setIsCalcModalOpen(false)} 
-          onApply={handleApplyCalc}
         />
       )}
 
