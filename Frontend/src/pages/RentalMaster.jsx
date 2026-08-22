@@ -2110,7 +2110,7 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
   if (totalDays < 1) totalDays = 1;
 
-  // 2. Current Month Usage
+  // 2. Current Month Active Usage
   let actualUsageEndUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -2175,8 +2175,8 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Top-Bar Standalone Calculator Modal
-function CalculateTotalDaysModal({ onClose }) {
+// 🌟 Calculator Modal with Apply Changes & Cancel
+function CalculateTotalDaysModal({ onClose, onApply }) {
   const threeMonthsAgoISO = useMemo(() => {
     const d = new Date();
     d.setMonth(d.getMonth() - 3);
@@ -2214,6 +2214,21 @@ function CalculateTotalDaysModal({ onClose }) {
     if (tempLogoutDate && tempLogoutDate < tempLoginDate) return "—";
     return getCalculatorDays(tempLoginDate, tempLogoutDate);
   }, [tempLoginDate, tempLogoutDate]);
+
+  const handleApply = () => {
+    if (tempLogoutDate && tempLogoutDate < tempLoginDate) {
+      setErrorMsg("Log Out Date must be on or after Log In Date.");
+      return;
+    }
+    if (onApply) {
+      onApply({
+        loginDate: tempLoginDate,
+        logoutDate: tempLogoutDate,
+        totalDaysFormatted: totalDaysDisplay
+      });
+    }
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -2272,13 +2287,21 @@ function CalculateTotalDaysModal({ onClose }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
           <button 
             type="button" 
             onClick={onClose} 
-            className="rounded-lg bg-teal-900 hover:bg-teal-950 text-white px-6 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
+            className="rounded-lg px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
           >
-            Done
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            onClick={handleApply} 
+            className="rounded-lg bg-teal-900 hover:bg-teal-950 text-white px-5 py-2 text-xs font-bold shadow-sm transition cursor-pointer"
+          >
+            Apply Changes
           </button>
         </div>
 
@@ -2862,7 +2885,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       deposit: dAdvance,
       advance: dAdvance,
       installationCharge: iCharge,
-      installation_charge: iCharge,
+      installationCharge_charge: iCharge,
       installation: iCharge,
 
       patientName: String(form.patientName || "").trim(),
@@ -3272,7 +3295,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [viewDetailLog, setViewDetailLog] = useState(null); 
   const [pageForm, setPageForm] = useState(null); 
 
-  // 🧮 Standalone Top Bar Calculator Modal State
+  // 🧮 Calculator Modal State
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
@@ -3378,6 +3401,11 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const currentLogs = useMemo(() => {
     return filtered.slice(indexOfFirstItem, indexOfLastItem);
   }, [filtered, indexOfFirstItem, indexOfLastItem]);
+
+  // 🧮 Safe Apply for Calculator Modal
+  const handleApplyCalc = (calcResult) => {
+    toast.success(`Calculated: ${calcResult.totalDaysFormatted} Total Days`);
+  };
 
   const handleFormSubmit = async (data) => {
     try {
@@ -3584,7 +3612,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       <KpiCards logs={scopedLogs} />
       
-      {/* 🖥️ Single Calculator in Top Filter Bar */}
+      {/* 🖥️ Top Single Line Filter Bar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -3901,6 +3929,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       {isCalcModalOpen && (
         <CalculateTotalDaysModal 
           onClose={() => setIsCalcModalOpen(false)} 
+          onApply={handleApplyCalc}
         />
       )}
 
