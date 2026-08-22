@@ -70,7 +70,6 @@
 //   );
 // }
 
-// // 📅 Timezone-Safe Date Formatters
 // const formatForDateInput = (d) => {
 //   if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || String(d).trim() === "") return "";
 //   const str = String(d).trim();
@@ -107,7 +106,6 @@
 //   return dt.toISOString().split("T")[0];
 // };
 
-// // 🧮 Unified Pure Calculation Logic
 // const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
 //   const cleanLogin = formatForDateInput(loginStr);
 //   if (!cleanLogin) return "—";
@@ -122,7 +120,6 @@
 //   const [tY, tM, tD] = todayStr.split("-").map(Number);
 //   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
-//   // 1. LEFT SIDE: Total Duration
 //   let endUtc = todayUtc;
 //   if (cleanRecall) {
 //     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -135,7 +132,6 @@
 //   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
 //   if (totalDays < 1) totalDays = 1;
 
-//   // 2. RIGHT SIDE: Current Month Usage
 //   let actualUsageEndUtc = todayUtc;
 //   if (cleanRecall) {
 //     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -200,7 +196,6 @@
 //   return isNaN(t) ? 0 : t;
 // };
 
-// // 🌟 Calculator Modal with Strict 3-Month & Boundary Rules
 // function CalculateTotalDaysModal({ onClose, onApply }) {
 //   const threeMonthsAgoISO = useMemo(() => {
 //     const d = new Date();
@@ -257,8 +252,6 @@
 //   return (
 //     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
 //       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
-        
-//         {/* Header */}
 //         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
 //           <div>
 //             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
@@ -273,12 +266,9 @@
 //           </button>
 //         </div>
 
-//         {/* Body Inputs */}
 //         <div className="p-6 space-y-4">
 //           <div className="space-y-1.5">
-//             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-//               LOG IN DATE
-//             </label>
+//             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">LOG IN DATE</label>
 //             <input 
 //               type="date" 
 //               value={tempLoginDate} 
@@ -290,9 +280,7 @@
 //           </div>
 
 //           <div className="space-y-1.5">
-//             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-//               LOG OUT DATE
-//             </label>
+//             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">LOG OUT DATE</label>
 //             <input 
 //               type="date" 
 //               value={tempLogoutDate} 
@@ -309,7 +297,6 @@
 //             </p>
 //           )}
 
-//           {/* Result Box */}
 //           <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center">
 //             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS</span>
 //             <p className="mt-1 font-display text-3xl font-extrabold text-slate-800 tracking-tight">
@@ -318,7 +305,6 @@
 //           </div>
 //         </div>
 
-//         {/* Footer Buttons */}
 //         <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
 //           <button 
 //             type="button" 
@@ -327,7 +313,6 @@
 //           >
 //             Cancel
 //           </button>
-
 //           <button 
 //             type="button" 
 //             onClick={handleApply} 
@@ -336,7 +321,6 @@
 //             Apply Changes
 //           </button>
 //         </div>
-
 //       </div>
 //     </div>
 //   );
@@ -523,7 +507,6 @@
 //   return (
 //     <div className="fade-slide-up space-y-6">
 //       <GlobalPolish />
-      
 //       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 //         <div>
 //           <div className="flex items-center gap-2.5">
@@ -547,7 +530,6 @@
 //           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-700">
 //             📦 Logistics &amp; Device Matrix
 //           </p>
-          
 //           <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Assigned Model</p>
@@ -557,7 +539,6 @@
 //               <p className="text-xs font-medium text-slate-400">Accessory</p>
 //               <p className="font-bold text-slate-800 mt-0.5">{log?.accessory || log?.accessories || "—"}</p>
 //             </div>
-
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Deal Type</p>
 //               <p className="font-bold text-slate-800 mt-0.5">{log?.dealType || log?.deal_type || "B2B"}</p>
@@ -566,31 +547,22 @@
 //               <p className="text-xs font-medium text-slate-400">Unit</p>
 //               <p className="font-bold text-slate-800 mt-0.5">{log?.unit || "ODCOM"}</p>
 //             </div>
-
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Mode</p>
 //               <p className="font-bold text-slate-800 mt-0.5">{log?.mode || log?.paymentType || log?.payment_type || "Postpaid"}</p>
 //             </div>
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Log In Date</p>
-//               <p className="font-bold text-slate-800 mt-0.5">
-//                 {formatDisplayDate(startDateVal)}
-//               </p>
+//               <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(startDateVal)}</p>
 //             </div>
-
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Log Out Date</p>
-//               <p className="font-bold text-slate-800 mt-0.5">
-//                 {formatDisplayDate(cleanLogout)}
-//               </p>
+//               <p className="font-bold text-slate-800 mt-0.5">{formatDisplayDate(cleanLogout)}</p>
 //             </div>
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Total Days</p>
-//               <p className="font-bold text-teal-700 mt-0.5">
-//                 {totalDaysFormatted}
-//               </p>
+//               <p className="font-bold text-teal-700 mt-0.5">{totalDaysFormatted}</p>
 //             </div>
-
 //             <div className="col-span-2 pt-1">
 //               <p className="text-xs font-medium text-slate-400 mb-1">Status</p>
 //               <span className={`inline-block rounded-md px-3 py-1 text-xs font-bold border ${statusColor}`}>
@@ -604,32 +576,22 @@
 //           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-600">
 //             💳 Commercial Parameters
 //           </p>
-
 //           <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Billing Type</p>
-//               <p className="font-extrabold text-teal-600 uppercase mt-0.5">
-//                 {billingTypeVal}
-//               </p>
+//               <p className="font-extrabold text-teal-600 uppercase mt-0.5">{billingTypeVal}</p>
 //             </div>
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Rental Charge</p>
-//               <p className="font-extrabold text-slate-800 mt-0.5">
-//                 ₹{rentalChargeVal}
-//               </p>
+//               <p className="font-extrabold text-slate-800 mt-0.5">₹{rentalChargeVal}</p>
 //             </div>
-
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Deposit / Advance</p>
-//               <p className="font-extrabold text-slate-800 mt-0.5">
-//                 ₹{depositAdvanceVal}
-//               </p>
+//               <p className="font-extrabold text-slate-800 mt-0.5">₹{depositAdvanceVal}</p>
 //             </div>
 //             <div>
 //               <p className="text-xs font-medium text-slate-400">Installation Charge</p>
-//               <p className="font-extrabold text-slate-800 mt-0.5">
-//                 ₹{installationChargeVal}
-//               </p>
+//               <p className="font-extrabold text-slate-800 mt-0.5">₹{installationChargeVal}</p>
 //             </div>
 //           </div>
 //         </div>
@@ -638,17 +600,13 @@
 //           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-600">
 //             👤 Patient Identity Details
 //           </p>
-
 //           <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-sm">
 //             <div><p className="text-xs font-medium text-slate-400">Patient Name:</p></div>
 //             <div><p className="font-bold text-slate-800">{patientNameVal}</p></div>
-
 //             <div><p className="text-xs font-medium text-slate-400">Mobile:</p></div>
 //             <div><p className="font-bold text-slate-800">{mobileNumberVal}</p></div>
-
 //             <div><p className="text-xs font-medium text-slate-400">Attendant:</p></div>
 //             <div><p className="font-bold text-slate-800">{attendantNameVal}</p></div>
-
 //             <div className="col-span-2 pt-2">
 //               <p className="text-xs font-medium text-slate-400 mb-1.5">Delivery Address:</p>
 //               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
@@ -662,17 +620,13 @@
 //           <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-600">
 //             🏥 Care Center Context
 //           </p>
-
 //           <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-sm">
 //             <div><p className="text-xs font-medium text-slate-400">Care Center:</p></div>
 //             <div><p className="font-bold text-slate-800">{careCenterName}</p></div>
-
 //             <div><p className="text-xs font-medium text-slate-400">Incharge Mobile:</p></div>
 //             <div><p className="font-bold text-slate-800">{log?.inchargeMobile || log?.incharge_mobile || log?.phone || careCenterObj?.phone || "—"}</p></div>
-
 //             <div><p className="text-xs font-medium text-slate-400">Bed No:</p></div>
 //             <div><p className="font-bold text-slate-800">{log?.bedNumber || log?.bed_number || log?.bedNo || "—"}</p></div>
-
 //             <div className="col-span-2 pt-2">
 //               <p className="text-xs font-medium text-slate-400 mb-1.5">Care Address:</p>
 //               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs font-medium text-slate-700">
@@ -910,7 +864,6 @@
 //     onSubmit({
 //       ...form, 
 //       id: form.id,
-      
 //       recordDate: formatForDateInput(form.recordDate) || todayISO(),
 //       record_date: formatForDateInput(form.recordDate) || todayISO(),
 //       startDate: formatForDateInput(form.loginDate) || todayISO(),
@@ -1023,7 +976,6 @@
 //         </div>
 //       </div>
 
-//       {/* Section 1: Record Types */}
 //       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
 //         <SectionHeading icon={Tag}>Record Types</SectionHeading>
 //         <div className="grid gap-4 sm:grid-cols-3">
@@ -1048,7 +1000,6 @@
 //         </div>
 //       </div>
 
-//       {/* Section 2: Asset Allocation & Logistics */}
 //       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
 //         <SectionHeading icon={Truck}>Asset Allocation &amp; Logistics</SectionHeading>
 //         <div className="grid gap-4 sm:grid-cols-4">
@@ -1113,7 +1064,6 @@
 //         </div>
 //       </div>
 
-//       {/* Section 3: Commercials & Billing */}
 //       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
 //         <SectionHeading icon={CreditCard}>Commercials &amp; Billing</SectionHeading>
 //         <div className="grid gap-4 sm:grid-cols-4">
@@ -1136,7 +1086,6 @@
 //         </div>
 //       </div>
 
-//       {/* Section 4: Care Center & Patient Details */}
 //       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
 //         <div className="grid gap-8 lg:grid-cols-2">
 //           <div>
@@ -1212,14 +1161,12 @@
 //         </div>
 //       </div>
 
-//       {/* Section 5: Notes */}
 //       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
 //         <Field label="Notes">
 //           <textarea rows={3} value={form.notes} onChange={(e) => set({ notes: e.target.value })} className="w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:ring-2 focus:ring-teal-500/30 placeholder:text-slate-400 border-slate-200 focus:border-teal-500 resize-none" />
 //         </Field>
 //       </div>
 
-//       {/* Section 6: Photo Verification */}
 //       <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-6 transition-colors hover:border-teal-300 hover:bg-teal-50/30">
 //         <Field label="Asset Handover Photo Verification (Up to 10 photos/PDFs)">
 //           <div className="flex flex-col gap-4">
@@ -1356,10 +1303,13 @@
 //   const [sortField, setSortField] = useState("startDate");
 //   const [sortOrder, setSortOrder] = useState("desc");
 
+//   // 📄 Pagination Setup
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const itemsPerPage = 8;
+
 //   const [viewDetailLog, setViewDetailLog] = useState(null); 
 //   const [pageForm, setPageForm] = useState(null); 
 
-//   // 🧮 Calculator Modal State
 //   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
 //   const [confirmDelete, setConfirmDelete] = useState(null);
 
@@ -1456,7 +1406,16 @@
 //       });
 //   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-//   // 🧮 Silent Apply
+//   // 📄 Derived Safe Pagination (No useEffect = 0 Warnings/Errors)
+//   const totalItems = filtered.length;
+//   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+//   const activePage = currentPage > totalPages ? 1 : currentPage;
+//   const indexOfLastItem = activePage * itemsPerPage;
+//   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+//   const currentLogs = useMemo(() => {
+//     return filtered.slice(indexOfFirstItem, indexOfLastItem);
+//   }, [filtered, indexOfFirstItem, indexOfLastItem]);
+
 //   const handleApplyCalc = (updatedDates) => {
 //     setLogs((prevLogs) =>
 //       prevLogs.map((item) => ({
@@ -1678,7 +1637,6 @@
 
 //       <KpiCards logs={scopedLogs} />
       
-//       {/* 🖥️ Desktop & Mobile Perfect Single-Line Filter Bar */}
 //       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
 //         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -1686,7 +1644,7 @@
 //             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-teal-500" />
 //             <input 
 //               value={search} 
-//               onChange={(e) => setSearch(e.target.value)} 
+//               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} 
 //               autoComplete="off" 
 //               placeholder="Search by ID, patient, device, mobile…" 
 //               className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20" 
@@ -1697,7 +1655,7 @@
 
 //           <select 
 //             value={careCenterFilter} 
-//             onChange={(e) => setCareCenterFilter(e.target.value)} 
+//             onChange={(e) => { setCareCenterFilter(e.target.value); setCurrentPage(1); }} 
 //             className="flex-1 min-w-[130px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
 //           >
 //             {!isCareCenterUser && <option value="All">All Care Centers</option>}
@@ -1708,7 +1666,7 @@
 
 //           <select 
 //             value={statusFilter} 
-//             onChange={(e) => setStatusFilter(e.target.value)} 
+//             onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }} 
 //             className="flex-1 min-w-[115px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
 //           >
 //             <option value="Both">Status: Both</option>
@@ -1717,17 +1675,29 @@
 //             <option value="Inactive">Inactive</option>
 //           </select>
           
-//           <select value={dealTypeFilter} onChange={(e) => setDealTypeFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+//           <select 
+//             value={dealTypeFilter} 
+//             onChange={(e) => { setDealTypeFilter(e.target.value); setCurrentPage(1); }} 
+//             className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+//           >
 //             <option value="All">All Deals</option>
 //             {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
 //           </select>
           
-//           <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="flex-1 min-w-[100px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+//           <select 
+//             value={unitFilter} 
+//             onChange={(e) => { setUnitFilter(e.target.value); setCurrentPage(1); }} 
+//             className="flex-1 min-w-[100px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+//           >
 //             <option value="All">All Units</option>
 //             {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
 //           </select>
 
-//           <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer">
+//           <select 
+//             value={modeFilter} 
+//             onChange={(e) => { setModeFilter(e.target.value); setCurrentPage(1); }} 
+//             className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
+//           >
 //             <option value="All">All Modes</option>
 //             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
 //           </select>
@@ -1752,6 +1722,7 @@
 //               setCareCenterFilter("All");
 //               setSortField("startDate");
 //               setSortOrder("desc");
+//               setCurrentPage(1);
 //               fetchLogs();
 //               toast.success("Filters reset");
 //             }} 
@@ -1763,7 +1734,6 @@
 //         </div>
 //       </div>
 
-//       {/* Main Table */}
 //       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
 //         <div className="smooth-scroll-x overflow-x-auto">
 //           <table className="w-full text-left text-sm" style={{ minWidth: 800 }}>
@@ -1827,7 +1797,7 @@
 //                   </td>
 //                 </tr>
 //               ) : (
-//                 filtered.map((log, i) => {
+//                 currentLogs.map((log, i) => {
 //                   const actualLogoutDate = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
 //                   const actualRecallDate = formatForDateInput(log?.recallDate || log?.recall_date);
 //                   const today = todayISO();
@@ -1926,9 +1896,56 @@
 //             </tbody>
 //           </table>
 //         </div>
-//         <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/40 px-5 py-3 text-xs text-slate-400">
-//           <span>Showing {filtered.length} of {scopedLogs.length} requisitions</span>
-//           <span className="hidden sm:inline">Chikitsa · Live data</span>
+
+//         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/40 px-5 py-3 text-xs text-slate-500">
+//           <div>
+//             Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1}–{Math.min(indexOfLastItem, totalItems)} of {totalItems} records
+//           </div>
+
+//           {totalPages > 1 && (
+//             <div className="flex items-center gap-1.5">
+//               <button
+//                 type="button"
+//                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+//                 disabled={activePage === 1}
+//                 className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+//                   activePage === 1
+//                     ? "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"
+//                     : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100 shadow-2xs"
+//                 }`}
+//               >
+//                 Prev
+//               </button>
+
+//               {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+//                 <button
+//                   key={pageNum}
+//                   type="button"
+//                   onClick={() => setCurrentPage(pageNum)}
+//                   className={`h-7 w-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+//                     activePage === pageNum
+//                       ? "bg-[#0b3b4f] text-white shadow-xs"
+//                       : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 shadow-2xs"
+//                   }`}
+//                 >
+//                   {pageNum}
+//                 </button>
+//               ))}
+
+//               <button
+//                 type="button"
+//                 onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+//                 disabled={activePage === totalPages || totalPages === 0}
+//                 className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+//                   activePage === totalPages || totalPages === 0
+//                     ? "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"
+//                     : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100 shadow-2xs"
+//                 }`}
+//               >
+//                 Next
+//               </button>
+//             </div>
+//           )}
 //         </div>
 //       </div>
 
@@ -2022,6 +2039,7 @@ function GlobalPolish() {
   );
 }
 
+// 📅 Safe Date Formatter
 const formatForDateInput = (d) => {
   if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || String(d).trim() === "") return "";
   const str = String(d).trim();
@@ -2058,6 +2076,7 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
+// 🧮 Pure Calculation Logic: Total Days / Current Month Days
 const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   const cleanLogin = formatForDateInput(loginStr);
   if (!cleanLogin) return "—";
@@ -2068,10 +2087,11 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   const cleanRecall = formatForDateInput(recallStr);
   const cleanLogout = formatForDateInput(logoutStr);
 
-  const todayStr = todayISO();
-  const [tY, tM, tD] = todayStr.split("-").map(Number);
+  const safeTodayStr = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
+  const [tY, tM, tD] = safeTodayStr.split("-").map(Number);
   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
+  // 1. LEFT SIDE: Total Duration (Login to Logout / Recall / Today)
   let endUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -2084,6 +2104,7 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
   if (totalDays < 1) totalDays = 1;
 
+  // 2. RIGHT SIDE: Current Month Active Days
   let actualUsageEndUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -2158,7 +2179,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
     return `${y}-${m}-${day}`;
   }, []);
 
-  const [tempLoginDate, setTempLoginDate] = useState(() => todayISO());
+  const [tempLoginDate, setTempLoginDate] = useState(() => (typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0]));
   const [tempLogoutDate, setTempLogoutDate] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -2207,7 +2228,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div>
             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
-            <p className="text-xs font-medium text-slate-400 mt-0.5">General • Estimation Tool</p>
+            <p className="text-xs font-medium text-slate-400 mt-0.5">Total Days / Current Month Usage</p>
           </div>
           <button 
             type="button" 
@@ -2240,7 +2261,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
               onChange={handleLogoutChange} 
               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
             />
-            <p className="text-[11px] text-slate-400">Leave empty to calculate until today</p>
+            <p className="text-[11px] text-slate-400">Leave empty to calculate until today (NA)</p>
           </div>
 
           {errorMsg && (
@@ -2250,7 +2271,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           )}
 
           <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS / THIS MONTH</span>
             <p className="mt-1 font-display text-3xl font-extrabold text-slate-800 tracking-tight">
               {totalDaysDisplay}
             </p>
@@ -2357,18 +2378,18 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
 }
 
 function KpiCards({ logs = [] }) {
-  const today = todayISO();
+  const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
   const countActive = logs.filter((l) => {
     const isInactive = String(l?.status || "").toLowerCase() === "inactive";
     const cleanRecall = formatForDateInput(l?.recallDate || l?.recall_date);
-    const hasEnded = Boolean(cleanRecall && cleanRecall <= today);
+    const hasEnded = Boolean(cleanRecall && cleanRecall <= safeToday);
     return !isInactive && !hasEnded;
   }).length;
 
   const countClosed = logs.filter((l) => {
     const isInactive = String(l?.status || "").toLowerCase() === "inactive";
     const cleanRecall = formatForDateInput(l?.recallDate || l?.recall_date);
-    const hasEnded = Boolean(cleanRecall && cleanRecall <= today);
+    const hasEnded = Boolean(cleanRecall && cleanRecall <= safeToday);
     return !isInactive && hasEnded;
   }).length;
 
@@ -2431,9 +2452,9 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
 
   const cleanLogout = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
   const cleanRecall = formatForDateInput(log?.recallDate || log?.recall_date);
-  const today = todayISO();
+  const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
   const isInactive = String(log?.status || "").toLowerCase() === "inactive";
-  const isClosed = Boolean(cleanRecall && cleanRecall <= today);
+  const isClosed = Boolean(cleanRecall && cleanRecall <= safeToday);
   
   const statusLabel = isInactive ? "Inactive" : (isClosed ? "Closed" : "Active");
 
@@ -2625,6 +2646,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
   }, [careCenters, isCareCenterUser, matchedUserCenter]);
 
   const [form, setForm] = useState(() => {
+    const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
     if (initial) {
       const rawAcc = initial.accessory || initial.accessories;
       let parsedAcc = [];
@@ -2649,7 +2671,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         mode: initial.mode || initial.paymentType || initial.payment_type || "Postpaid",
         deviceModel: initial.equipmentId || initial.equipment_id || initial.deviceModel || "",
         accessory: parsedAcc,
-        recordDate: formatForDateInput(initial.recordDate || initial.record_date) || todayISO(),
+        recordDate: formatForDateInput(initial.recordDate || initial.record_date) || safeToday,
         loginDate: formatForDateInput(initial.startDate || initial.start_date || initial.loginDate || initial.login_date) || "",
         notifyDate: formatForDateInput(initial.notifyDate || initial.notify_date) || "",
         logoutDate: parsedLogoutDate || "",
@@ -2680,7 +2702,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       mode: "Postpaid",
       deviceModel: "",
       accessory: [],
-      recordDate: todayISO(),
+      recordDate: safeToday,
       loginDate: "",
       notifyDate: "",
       logoutDate: "",
@@ -2798,8 +2820,8 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
 
     const cleanLogout = formatForDateInput(form.logoutDate || form.logout_date);
     const cleanRecall = formatForDateInput(form.recallDate || form.recall_date);
-    const today = todayISO();
-    const isClosed = Boolean(cleanRecall && cleanRecall <= today);
+    const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
+    const isClosed = Boolean(cleanRecall && cleanRecall <= safeToday);
     const finalCalculatedStatus = isClosed ? "Closed" : "Active";
 
     const parseNum = (v) => {
@@ -2816,12 +2838,12 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     onSubmit({
       ...form, 
       id: form.id,
-      recordDate: formatForDateInput(form.recordDate) || todayISO(),
-      record_date: formatForDateInput(form.recordDate) || todayISO(),
-      startDate: formatForDateInput(form.loginDate) || todayISO(),
-      start_date: formatForDateInput(form.loginDate) || todayISO(),
-      loginDate: formatForDateInput(form.loginDate) || todayISO(),
-      login_date: formatForDateInput(form.loginDate) || todayISO(),
+      recordDate: formatForDateInput(form.recordDate) || safeToday,
+      record_date: formatForDateInput(form.recordDate) || safeToday,
+      startDate: formatForDateInput(form.loginDate) || safeToday,
+      start_date: formatForDateInput(form.loginDate) || safeToday,
+      loginDate: formatForDateInput(form.loginDate) || safeToday,
+      login_date: formatForDateInput(form.loginDate) || safeToday,
       logoutDate: cleanLogout || null,
       logout_date: cleanLogout || null,
       end_date: cleanLogout || null,
@@ -3255,7 +3277,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [sortField, setSortField] = useState("startDate");
   const [sortOrder, setSortOrder] = useState("desc");
 
-  // 📄 Pagination Setup
+  // 📄 Pagination Setup (8 records limit per page)
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -3297,7 +3319,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const filtered = useMemo(() => {
     const q = String(search || "").toLowerCase().trim();
     const sFilter = String(statusFilter || "Both").trim().toLowerCase();
-    const today = todayISO();
+    const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
 
     return (scopedLogs || [])
       .filter((l) => {
@@ -3324,7 +3346,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
           
         const cleanRecall = formatForDateInput(l.recallDate || l.recall_date);
         const rawStatus = String(l.status || l.requisition_status || "").trim().toLowerCase();
-        const isClosed = Boolean(cleanRecall && cleanRecall <= today);
+        const isClosed = Boolean(cleanRecall && cleanRecall <= safeToday);
         const computedStatus = rawStatus === "inactive" ? "inactive" : (isClosed ? "closed" : "active");
         
         let isStatusMatch = false;
@@ -3358,7 +3380,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
 
-  // 📄 Derived Safe Pagination (No useEffect = 0 Warnings/Errors)
+  // 📄 Derived Safe Pagination (0 Warnings, 0 Crash)
   const totalItems = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
   const activePage = currentPage > totalPages ? 1 : currentPage;
@@ -3399,10 +3421,10 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       const cleanLogout = formatForDateInput(data.logoutDate || data.logout_date);
       const cleanRecall = formatForDateInput(data.recallDate || data.recall_date);
-      const cleanRecord = formatForDateInput(data.recordDate || data.record_date) || todayISO();
-      const cleanStart = formatForDateInput(data.startDate || data.start_date || data.loginDate || data.login_date) || todayISO();
+      const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
+      const cleanRecord = formatForDateInput(data.recordDate || data.record_date) || safeToday;
+      const cleanStart = formatForDateInput(data.startDate || data.start_date || data.loginDate || data.login_date) || safeToday;
       const cleanNotify = formatForDateInput(data.notifyDate || data.notify_date);
-      const today = todayISO();
 
       const parseVal = (v) => {
         if (v === undefined || v === null || v === "") return 0;
@@ -3415,7 +3437,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       const iCharge = parseVal(data.installationCharge ?? data.installation_charge ?? data.installation);
       const bType = data.billingType || data.billing_type || "Daily";
 
-      const isClosed = Boolean(cleanRecall && cleanRecall <= today);
+      const isClosed = Boolean(cleanRecall && cleanRecall <= safeToday);
 
       const payload = {
         id: data.id,
@@ -3518,13 +3540,13 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   
   const handleFastClose = async (log) => {
     try {
-      const today = todayISO();
+      const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
       await API.put(`/rental/requisitions/${log.id}`, {
         ...log,
         status: "Closed",
         requisition_status: "Closed",
-        recallDate: today,
-        recall_date: today
+        recallDate: safeToday,
+        recall_date: safeToday
       });
       toast.success("Requisition marked as Closed!");
       await fetchLogs();
@@ -3752,8 +3774,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                 currentLogs.map((log, i) => {
                   const actualLogoutDate = formatForDateInput(log?.logoutDate || log?.logout_date || log?.end_date);
                   const actualRecallDate = formatForDateInput(log?.recallDate || log?.recall_date);
-                  const today = todayISO();
-                  const isClosed = Boolean(actualRecallDate && actualRecallDate <= today);
+                  const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
+                  const isClosed = Boolean(actualRecallDate && actualRecallDate <= safeToday);
                   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate;
                   const dynamicDaysFormatted = getDynamicTotalDays(startDateVal, actualLogoutDate, actualRecallDate);
                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
