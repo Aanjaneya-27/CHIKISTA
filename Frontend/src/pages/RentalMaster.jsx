@@ -2045,7 +2045,7 @@ function GlobalPolish() {
   );
 }
 
-// 📅 Safe Date Formatter
+// 📅 Timezone-Safe Date Formatter
 const formatForDateInput = (d) => {
   if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || String(d).trim() === "") return "";
   const str = String(d).trim();
@@ -2082,7 +2082,7 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Pure Calculation Logic: Total Days / Current Month Days
+// 🧮 Pure Calculation Logic: Total Days / Current Month Usage
 const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   const cleanLogin = formatForDateInput(loginStr);
   if (!cleanLogin) return "—";
@@ -2097,7 +2097,7 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   const [tY, tM, tD] = safeTodayStr.split("-").map(Number);
   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
-  // 1. Total Duration
+  // 1. LEFT SIDE: Total Duration
   let endUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -2110,7 +2110,7 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
   if (totalDays < 1) totalDays = 1;
 
-  // 2. Current Month Active Usage
+  // 2. RIGHT SIDE: Current Month Active Days
   let actualUsageEndUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -2175,7 +2175,7 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Calculator Modal with Apply Changes & Cancel
+// 🌟 Calculator Modal with "Apply Changes" & "Cancel"
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const threeMonthsAgoISO = useMemo(() => {
     const d = new Date();
@@ -2287,7 +2287,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Cancel and Apply Changes Buttons */}
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
           <button 
             type="button" 
@@ -2885,7 +2885,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       deposit: dAdvance,
       advance: dAdvance,
       installationCharge: iCharge,
-      installationCharge_charge: iCharge,
+      installation_charge: iCharge,
       installation: iCharge,
 
       patientName: String(form.patientName || "").trim(),
@@ -3402,8 +3402,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     return filtered.slice(indexOfFirstItem, indexOfLastItem);
   }, [filtered, indexOfFirstItem, indexOfLastItem]);
 
-  // 🧮 Safe Apply for Calculator Modal
+  // 🧮 "Apply Changes" click handler: Refreshes table calculations cleanly
   const handleApplyCalc = (calcResult) => {
+    fetchLogs();
     toast.success(`Calculated: ${calcResult.totalDaysFormatted} Total Days`);
   };
 
@@ -3612,7 +3613,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       <KpiCards logs={scopedLogs} />
       
-      {/* 🖥️ Top Single Line Filter Bar */}
+      {/* 🖥️ Single Calculator Button in Top Filter Bar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -3874,6 +3875,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
           </table>
         </div>
 
+        {/* 📄 Pagination Footer Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/40 px-5 py-3 text-xs text-slate-500">
           <div>
             Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1}–{Math.min(indexOfLastItem, totalItems)} of {totalItems} records
