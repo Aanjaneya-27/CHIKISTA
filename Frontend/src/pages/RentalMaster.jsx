@@ -2185,7 +2185,7 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Clean Calculator Modal (In Date starts blank)
+// 🌟 Clean Calculator Modal
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const [tempLoginDate, setTempLoginDate] = useState("");
   const [tempLogoutDate, setTempLogoutDate] = useState("");
@@ -2350,8 +2350,8 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
       >
         <div className="flex flex-wrap gap-1.5 items-center flex-1">
           {safeSelected.length === 0 && <span className="text-slate-400">{placeholder}</span>}
-          {safeSelected.map((sel) => (
-            <span key={sel} className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 border border-amber-200 shadow-xs">
+          {safeSelected.map((sel, idx) => (
+            <span key={`selected-chip-${sel}-${idx}`} className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 border border-amber-200 shadow-xs">
               {sel}
               {!disabled && (
                 <X className="h-3.5 w-3.5 cursor-pointer hover:text-amber-900 transition-colors" onClick={(e) => removeOption(e, sel)} />
@@ -2369,12 +2369,12 @@ function MultiSelect({ options = [], selected = [], onChange, placeholder = "Sel
             {options.length === 0 ? (
               <div className="px-4 py-2 text-xs text-slate-400">No active accessories available</div>
             ) : (
-              options.map((opt) => {
+              options.map((opt, idx) => {
                 const optName = typeof opt === "string" ? opt : getOptionLabel(opt);
                 const isSel = safeSelected.includes(optName);
                 return (
                   <div 
-                    key={optName} 
+                    key={`opt-dropdown-${optName}-${idx}`} 
                     onClick={() => toggleOption(optName)} 
                     className={`cursor-pointer px-4 py-2 text-sm transition-colors hover:bg-teal-50 ${
                       isSel ? "bg-teal-50 text-teal-700 font-semibold" : "text-slate-700"
@@ -2431,7 +2431,7 @@ function KpiCards({ logs = [] }) {
         const t = toneMap[c.tone];
         return (
           <div 
-            key={c.label} 
+            key={`kpi-card-${c.label}-${i}`} 
             style={{ animationDelay: `${i * 50}ms` }} 
             className="rise-in group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-5"
           >
@@ -2631,6 +2631,11 @@ function RequisitionDetailView({ log, equipmentCatalog = [], careCenters = [], o
 function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], equipmentCatalog = [], references = [], categories = [], onCancel, onSubmit }) {
   const isEdit = mode === "edit";
 
+  // 🔒 Rule: Agar Recall Date pehle se set hai toh lock rahega
+  const isRecallDateLocked = useMemo(() => {
+    return Boolean(initial?.recallDate || initial?.recall_date);
+  }, [initial]);
+
   const loggedUser = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}");
@@ -2811,7 +2816,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       e.logoutDate = `Log Out Date cannot be before Log In Date (${formatDisplayDate(cleanLogIn)}).`;
     }
 
-    if (cleanLogOut && cleanRecall && cleanRecall <= cleanLogOut) {
+    if (!isRecallDateLocked && cleanLogOut && cleanRecall && cleanRecall <= cleanLogOut) {
       e.recallDate = `Recall Date must be after Log Out Date (at least ${formatDisplayDate(getNextDayISO(cleanLogOut))}).`;
     }
 
@@ -2972,19 +2977,19 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
           <Field label="Deal Type" required error={errors.dealType}>
             <Select value={form.dealType} error={errors.dealType} onChange={(e) => set({ dealType: e.target.value })}>
               <option value="">--- Select ---</option>
-              {DEAL_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
+              {DEAL_TYPE_OPTIONS.map((pt, idx) => <option key={`deal-opt-${pt}-${idx}`} value={pt}>{pt}</option>)}
             </Select>
           </Field>
           <Field label="Unit" required error={errors.unit}>
             <Select value={form.unit} error={errors.unit} onChange={(e) => set({ unit: e.target.value })}>
               <option value="">--- Select ---</option>
-              {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+              {UNIT_OPTIONS.map((u, idx) => <option key={`unit-opt-${u}-${idx}`} value={u}>{u}</option>)}
             </Select>
           </Field>
           <Field label="Payment Mode" required error={errors.mode}>
             <Select value={form.mode} error={errors.mode} onChange={(e) => set({ mode: e.target.value, paymentType: e.target.value })}>
               <option value="">--- Select ---</option>
-              {MODE_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
+              {MODE_OPTIONS.map((m, idx) => <option key={`mode-opt-${m}-${idx}`} value={m}>{m}</option>)}
             </Select>
           </Field>
         </div>
@@ -2996,7 +3001,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
           <Field label="Select Device Model" required error={errors.deviceModel}>
             <Select value={form.deviceModel} error={errors.deviceModel} onChange={(e) => set({ deviceModel: e.target.value })}>
               <option value="">-- Choose Equipment Model --</option>
-              {activeEquipment.map((eq) => <option key={eq.id} value={eq.id}>{eq.name}</option>)}
+              {activeEquipment.map((eq, idx) => <option key={`eq-model-${eq.id || idx}-${idx}`} value={eq.id}>{eq.name}</option>)}
             </Select>
           </Field>
           
@@ -3037,18 +3042,26 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
             />
           </Field>
 
+          {/* 🔒 Recall Date Locked if already set */}
           <Field label="Recall Date (Optional)" error={errors.recallDate}>
             <TextInput 
               type="date" 
               value={form.recallDate || ""} 
               min={minRecallDateAllowed || undefined}
+              disabled={isRecallDateLocked}
               error={errors.recallDate}
-              onChange={(e) => set({ recallDate: e.target.value })} 
+              onChange={(e) => !isRecallDateLocked && set({ recallDate: e.target.value })} 
             />
-            {form.logoutDate && (
-              <p className="mt-1 text-[11px] font-medium text-amber-600">
-                Must be on or after {formatDisplayDate(minRecallDateAllowed)}
+            {isRecallDateLocked ? (
+              <p className="mt-1 text-[11px] font-semibold text-slate-400">
+                🔒 Recall Date is locked and cannot be changed.
               </p>
+            ) : (
+              form.logoutDate && (
+                <p className="mt-1 text-[11px] font-medium text-amber-600">
+                  Must be on or after {formatDisplayDate(minRecallDateAllowed)}
+                </p>
+              )
             )}
           </Field>
         </div>
@@ -3084,7 +3097,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
               <Field label="Care Center Name">
                 <Select value={form.careCenterId} onChange={(e) => handleCareCenterChange(e.target.value)}>
                   {!isCareCenterUser && <option value="">-- Select Care Center --</option>}
-                  {pageDropdownCareCenters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {pageDropdownCareCenters.map((c, idx) => <option key={`care-center-${c.id || idx}-${idx}`} value={c.id}>{c.name}</option>)}
                   {!isCareCenterUser && <option value="other">Other (Add New)</option>}
                 </Select>
               </Field>
@@ -3110,8 +3123,8 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
                 <Field label="Referral Doctor">
                   <Select value={form.referral} onChange={(e) => set({ referral: e.target.value })}>
                     <option value="">-- Select Referral --</option>
-                    {activeReferrals.map((r) => (
-                      <option key={r.id} value={r.doctorName || r.name}>
+                    {activeReferrals.map((r, idx) => (
+                      <option key={`referral-doc-${r.id || idx}-${idx}`} value={r.doctorName || r.name}>
                         {r.doctorName || r.name} {r.domain ? `(${r.domain})` : ""}
                       </option>
                     ))}
@@ -3173,7 +3186,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
                 {photos.map((file, idx) => {
                   const isImage = file.type?.startsWith("image/");
                   return (
-                    <div key={idx} className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs transition hover:ring-2 hover:ring-teal-500/50">
+                    <div key={`photo-preview-${file.name || 'file'}-${idx}`} className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs transition hover:ring-2 hover:ring-teal-500/50">
                       {isImage ? (
                         <img src={URL.createObjectURL(file)} alt="preview" className="h-full w-full object-cover" />
                       ) : (
@@ -3391,7 +3404,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
         const matchesCareCenter = isCareCenterUser || careCenterFilter === "All" || ccId === careCenterFilter;
 
-        // 🌟 Temporary Calculator Filter (shows records up to that reference period)
+        // 🌟 Temporary Calculator Filter
         let matchesCalcWindow = true;
         if (calcRefWindow?.logoutDate) {
           const startVal = formatForDateInput(l.startDate || l.start_date || l.loginDate || l.login_date);
@@ -3409,7 +3422,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       });
   }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser, calcRefWindow]);
 
-  // 📄 Derived Safe Pagination (0 Warnings, 0 Crash)
+  // 📄 Derived Safe Pagination
   const totalItems = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
   const activePage = Math.min(currentPage, totalPages);
@@ -3419,7 +3432,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     return filtered.slice(indexOfFirstItem, indexOfLastItem);
   }, [filtered, indexOfFirstItem, indexOfLastItem]);
 
-  // 🧮 "Apply Changes" click handler: Temporarily aligns table view to selected period
+  // 🧮 "Apply Changes" click handler
   const handleApplyCalc = (calcResult) => {
     setCalcRefWindow({
       loginDate: calcResult.loginDate,
@@ -3429,7 +3442,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     toast.success(`Applied Reference View (${calcResult.totalDaysFormatted})`);
   };
 
-  // 🌟 Clean Form Submission (Uses strictly `data.*`)
+  // 🌟 Clean Form Submission
   const handleFormSubmit = async (data) => {
     try {
       const modeVal = data.mode || data.paymentType || "Postpaid";
@@ -3464,20 +3477,14 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       const isClosed = Boolean(cleanRecall && cleanRecall <= safeToday);
 
       const payload = {
-        id: data.id,
+        id: data.id || null,
         care_center_id: finalCareCenterId,
         careCenterId: finalCareCenterId,
         care_center_name: finalCareCenterName,
         careCenterName: finalCareCenterName,
-
         equipment_id: data.equipmentId || data.equipment_id || data.deviceModel || null,
         equipmentId: data.equipmentId || data.equipment_id || data.deviceModel || null,
-        
-        patient_name: String(data.patientName || data.patient_name || "").trim(),
-        patientName: String(data.patientName || data.patient_name || "").trim(),
-        patient: String(data.patientName || data.patient_name || "").trim(),
         quantity: 1,
-        
         start_date: cleanStart,
         startDate: cleanStart,
         login_date: cleanStart,
@@ -3486,7 +3493,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         logoutDate: cleanLogout || null,
         end_date: cleanLogout || null,
         status: isClosed ? "Closed" : "Active",
-        
         billing_type: bType,
         billingType: bType,
         rental_charge: rCharge,
@@ -3500,7 +3506,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         installation_charge: iCharge,
         installationCharge: iCharge,
         installation: iCharge,
-        
+        patient_name: String(data.patientName || data.patient_name || "").trim(),
+        patientName: String(data.patientName || data.patient_name || "").trim(),
+        patient: String(data.patientName || data.patient_name || "").trim(),
         age: String(data.age || "").trim(),
         attendant_name: String(data.attendantName || data.attendant_name || "").trim(),
         attendantName: String(data.attendantName || data.attendant_name || "").trim(),
@@ -3511,22 +3519,23 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         phone: String(data.mobileNumber || data.mobile_number || data.mobile || data.phone || "").trim(),
         alt_mobile_number: String(data.altMobileNumber || data.alt_mobile_number || "").trim(),
         altMobileNumber: String(data.altMobileNumber || data.alt_mobile_number || "").trim(),
-        delivery_address: String(data.deliveryAddress || data.delivery_address || "").trim(),
-        deliveryAddress: String(data.deliveryAddress || data.delivery_address || "").trim(),
-
         incharge_mobile: String(data.inchargeMobile || data.incharge_mobile || "").trim(),
         inchargeMobile: String(data.inchargeMobile || data.incharge_mobile || "").trim(),
         alt_mobile: String(data.altMobile || data.alt_mobile || "").trim(),
         altMobile: String(data.altMobile || data.alt_mobile || "").trim(),
         care_address: String(data.careAddress || data.care_address || "").trim(),
         careAddress: String(data.careAddress || data.care_address || "").trim(),
+        delivery_address: String(data.deliveryAddress || data.delivery_address || "").trim(),
+        deliveryAddress: String(data.deliveryAddress || data.delivery_address || "").trim(),
         bed_number: String(data.bedNo || data.bedNumber || data.bed_number || "").trim(),
+        bedNumber: String(data.bedNo || data.bedNumber || data.bed_number || "").trim(),
         bedNo: String(data.bedNo || data.bedNumber || data.bed_number || "").trim(),
         referral_doctor: String(data.referral || data.referralDoctor || data.referral_doctor || "").trim(),
+        referralDoctor: String(data.referral || data.referralDoctor || data.referral_doctor || "").trim(),
         referral: String(data.referral || data.referralDoctor || data.referral_doctor || "").trim(),
         gst_number: String(data.gstNo || data.gstNumber || data.gst_number || "").trim(),
+        gstNumber: String(data.gstNo || data.gstNumber || data.gst_number || "").trim(),
         gstNo: String(data.gstNo || data.gstNumber || data.gst_number || "").trim(),
-        
         deal_type: data.dealType || data.deal_type || "B2B",
         dealType: data.dealType || data.deal_type || "B2B",
         unit: data.unit || "ODCOM",
@@ -3542,7 +3551,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         notes: data.notes || "",
         accessory: Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || ""),
         accessories: Array.isArray(data.accessory) ? data.accessory.join(", ") : (data.accessory || ""),
-
         deliveryStatus: data.deliveryStatus || data.delivery_status || "Pending Dispatch",
         delivery_status: data.deliveryStatus || data.delivery_status || "Pending Dispatch",
         photoCount: Number(data.photoCount || 0)
@@ -3642,8 +3650,8 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             className="flex-1 min-w-[130px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
           >
             {!isCareCenterUser && <option value="All">All Care Centers</option>}
-            {filterBarDropdownCareCenters.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+            {filterBarDropdownCareCenters.map((c, idx) => (
+              <option key={`cc-filter-opt-${c.id || idx}-${idx}`} value={c.id}>{c.name}</option>
             ))}
           </select>
 
@@ -3664,7 +3672,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
           >
             <option value="All">All Deals</option>
-            {DEAL_TYPE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+            {DEAL_TYPE_OPTIONS.map((s, idx) => <option key={`deal-filter-${s}-${idx}`} value={s}>{s}</option>)}
           </select>
           
           <select 
@@ -3673,7 +3681,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             className="flex-1 min-w-[100px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
           >
             <option value="All">All Units</option>
-            {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+            {UNIT_OPTIONS.map((u, idx) => <option key={`unit-filter-${u}-${idx}`} value={u}>{u}</option>)}
           </select>
 
           <select 
@@ -3682,7 +3690,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             className="flex-1 min-w-[105px] rounded-lg border border-slate-200 bg-white py-2 pl-2.5 pr-7 text-xs font-semibold text-slate-600 outline-none transition hover:border-teal-300 focus:border-teal-500 cursor-pointer"
           >
             <option value="All">All Modes</option>
-            {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+            {MODE_OPTIONS.map((s, idx) => <option key={`mode-filter-${s}-${idx}`} value={s}>{s}</option>)}
           </select>
 
           {/* 🧮 Calculator Trigger Button */}
@@ -3723,7 +3731,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
           </button>
         </div>
 
-        {/* 🌟 Active Calculator Reference Indicator */}
+        {/* Active Calculator Reference Indicator */}
         {calcRefWindow && (
           <div className="mt-2.5 flex items-center justify-between rounded-lg bg-teal-50/80 px-3 py-1.5 border border-teal-200 text-xs">
             <span className="font-semibold text-teal-800">
@@ -3785,7 +3793,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <tbody className="divide-y divide-slate-100">
               {loading && filtered.length === 0 ? (
                 Array.from({ length: 5 }).map((_, idx) => (
-                  <tr key={idx} className="animate-pulse">
+                  <tr key={`skeleton-loading-${idx}`} className="animate-pulse">
                     <td className="px-5 py-4"><div className="h-5 w-28 bg-slate-100 rounded-md"></div></td>
                     <td className="px-5 py-4"><div className="h-5 w-32 bg-slate-100 rounded-md"></div></td>
                     <td className="px-5 py-4"><div className="h-5 w-20 bg-slate-100 rounded-md"></div></td>
@@ -3810,7 +3818,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                   const isClosed = Boolean(actualRecallDate && actualRecallDate <= safeToday);
                   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate;
                   
-                  // Evaluated against each row's own start date and the optional applied reference window
                   const dynamicDaysFormatted = getDynamicTotalDays(
                     startDateVal, 
                     actualLogoutDate, 
@@ -3836,7 +3843,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
                   return (
                     <tr 
-                      key={log?.id || i} 
+                      key={`log-row-${log?.id || 'noid'}-${i}`} 
                       className={`rise-in group/row relative transition-colors duration-150 ${rowColor} whitespace-nowrap`}
                     >
                       <td className="px-5 py-3.5 font-bold text-slate-800">
@@ -3936,7 +3943,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                 <button
-                  key={pageNum}
+                  key={`page-btn-item-${pageNum}`}
                   type="button"
                   onClick={() => setCurrentPage(pageNum)}
                   className={`h-7 w-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
