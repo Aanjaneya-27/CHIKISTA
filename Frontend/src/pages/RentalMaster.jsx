@@ -1,4 +1,3 @@
-
 // import { useState, useEffect, useMemo, useCallback } from "react";
 // import { 
 //   Search, 
@@ -71,7 +70,7 @@
 //   );
 // }
 
-// // 📅 Safe Date Formatter
+// // 📅 Timezone-Safe Date Formatter
 // const formatForDateInput = (d) => {
 //   if (!d || d === "null" || d === "undefined" || d === "0000-00-00" || String(d).trim() === "") return "";
 //   const str = String(d).trim();
@@ -108,7 +107,7 @@
 //   return dt.toISOString().split("T")[0];
 // };
 
-// // 🧮 Pure Calculation Logic: Total Days / Current Month Days
+// // 🧮 Calculation Logic: Total Days / Current Month Usage
 // const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
 //   const cleanLogin = formatForDateInput(loginStr);
 //   if (!cleanLogin) return "—";
@@ -123,7 +122,7 @@
 //   const [tY, tM, tD] = safeTodayStr.split("-").map(Number);
 //   const todayUtc = Date.UTC(tY, tM - 1, tD);
 
-//   // 1. LEFT SIDE: Total Duration (Login to Logout / Recall / Today)
+//   // 1. Total Duration
 //   let endUtc = todayUtc;
 //   if (cleanRecall) {
 //     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -136,7 +135,7 @@
 //   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
 //   if (totalDays < 1) totalDays = 1;
 
-//   // 2. RIGHT SIDE: Current Month Active Days
+//   // 2. Current Month Usage
 //   let actualUsageEndUtc = todayUtc;
 //   if (cleanRecall) {
 //     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -201,6 +200,7 @@
 //   return isNaN(t) ? 0 : t;
 // };
 
+// // 🌟 Standalone Calculator Modal
 // function CalculateTotalDaysModal({ onClose, onApply }) {
 //   const threeMonthsAgoISO = useMemo(() => {
 //     const d = new Date();
@@ -248,7 +248,8 @@
 //     if (onApply) {
 //       onApply({
 //         loginDate: tempLoginDate,
-//         logoutDate: tempLogoutDate
+//         logoutDate: tempLogoutDate,
+//         totalDaysFormatted: totalDaysDisplay
 //       });
 //     }
 //     onClose();
@@ -257,10 +258,11 @@
 //   return (
 //     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
 //       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
+        
 //         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
 //           <div>
 //             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
-//             <p className="text-xs font-medium text-slate-400 mt-0.5">Total Days / Current Month Usage</p>
+//             <p className="text-xs font-medium text-slate-400 mt-0.5">Quick Duration &amp; Monthly Estimator</p>
 //           </div>
 //           <button 
 //             type="button" 
@@ -326,6 +328,7 @@
 //             Apply Changes
 //           </button>
 //         </div>
+
 //       </div>
 //     </div>
 //   );
@@ -1316,6 +1319,7 @@
 //   const [viewDetailLog, setViewDetailLog] = useState(null); 
 //   const [pageForm, setPageForm] = useState(null); 
 
+//   // 🧮 Calculator Modal State
 //   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
 //   const [confirmDelete, setConfirmDelete] = useState(null);
 
@@ -1415,27 +1419,17 @@
 //   // 📄 Derived Safe Pagination (0 Warnings, 0 Crash)
 //   const totalItems = filtered.length;
 //   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-//   const activePage = currentPage > totalPages ? 1 : currentPage;
+//   const activePage = Math.min(currentPage, totalPages);
 //   const indexOfLastItem = activePage * itemsPerPage;
 //   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 //   const currentLogs = useMemo(() => {
 //     return filtered.slice(indexOfFirstItem, indexOfLastItem);
 //   }, [filtered, indexOfFirstItem, indexOfLastItem]);
 
-//   const handleApplyCalc = (updatedDates) => {
-//     setLogs((prevLogs) =>
-//       prevLogs.map((item) => ({
-//         ...item,
-//         startDate: updatedDates.loginDate,
-//         start_date: updatedDates.loginDate,
-//         loginDate: updatedDates.loginDate,
-//         login_date: updatedDates.loginDate,
-//         logoutDate: updatedDates.logoutDate,
-//         logout_date: updatedDates.logoutDate,
-//         endDate: updatedDates.logoutDate,
-//         end_date: updatedDates.logoutDate
-//       }))
-//     );
+//   // 🧮 Safe Apply for Calculator Modal
+//   const handleApplyCalc = (calcResult) => {
+//     fetchLogs();
+//     toast.success(`Calculated: ${calcResult.totalDaysFormatted} Total Days`);
 //   };
 
 //   const handleFormSubmit = async (data) => {
@@ -1643,6 +1637,7 @@
 
 //       <KpiCards logs={scopedLogs} />
       
+//       {/* 🖥️ Top Single Line Filter Bar */}
 //       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
 //         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -1708,6 +1703,7 @@
 //             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
 //           </select>
 
+//           {/* 🧮 Top Bar Calculator Button */}
 //           <button 
 //             type="button" 
 //             onClick={() => setIsCalcModalOpen(true)} 
@@ -1840,8 +1836,20 @@
 //                       <td className="px-5 py-3.5 text-slate-600 font-medium">
 //                         {formatDisplayDate(startDateVal)}
 //                       </td>
-//                       <td className="px-5 py-3.5 text-slate-600">
-//                         {actualLogoutDate ? formatDisplayDate(actualLogoutDate) : "—"}
+                      
+//                       {/* Logout Date: Date or Simple '—' */}
+//                       <td className="px-5 py-3.5 text-slate-600 font-medium">
+//                         {actualLogoutDate ? (
+//                           <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold border shadow-2xs ${
+//                             !isClosed 
+//                               ? "bg-amber-100 text-amber-900 border-amber-300" 
+//                               : "text-slate-600 bg-slate-50 border-slate-200"
+//                           }`}>
+//                             {formatDisplayDate(actualLogoutDate)}
+//                           </span>
+//                         ) : (
+//                           <span className="text-slate-400 font-normal">—</span>
+//                         )}
 //                       </td>
                       
 //                       <td className="px-5 py-3.5">
@@ -1903,6 +1911,7 @@
 //           </table>
 //         </div>
 
+//         {/* 📄 Pagination Footer Bar */}
 //         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/40 px-5 py-3 text-xs text-slate-500">
 //           <div>
 //             Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1}–{Math.min(indexOfLastItem, totalItems)} of {totalItems} records
@@ -2082,7 +2091,7 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Calculation Logic: Total Days / Current Month Usage
+// 🧮 Pure Calculation Logic: Total Days / Current Month Usage
 const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   const cleanLogin = formatForDateInput(loginStr);
   if (!cleanLogin) return "—";
@@ -2175,17 +2184,8 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Standalone Calculator Modal
+// 🌟 Clean & Aesthetic Calculator Modal (No clutter text)
 function CalculateTotalDaysModal({ onClose, onApply }) {
-  const threeMonthsAgoISO = useMemo(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 3);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-  }, []);
-
   const [tempLoginDate, setTempLoginDate] = useState(() => (typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0]));
   const [tempLogoutDate, setTempLogoutDate] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -2234,10 +2234,11 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
         
+        {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
           <div>
-            <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
-            <p className="text-xs font-medium text-slate-400 mt-0.5">Quick Duration &amp; Monthly Estimator</p>
+            <h3 className="text-base font-bold text-slate-800">Rental Calculator</h3>
+            <p className="text-xs font-medium text-slate-400 mt-0.5">Duration &amp; Monthly Usage Estimator</p>
           </div>
           <button 
             type="button" 
@@ -2248,46 +2249,49 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           </button>
         </div>
 
+        {/* Inputs */}
         <div className="p-6 space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">LOG IN DATE</label>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              LOG IN DATE
+            </label>
             <input 
               type="date" 
               value={tempLoginDate} 
-              min={threeMonthsAgoISO}
               onChange={handleLoginChange} 
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
             />
-            <p className="text-[11px] text-slate-400">Allowed within last 3 months only</p>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">LOG OUT DATE</label>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              LOG OUT DATE
+            </label>
             <input 
               type="date" 
               value={tempLogoutDate} 
-              min={tempLoginDate || threeMonthsAgoISO}
               onChange={handleLogoutChange} 
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
             />
-            <p className="text-[11px] text-slate-400">Leave empty to calculate until today (NA)</p>
           </div>
 
           {errorMsg && (
-            <p className="text-xs font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-lg p-2">
+            <p className="text-xs font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-lg p-2.5">
               ⚠️ {errorMsg}
             </p>
           )}
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS / THIS MONTH</span>
-            <p className="mt-1 font-display text-3xl font-extrabold text-slate-800 tracking-tight">
+          {/* Clean Output Box */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 text-center">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">CALCULATED DAYS</span>
+            <p className="mt-1.5 font-display text-3xl font-black text-slate-800 tracking-tight">
               {totalDaysDisplay}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
           <button 
             type="button" 
             onClick={onClose} 
@@ -3401,7 +3405,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     return filtered.slice(indexOfFirstItem, indexOfLastItem);
   }, [filtered, indexOfFirstItem, indexOfLastItem]);
 
-  // 🧮 Safe Apply for Calculator Modal
+  // 🧮 "Apply Changes" click handler: Refreshes table calculations cleanly
   const handleApplyCalc = (calcResult) => {
     fetchLogs();
     toast.success(`Calculated: ${calcResult.totalDaysFormatted} Total Days`);
@@ -3812,7 +3816,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         {formatDisplayDate(startDateVal)}
                       </td>
                       
-                      {/* Logout Date: Date or Simple '—' */}
+                      {/* Logout Date: Badge or Clean '—' */}
                       <td className="px-5 py-3.5 text-slate-600 font-medium">
                         {actualLogoutDate ? (
                           <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold border shadow-2xs ${
