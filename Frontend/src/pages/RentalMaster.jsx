@@ -1985,7 +1985,6 @@ import {
   Eye, 
   Pencil, 
   Trash2, 
-  PackageCheck, 
   Clock, 
   Activity, 
   AlertTriangle, 
@@ -2114,7 +2113,7 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
   if (totalDays < 1) totalDays = 1;
 
-  // 2. Current Month Active Usage
+  // 2. Current Month Active Days
   let actualUsageEndUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -2179,7 +2178,7 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Clean Calculator Modal (IN DATE & OUT DATE)
+// 🌟 Clean & Minimal Calculator Modal
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const [tempLoginDate, setTempLoginDate] = useState(() => (typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0]));
   const [tempLogoutDate, setTempLogoutDate] = useState("");
@@ -2244,7 +2243,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           </button>
         </div>
 
-        {/* Inputs with IN DATE & OUT DATE */}
+        {/* Inputs */}
         <div className="p-6 space-y-4">
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
@@ -2406,7 +2405,7 @@ function KpiCards({ logs = [] }) {
 
   const cards = [
     { label: "Active Rentals", value: countActive, icon: Activity, tone: "teal" },
-    { label: "Closed", value: countClosed, icon: PackageCheck, tone: "slate" },
+    { label: "Closed", value: countClosed, icon: Clock, tone: "slate" },
     { label: "Inactive Rentals", value: countInactive, icon: AlertTriangle, tone: "rose" },
     { label: "Total Requisitions", value: logs.length, icon: Clock, tone: "amber" },
   ];
@@ -2654,7 +2653,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     return filterActive(careCenters);
   }, [careCenters, isCareCenterUser, matchedUserCenter]);
 
-  // 🌟 Clean Form State - NO auto-filled/default mobile numbers
+  // 🌟 Clean Form State - Default Mobile is Blank
   const [form, setForm] = useState(() => {
     const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
     if (initial) {
@@ -2722,7 +2721,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       depositAdvance: "",
       installationCharge: "",
       careCenterId: matchedUserCenter?.id || "",
-      inchargeMobile: "", // 🌟 Completely blank by default
+      inchargeMobile: "", // 🌟 Blank by default
       altMobile: "",
       careAddress: matchedUserCenter?.address || "",
       bedNo: "",
@@ -2760,7 +2759,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       set({ 
         careCenterId: id, 
         careAddress: cc?.address || "", 
-        inchargeMobile: "", // 🌟 Never auto-fills phone number
+        inchargeMobile: "", // 🌟 Never auto-fills phone
         altMobile: ""
       });
     }
@@ -3407,6 +3406,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     toast.success(`Calculated: ${calcResult.totalDaysFormatted} Total Days`);
   };
 
+  // 🌟 Clean & Bug-free Form Submission (Uses strictly `data.*`)
   const handleFormSubmit = async (data) => {
     try {
       const modeVal = data.mode || data.paymentType || "Postpaid";
@@ -3485,6 +3485,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
         mobile_number: String(data.mobileNumber || data.mobile_number || data.mobile || data.phone || "").trim(),
         mobileNumber: String(data.mobileNumber || data.mobile_number || data.mobile || data.phone || "").trim(),
         mobile: String(data.mobileNumber || data.mobile_number || data.mobile || data.phone || "").trim(),
+        phone: String(data.mobileNumber || data.mobile_number || data.mobile || data.phone || "").trim(),
         alt_mobile_number: String(data.altMobileNumber || data.alt_mobile_number || "").trim(),
         altMobileNumber: String(data.altMobileNumber || data.alt_mobile_number || "").trim(),
         delivery_address: String(data.deliveryAddress || data.delivery_address || "").trim(),
@@ -3536,23 +3537,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
       setPageForm(null);
     } catch (err) {
       toast.error("Error: " + (err.response?.data?.message || err.message)); 
-    }
-  };
-  
-  const handleFastClose = async (log) => {
-    try {
-      const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
-      await API.put(`/rental/requisitions/${log.id}`, {
-        ...log,
-        status: "Closed",
-        requisition_status: "Closed",
-        recallDate: safeToday,
-        recall_date: safeToday
-      });
-      toast.success("Requisition marked as Closed!");
-      await fetchLogs();
-    } catch (err) {
-      toast.error("Failed to close: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -3812,7 +3796,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         {formatDisplayDate(startDateVal)}
                       </td>
                       
-                      {/* Logout Date: Date or Clean '—' */}
+                      {/* Logout Date: Date Badge or Clean '—' */}
                       <td className="px-5 py-3.5 text-slate-600 font-medium">
                         {actualLogoutDate ? (
                           <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold border shadow-2xs ${
@@ -3837,18 +3821,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         </span>
                       </td>
 
+                      {/* Actions Column (PackageCheck button removed) */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1">
-                          {!isClosed && (
-                            <IconAction 
-                              title="Mark as Closed" 
-                              tone="teal" 
-                              onClick={() => handleFastClose(log)}
-                            >
-                              <PackageCheck className="h-4 w-4 text-emerald-600" />
-                            </IconAction>
-                          )}
-
                           <IconAction 
                             title="View Details" 
                             tone="teal" 
