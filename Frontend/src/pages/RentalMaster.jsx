@@ -107,7 +107,7 @@
 //   return dt.toISOString().split("T")[0];
 // };
 
-// // 🧮 Calculation Logic: Total Days / Current Month Usage
+// // 🧮 Pure Calculation Logic: Total Days / Current Month Usage
 // const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
 //   const cleanLogin = formatForDateInput(loginStr);
 //   if (!cleanLogin) return "—";
@@ -200,17 +200,8 @@
 //   return isNaN(t) ? 0 : t;
 // };
 
-// // 🌟 Standalone Calculator Modal
+// // 🌟 Clean & Aesthetic Calculator Modal (No clutter text)
 // function CalculateTotalDaysModal({ onClose, onApply }) {
-//   const threeMonthsAgoISO = useMemo(() => {
-//     const d = new Date();
-//     d.setMonth(d.getMonth() - 3);
-//     const y = d.getFullYear();
-//     const m = String(d.getMonth() + 1).padStart(2, "0");
-//     const day = String(d.getDate()).padStart(2, "0");
-//     return `${y}-${m}-${day}`;
-//   }, []);
-
 //   const [tempLoginDate, setTempLoginDate] = useState(() => (typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0]));
 //   const [tempLogoutDate, setTempLogoutDate] = useState("");
 //   const [errorMsg, setErrorMsg] = useState("");
@@ -259,10 +250,11 @@
 //     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
 //       <div className="fade-slide-up w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
         
+//         {/* Header */}
 //         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
 //           <div>
-//             <h3 className="text-base font-bold text-slate-800">Calculate Total Days</h3>
-//             <p className="text-xs font-medium text-slate-400 mt-0.5">Quick Duration &amp; Monthly Estimator</p>
+//             <h3 className="text-base font-bold text-slate-800">Rental Calculator</h3>
+//             <p className="text-xs font-medium text-slate-400 mt-0.5">Duration &amp; Monthly Usage Estimator</p>
 //           </div>
 //           <button 
 //             type="button" 
@@ -273,46 +265,49 @@
 //           </button>
 //         </div>
 
+//         {/* Inputs */}
 //         <div className="p-6 space-y-4">
 //           <div className="space-y-1.5">
-//             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">LOG IN DATE</label>
+//             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+//               LOG IN DATE
+//             </label>
 //             <input 
 //               type="date" 
 //               value={tempLoginDate} 
-//               min={threeMonthsAgoISO}
 //               onChange={handleLoginChange} 
-//               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+//               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
 //             />
-//             <p className="text-[11px] text-slate-400">Allowed within last 3 months only</p>
 //           </div>
 
 //           <div className="space-y-1.5">
-//             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">LOG OUT DATE</label>
+//             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+//               LOG OUT DATE
+//             </label>
 //             <input 
 //               type="date" 
 //               value={tempLogoutDate} 
-//               min={tempLoginDate || threeMonthsAgoISO}
 //               onChange={handleLogoutChange} 
-//               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+//               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
 //             />
-//             <p className="text-[11px] text-slate-400">Leave empty to calculate until today (NA)</p>
 //           </div>
 
 //           {errorMsg && (
-//             <p className="text-xs font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-lg p-2">
+//             <p className="text-xs font-semibold text-rose-500 bg-rose-50 border border-rose-200 rounded-lg p-2.5">
 //               ⚠️ {errorMsg}
 //             </p>
 //           )}
 
-//           <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center">
-//             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL DAYS / THIS MONTH</span>
-//             <p className="mt-1 font-display text-3xl font-extrabold text-slate-800 tracking-tight">
+//           {/* Clean Output Box */}
+//           <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 text-center">
+//             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">CALCULATED DAYS</span>
+//             <p className="mt-1.5 font-display text-3xl font-black text-slate-800 tracking-tight">
 //               {totalDaysDisplay}
 //             </p>
 //           </div>
 //         </div>
 
-//         <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/50 px-6 py-3.5">
+//         {/* Actions */}
+//         <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
 //           <button 
 //             type="button" 
 //             onClick={onClose} 
@@ -1426,7 +1421,7 @@
 //     return filtered.slice(indexOfFirstItem, indexOfLastItem);
 //   }, [filtered, indexOfFirstItem, indexOfLastItem]);
 
-//   // 🧮 Safe Apply for Calculator Modal
+//   // 🧮 "Apply Changes" click handler: Refreshes table calculations cleanly
 //   const handleApplyCalc = (calcResult) => {
 //     fetchLogs();
 //     toast.success(`Calculated: ${calcResult.totalDaysFormatted} Total Days`);
@@ -1837,7 +1832,7 @@
 //                         {formatDisplayDate(startDateVal)}
 //                       </td>
                       
-//                       {/* Logout Date: Date or Simple '—' */}
+//                       {/* Logout Date: Badge or Clean '—' */}
 //                       <td className="px-5 py-3.5 text-slate-600 font-medium">
 //                         {actualLogoutDate ? (
 //                           <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold border shadow-2xs ${
@@ -2119,7 +2114,7 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
   if (totalDays < 1) totalDays = 1;
 
-  // 2. Current Month Usage
+  // 2. Current Month Active Usage
   let actualUsageEndUtc = todayUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
@@ -2184,7 +2179,7 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Clean & Aesthetic Calculator Modal (No clutter text)
+// 🌟 Clean Calculator Modal (IN DATE & OUT DATE)
 function CalculateTotalDaysModal({ onClose, onApply }) {
   const [tempLoginDate, setTempLoginDate] = useState(() => (typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0]));
   const [tempLogoutDate, setTempLogoutDate] = useState("");
@@ -2202,7 +2197,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
   const handleLogoutChange = (e) => {
     const val = e.target.value;
     if (tempLoginDate && val && val < tempLoginDate) {
-      setErrorMsg("Log Out Date cannot be before Log In Date.");
+      setErrorMsg("Out Date cannot be before In Date.");
       return;
     }
     setErrorMsg("");
@@ -2217,7 +2212,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
 
   const handleApply = () => {
     if (tempLogoutDate && tempLogoutDate < tempLoginDate) {
-      setErrorMsg("Log Out Date must be on or after Log In Date.");
+      setErrorMsg("Out Date must be on or after In Date.");
       return;
     }
     if (onApply) {
@@ -2249,11 +2244,11 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
           </button>
         </div>
 
-        {/* Inputs */}
+        {/* Inputs with IN DATE & OUT DATE */}
         <div className="p-6 space-y-4">
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              LOG IN DATE
+              IN DATE
             </label>
             <input 
               type="date" 
@@ -2265,7 +2260,7 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
 
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              LOG OUT DATE
+              OUT DATE
             </label>
             <input 
               type="date" 
@@ -2659,6 +2654,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
     return filterActive(careCenters);
   }, [careCenters, isCareCenterUser, matchedUserCenter]);
 
+  // 🌟 Clean Form State - NO auto-filled/default mobile numbers
   const [form, setForm] = useState(() => {
     const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
     if (initial) {
@@ -2695,7 +2691,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
         depositAdvance: dAdvance !== undefined && dAdvance !== null ? String(dAdvance) : "",
         installationCharge: iCharge !== undefined && iCharge !== null ? String(iCharge) : "",
         careCenterId: ccId || matchedUserCenter?.id || "",
-        inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || cc?.phone || "",
+        inchargeMobile: initial.inchargeMobile || initial.incharge_mobile || initial.phone || "",
         altMobile: initial.altMobile || initial.alt_mobile || "",
         careAddress: initial.careAddress || initial.care_address || initial.address || cc?.address || "",
         bedNo: initial.bedNumber || initial.bed_number || initial.bedNo || "",
@@ -2726,7 +2722,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       depositAdvance: "",
       installationCharge: "",
       careCenterId: matchedUserCenter?.id || "",
-      inchargeMobile: matchedUserCenter?.phone || loggedUser?.phone || "",
+      inchargeMobile: "", // 🌟 Completely blank by default
       altMobile: "",
       careAddress: matchedUserCenter?.address || "",
       bedNo: "",
@@ -2764,7 +2760,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       set({ 
         careCenterId: id, 
         careAddress: cc?.address || "", 
-        inchargeMobile: cc?.phone || "", 
+        inchargeMobile: "", // 🌟 Never auto-fills phone number
         altMobile: ""
       });
     }
@@ -3816,7 +3812,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         {formatDisplayDate(startDateVal)}
                       </td>
                       
-                      {/* Logout Date: Badge or Clean '—' */}
+                      {/* Logout Date: Date or Clean '—' */}
                       <td className="px-5 py-3.5 text-slate-600 font-medium">
                         {actualLogoutDate ? (
                           <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold border shadow-2xs ${
