@@ -2085,8 +2085,8 @@ const getNextDayISO = (dateStr) => {
   return dt.toISOString().split("T")[0];
 };
 
-// 🧮 Pure Calculation Logic: Total Days / Current Month Usage
-const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
+// 🧮 Pure Calculation Logic: Total Days / Target Month Active Days
+const calculateRentalDays = (loginStr, logoutStr, recallStr = null, refDateStr = null) => {
   const cleanLogin = formatForDateInput(loginStr);
   if (!cleanLogin) return "—";
 
@@ -2096,12 +2096,15 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   const cleanRecall = formatForDateInput(recallStr);
   const cleanLogout = formatForDateInput(logoutStr);
 
-  const safeTodayStr = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
-  const [tY, tM, tD] = safeTodayStr.split("-").map(Number);
-  const todayUtc = Date.UTC(tY, tM - 1, tD);
+  const targetRefStr = refDateStr 
+    ? formatForDateInput(refDateStr) 
+    : (typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0]);
+  
+  const [tY, tM, tD] = targetRefStr.split("-").map(Number);
+  const refUtc = Date.UTC(tY, tM - 1, tD);
 
-  // 1. Total Duration
-  let endUtc = todayUtc;
+  // 1. LEFT SIDE: Total Duration
+  let endUtc = refUtc;
   if (cleanRecall) {
     const [rY, rM, rD] = cleanRecall.split("-").map(Number);
     endUtc = Date.UTC(rY, rM - 1, rD);
@@ -2110,23 +2113,26 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
     endUtc = Date.UTC(lY, lM - 1, lD);
   }
 
+  if (startUtc > endUtc) {
+    return "0 / 0";
+  }
+
   let totalDays = Math.floor((endUtc - startUtc) / 86400000) + 1;
   if (totalDays < 1) totalDays = 1;
 
-  // 2. Current Month Active Days
-  let actualUsageEndUtc = todayUtc;
-  if (cleanRecall) {
-    const [rY, rM, rD] = cleanRecall.split("-").map(Number);
-    actualUsageEndUtc = Date.UTC(rY, rM - 1, rD);
-  } else if (cleanLogout) {
-    const [lY, lM, lD] = cleanLogout.split("-").map(Number);
-    const logoutUtc = Date.UTC(lY, lM - 1, lD);
-    actualUsageEndUtc = logoutUtc < todayUtc ? logoutUtc : todayUtc;
-  }
-
+  // 2. RIGHT SIDE: Target Evaluation Month Active Days
   const curMonthStartUtc = Date.UTC(tY, tM - 1, 1);
   const nextMonthFirstUtc = Date.UTC(tY, tM, 1);
   const curMonthEndUtc = nextMonthFirstUtc - 86400000;
+
+  let actualUsageEndUtc = refUtc;
+  if (cleanRecall) {
+    const [rY, rM, rD] = cleanRecall.split("-").map(Number);
+    actualUsageEndUtc = Math.min(Date.UTC(rY, rM - 1, rD), refUtc);
+  } else if (cleanLogout) {
+    const [lY, lM, lD] = cleanLogout.split("-").map(Number);
+    actualUsageEndUtc = Math.min(Date.UTC(lY, lM - 1, lD), refUtc);
+  }
 
   const overlapStartUtc = Math.max(startUtc, curMonthStartUtc);
   const overlapEndUtc = Math.min(actualUsageEndUtc, curMonthEndUtc);
@@ -2140,12 +2146,13 @@ const calculateRentalDays = (loginStr, logoutStr, recallStr = null) => {
   return `${totalDays} / ${currentMonthDays}`;
 };
 
-const getDynamicTotalDays = (loginStr, logoutStr, recallStr = null) => {
-  return calculateRentalDays(loginStr, logoutStr, recallStr);
+const getDynamicTotalDays = (loginStr, logoutStr, recallStr = null, refDateStr = null) => {
+  return calculateRentalDays(loginStr, logoutStr, recallStr, refDateStr);
 };
 
 const getCalculatorDays = (loginStr, logoutStr) => {
-  return calculateRentalDays(loginStr, logoutStr, null);
+  if (!loginStr) return "0 / 0";
+  return calculateRentalDays(loginStr, logoutStr, null, logoutStr || null);
 };
 
 const getOptionLabel = (item) => {
@@ -2178,9 +2185,9 @@ const getSafeTime = (item, field) => {
   return isNaN(t) ? 0 : t;
 };
 
-// 🌟 Clean & Minimal Calculator Modal
+// 🌟 Clean Calculator Modal (In Date starts blank)
 function CalculateTotalDaysModal({ onClose, onApply }) {
-  const [tempLoginDate, setTempLoginDate] = useState(() => (typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0]));
+  const [tempLoginDate, setTempLoginDate] = useState("");
   const [tempLogoutDate, setTempLogoutDate] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -2204,13 +2211,13 @@ function CalculateTotalDaysModal({ onClose, onApply }) {
   };
 
   const totalDaysDisplay = useMemo(() => {
-    if (!tempLoginDate) return "—";
-    if (tempLogoutDate && tempLogoutDate < tempLoginDate) return "—";
+    if (!tempLoginDate) return "0 / 0";
+    if (tempLogoutDate && tempLogoutDate < tempLoginDate) return "0 / 0";
     return getCalculatorDays(tempLoginDate, tempLogoutDate);
   }, [tempLoginDate, tempLogoutDate]);
 
   const handleApply = () => {
-    if (tempLogoutDate && tempLogoutDate < tempLoginDate) {
+    if (tempLogoutDate && tempLoginDate && tempLogoutDate < tempLoginDate) {
       setErrorMsg("Out Date must be on or after In Date.");
       return;
     }
@@ -2721,7 +2728,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       depositAdvance: "",
       installationCharge: "",
       careCenterId: matchedUserCenter?.id || "",
-      inchargeMobile: "", // 🌟 Blank by default
+      inchargeMobile: "",
       altMobile: "",
       careAddress: matchedUserCenter?.address || "",
       bedNo: "",
@@ -2759,7 +2766,7 @@ function RequisitionFormPage({ initial = null, mode = "add", careCenters = [], e
       set({ 
         careCenterId: id, 
         careAddress: cc?.address || "", 
-        inchargeMobile: "", // 🌟 Never auto-fills phone
+        inchargeMobile: "",
         altMobile: ""
       });
     }
@@ -3286,6 +3293,9 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
   const [sortField, setSortField] = useState("startDate");
   const [sortOrder, setSortOrder] = useState("desc");
 
+  // 📄 Temporary Calculator Reference Window
+  const [calcRefWindow, setCalcRefWindow] = useState(null);
+
   // 📄 Pagination Setup (8 records limit per page)
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -3381,14 +3391,23 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
         const matchesCareCenter = isCareCenterUser || careCenterFilter === "All" || ccId === careCenterFilter;
 
-        return matchesSearch && isStatusMatch && matchesDealType && matchesUnit && matchesMode && matchesCareCenter;
+        // 🌟 Temporary Calculator Filter (shows records up to that reference period)
+        let matchesCalcWindow = true;
+        if (calcRefWindow?.logoutDate) {
+          const startVal = formatForDateInput(l.startDate || l.start_date || l.loginDate || l.login_date);
+          if (startVal && startVal > calcRefWindow.logoutDate) {
+            matchesCalcWindow = false;
+          }
+        }
+
+        return matchesSearch && isStatusMatch && matchesDealType && matchesUnit && matchesMode && matchesCareCenter && matchesCalcWindow;
       })
       .sort((a, b) => {
         const tA = getSafeTime(a, sortField);
         const tB = getSafeTime(b, sortField);
         return sortOrder === "desc" ? tB - tA : tA - tB;
       });
-  }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser]);
+  }, [scopedLogs, search, statusFilter, dealTypeFilter, unitFilter, modeFilter, careCenterFilter, sortField, sortOrder, careCenters, equipmentCatalog, isCareCenterUser, calcRefWindow]);
 
   // 📄 Derived Safe Pagination (0 Warnings, 0 Crash)
   const totalItems = filtered.length;
@@ -3400,13 +3419,17 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
     return filtered.slice(indexOfFirstItem, indexOfLastItem);
   }, [filtered, indexOfFirstItem, indexOfLastItem]);
 
-  // 🧮 "Apply Changes" click handler: Refreshes table calculations cleanly
+  // 🧮 "Apply Changes" click handler: Temporarily aligns table view to selected period
   const handleApplyCalc = (calcResult) => {
-    fetchLogs();
-    toast.success(`Calculated: ${calcResult.totalDaysFormatted} Total Days`);
+    setCalcRefWindow({
+      loginDate: calcResult.loginDate,
+      logoutDate: calcResult.logoutDate
+    });
+    setCurrentPage(1);
+    toast.success(`Applied Reference View (${calcResult.totalDaysFormatted})`);
   };
 
-  // 🌟 Clean & Bug-free Form Submission (Uses strictly `data.*`)
+  // 🌟 Clean Form Submission (Uses strictly `data.*`)
   const handleFormSubmit = async (data) => {
     try {
       const modeVal = data.mode || data.paymentType || "Postpaid";
@@ -3596,7 +3619,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
 
       <KpiCards logs={scopedLogs} />
       
-      {/* 🖥️ Top Single Line Filter Bar */}
+      {/* 🖥️ Top Filter Bar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
         <div className="flex flex-wrap items-center gap-2.5 w-full">
           
@@ -3662,16 +3685,21 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             {MODE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
 
-          {/* 🧮 Top Bar Calculator Button */}
+          {/* 🧮 Calculator Trigger Button */}
           <button 
             type="button" 
             onClick={() => setIsCalcModalOpen(true)} 
             title="Open Total Days Calculator" 
-            className="flex items-center justify-center h-9 w-9 rounded-lg border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-300 transition cursor-pointer shrink-0 shadow-2xs"
+            className={`flex items-center justify-center h-9 w-9 rounded-lg border transition cursor-pointer shrink-0 shadow-2xs ${
+              calcRefWindow 
+                ? "bg-teal-600 text-white border-teal-700 ring-2 ring-teal-500/20" 
+                : "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-300"
+            }`}
           >
             <Calculator className="h-4 w-4" />
           </button>
 
+          {/* Reset Button */}
           <button 
             type="button" 
             onClick={() => {
@@ -3683,6 +3711,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
               setCareCenterFilter("All");
               setSortField("startDate");
               setSortOrder("desc");
+              setCalcRefWindow(null);
               setCurrentPage(1);
               fetchLogs();
               toast.success("Filters reset");
@@ -3693,6 +3722,22 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {/* 🌟 Active Calculator Reference Indicator */}
+        {calcRefWindow && (
+          <div className="mt-2.5 flex items-center justify-between rounded-lg bg-teal-50/80 px-3 py-1.5 border border-teal-200 text-xs">
+            <span className="font-semibold text-teal-800">
+              📊 Calculation Window Active: {calcRefWindow.loginDate ? formatDisplayDate(calcRefWindow.loginDate) : "Start"} → {calcRefWindow.logoutDate ? formatDisplayDate(calcRefWindow.logoutDate) : "Today"}
+            </span>
+            <button 
+              type="button" 
+              onClick={() => { setCalcRefWindow(null); toast.success("Live calculation restored"); }}
+              className="text-teal-700 hover:text-rose-600 font-bold flex items-center gap-1 cursor-pointer"
+            >
+              Clear Window <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
@@ -3764,7 +3809,15 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                   const safeToday = typeof todayISO === "function" ? todayISO() : new Date().toISOString().split("T")[0];
                   const isClosed = Boolean(actualRecallDate && actualRecallDate <= safeToday);
                   const startDateVal = log?.startDate || log?.start_date || log?.loginDate || log?.login_date || log?.recordDate;
-                  const dynamicDaysFormatted = getDynamicTotalDays(startDateVal, actualLogoutDate, actualRecallDate);
+                  
+                  // Evaluated against each row's own start date and the optional applied reference window
+                  const dynamicDaysFormatted = getDynamicTotalDays(
+                    startDateVal, 
+                    actualLogoutDate, 
+                    actualRecallDate, 
+                    calcRefWindow?.logoutDate || null
+                  );
+                  
                   const currentMode = log?.mode || log?.paymentType || log?.payment_type || "Postpaid";
 
                   const rowColor = currentMode === "Prepaid" 
@@ -3796,7 +3849,7 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         {formatDisplayDate(startDateVal)}
                       </td>
                       
-                      {/* Logout Date: Date Badge or Clean '—' */}
+                      {/* Clean Logout Date */}
                       <td className="px-5 py-3.5 text-slate-600 font-medium">
                         {actualLogoutDate ? (
                           <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold border shadow-2xs ${
@@ -3821,7 +3874,6 @@ export default function RentalMaster({ permissions = { canAdd: true, canEdit: tr
                         </span>
                       </td>
 
-                      {/* Actions Column (PackageCheck button removed) */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1">
                           <IconAction 
